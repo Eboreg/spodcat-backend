@@ -1,0 +1,3 @@
+.markdownx .markdownx-preview * {
+    color: var(--body-fg) !important;
+}
