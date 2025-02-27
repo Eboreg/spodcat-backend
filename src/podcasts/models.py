@@ -139,7 +139,7 @@ def episode_audio_file_path(instance: "Episode", filename: str):
 
 
 class PodcastContent(PolymorphicModel):
-    slug = models.SlugField(primary_key=True)
+    slug = models.SlugField(primary_key=True, max_length=100)
     name = models.CharField(max_length=100)
     description = MDTextField(null=True, default=None, blank=True)
     podcast: "Podcast" = models.ForeignKey("Podcast", on_delete=models.PROTECT, related_name="contents")
