@@ -27,6 +27,7 @@ dependencies = [
     "django-mdeditor",
     "django-polymorphic",
     "mysqlclient",
+    "django-cors-headers",
 ]
 dynamic = ["version"]
 

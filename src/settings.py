@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_json_api",
     "mdeditor",
+    "corsheaders",
     "polymorphic",
     "users",
     "podcasts",
@@ -45,6 +46,7 @@ if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -182,6 +184,14 @@ MDEDITOR_CONFIGS = {
     }
 }
 
+
+# django-cors-headers
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://backend.musikensmakt.huseli.us",
+    "https://musikensmakt.huseli.us",
+]
 
 # Own stuff
 FRONTEND_ROOT_URL = os.environ.get("FRONTEND_ROOT_URL")
