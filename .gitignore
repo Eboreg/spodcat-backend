@@ -5,6 +5,7 @@
 /.env
 **/.mypy_cache
 **/*.egg-info
-**/db.sqlite3
+**/*.sqlite3
 .directory
 /media
+/notes.txt

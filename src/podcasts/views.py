@@ -2,7 +2,9 @@ from typing import cast
 from urllib.parse import urljoin
 
 from django.conf import settings
+from django.db.models import Prefetch
 from django.http import HttpRequest, HttpResponse
+from django.utils import timezone
 from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
@@ -10,7 +12,7 @@ from feedgen.feed import FeedGenerator
 from rest_framework_json_api import views
 
 from podcasts import serializers
-from podcasts.models import Episode, Podcast
+from podcasts.models import Episode, Podcast, PodcastContent
 
 
 class PodcastFeedGenerator(FeedGenerator):
@@ -25,10 +27,25 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     queryset = Podcast.objects.all()
     serializer_class = serializers.PodcastSerializer
     prefetch_for_includes = {
-        "episodes": ["episodes"],
         "owners": ["owners"],
         "categories": ["categories"],
         "links": ["links"],
+        "contents": [
+            Prefetch(
+                "contents",
+                queryset=PodcastContent.objects.only(
+                    "slug",
+                    "name",
+                    "polymorphic_ctype_id",
+                    "Episode___podcastcontent_ptr_id",
+                    "Episode___number",
+                    "podcast",
+                    "published",
+                    "Episode___duration_seconds",
+                    "Episode___audio_file",
+                )
+            )
+        ]
     }
 
 
@@ -39,10 +56,23 @@ class EpisodeViewSet(views.ReadOnlyModelViewSet):
         "podcast": ["podcast"],
     }
 
+    def get_queryset(self, *args, **kwargs):
+        return Episode.objects.filter(published__lte=timezone.now(), is_draft=False)
+
+
+class PodcastContentViewSet(views.ReadOnlyModelViewSet):
+    serializer_class = serializers.PodcastContentSerializer
+    select_for_includes = {
+        "podcast": ["podcast"],
+    }
+
+    def get_queryset(self, *args, **kwargs):
+        return PodcastContent.objects.filter(published__lte=timezone.now(), is_draft=False)
+
 
 # pylint: disable=no-member
 def podcast_rss(request: HttpRequest, slug: str):
-    podcast = Podcast.objects.prefetch_related("episodes", "owners", "categories").get(slug=slug)
+    podcast = Podcast.objects.prefetch_related("owners", "categories").get(slug=slug)
     authors = ", ".join(o.get_full_name() for o in podcast.owners.all())
     categories = [c.to_dict() for c in podcast.categories.all()]
 
@@ -51,9 +81,10 @@ def podcast_rss(request: HttpRequest, slug: str):
     fg = cast(PodcastFeedGenerator, fg)
     fg.title(podcast.name)
     fg.link(href=urljoin(settings.FRONTEND_ROOT_URL, slug))
-    if podcast.description:
-        fg.description(podcast.description)
-        fg.podcast.itunes_summary(podcast.description)
+    if podcast.tagline:
+        description = "<![CDATA[" + podcast.tagline + "]]>"
+        fg.description(description)
+        fg.podcast.itunes_summary(description)
     if podcast.cover:
         fg.image(podcast.cover.url)
         fg.podcast.itunes_image(podcast.cover.url)
@@ -68,15 +99,15 @@ def podcast_rss(request: HttpRequest, slug: str):
     if categories:
         fg.podcast.itunes_category(categories)
 
-    for episode in podcast.episodes.all():
+    for episode in podcast.published_episodes:
         if not episode.is_published():
             continue
         fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
         fe.title(episode.name)
-        fe.description(episode.description)
+        fe.description("<![CDATA[" + episode.description_html + "]]>")
         fe.published(episode.published)
-        fe.podcast.itunes_episode(episode.episode)
-        fe.link(href=episode.frontend_url)
+        fe.podcast.itunes_episode(episode.number)
+        fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/{episode.slug}"))
         fe.podcast.itunes_duration(round(episode.duration_seconds))
         fe.enclosure(
             url=episode.audio_file.url,

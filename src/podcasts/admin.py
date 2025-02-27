@@ -96,17 +96,16 @@ class PodcastAdmin(admin.ModelAdmin):
 
 @admin.register(Episode)
 class EpisodeAdmin(admin.ModelAdmin):
-    list_display = ("name", "episode", "is_published", "podcast", "created", "duration_seconds")
+    list_display = ("name", "number", "is_published", "is_draft", "podcast", "published")
     formfield_overrides = {
         models.TextField: {"widget": MDEditorWidget},
     }
     fields = (
         "podcast",
-        "episode",
-        "name",
+        ("number", "name"),
+        ("is_draft", "published"),
         "audio_file",
         "description",
-        "published",
         "duration_seconds",
         "audio_content_type",
         "audio_file_length",

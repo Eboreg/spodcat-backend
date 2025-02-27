@@ -3,9 +3,49 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.urls import reverse
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import ResourceRelatedField
+from rest_framework_json_api.relations import ResourceRelatedField, PolymorphicResourceRelatedField
 
-from podcasts.models import Category, Episode, Podcast, PodcastLink
+from podcasts.models import Category, Episode, Podcast, PodcastContent, PodcastLink
+
+
+class EpisodeSerializer(serializers.ModelSerializer):
+    description_html = serializers.SerializerMethodField()
+
+    included_serializers = {
+        "podcast": "podcasts.serializers.PodcastSerializer",
+    }
+
+    class Meta:
+        model = Episode
+        exclude = ["polymorphic_ctype"]
+
+    def get_description_html(self, obj: Episode):
+        return obj.description_html
+
+
+class PartialEpisodeSerializer(EpisodeSerializer):
+    class Meta:
+        model = Episode
+        fields = ["name", "podcast", "number", "published", "duration_seconds", "audio_file", "slug"]
+
+
+class PodcastContentSerializer(serializers.PolymorphicModelSerializer):
+    polymorphic_serializers = [EpisodeSerializer]
+    included_serializers = {
+        "podcast": "podcasts.serializers.PodcastSerializer",
+    }
+
+    class Meta:
+        model = PodcastContent
+        fields = "__all__"
+
+
+class PartialPodcastContentSerializer(PodcastContentSerializer):
+    polymorphic_serializers = [PartialEpisodeSerializer]
+
+    class Meta:
+        model = PodcastContent
+        fields = ["name", "podcast", "published", "slug"]
 
 
 class PodcastLinkSerializer(serializers.ModelSerializer):
@@ -21,39 +61,28 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class PodcastSerializer(serializers.ModelSerializer):
-    episodes = ResourceRelatedField(queryset=Episode.objects, many=True)
     links = ResourceRelatedField(queryset=PodcastLink.objects, many=True)
     rss_url = serializers.SerializerMethodField()
+    contents = PolymorphicResourceRelatedField(
+        PartialPodcastContentSerializer,
+        queryset=PodcastContent.objects,
+        many=True,
+    )
     description_html = serializers.SerializerMethodField()
 
     included_serializers = {
-        "episodes": "podcasts.serializers.EpisodeSerializer",
         "owners": "users.serializers.UserSerializer",
         "categories": "podcasts.serializers.CategorySerializer",
         "links": "podcasts.serializers.PodcastLinkSerializer",
+        "contents": "podcasts.serializers.PartialPodcastContentSerializer",
     }
 
     class Meta:
         model = Podcast
         fields = "__all__"
 
-    def get_description_html(self, obj: Podcast):
-        return obj.description_html
-
     def get_rss_url(self, obj: Podcast):
         return urljoin(settings.ROOT_URL, reverse("rss", kwargs={"slug": obj.slug}))
 
-
-class EpisodeSerializer(serializers.ModelSerializer):
-    description_html = serializers.SerializerMethodField()
-
-    included_serializers = {
-        "podcast": "podcasts.serializers.PodcastSerializer",
-    }
-
-    class Meta:
-        model = Episode
-        fields = "__all__"
-
-    def get_description_html(self, obj: Episode):
+    def get_description_html(self, obj: Podcast):
         return obj.description_html

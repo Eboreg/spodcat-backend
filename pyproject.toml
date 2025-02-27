@@ -15,7 +15,7 @@ dependencies = [
     "python-dotenv",
     "django-extensions",
     "djangorestframework",
-    "djangorestframework-jsonapi",
+    "djangorestframework-jsonapi[django-polymorphic]",
     "pillow",
     "pydub",
     "feedgen",
@@ -25,11 +25,14 @@ dependencies = [
     "whitenoise",
     "markdown",
     "django-mdeditor",
+    "django-polymorphic",
+    "mysqlclient",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
+    "django-debug-toolbar",
     "flake8",
     "ipdb",
     "ipython",

@@ -20,8 +20,8 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 DEBUG = env_boolean("DEBUG")
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ".localhost,127.0.0.1,[::1]").split(",")
-
 INTERNAL_IPS = os.environ.get("INTERNAL_IPS", "127.0.0.1").split(",")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
 
 
 # Application definition
@@ -37,9 +37,12 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_json_api",
     "mdeditor",
+    "polymorphic",
     "users",
     "podcasts",
 ]
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -50,6 +53,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+if DEBUG:
+    MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = "urls"
 
@@ -75,12 +80,20 @@ WSGI_APPLICATION = "wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-DATABASES = {
-    "default": {
+DATABASES: dict[str, dict] = {
+    "local": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+    },
+    "production": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("MYSQL_DB", ""),
+        "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
+        "HOST": os.environ.get("MYSQL_HOST", ""),
+        "USER": os.environ.get("MYSQL_USER", ""),
     }
 }
+DATABASES["default"] = DATABASES[ENVIRONMENT].copy()
 
 
 # Password validation
@@ -108,7 +121,6 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
 STATICFILES_DIRS = [("assets", SRC_DIR / "assets")]
-# MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 AZURE_ACCOUNT_NAME = "musikensmakt"

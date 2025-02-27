@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def migrate(apps, schema_editor):
+def migrate(apps, _):
     from podcasts.data import CATEGORIES
 
     Category = apps.get_model("podcasts", "Category")
