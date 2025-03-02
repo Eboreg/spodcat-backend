@@ -4,7 +4,12 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from podcasts.views import EpisodeViewSet, PodcastContentViewSet, PodcastViewSet, podcast_rss
+from podcasts.views import (
+    EpisodeViewSet,
+    PodcastContentViewSet,
+    PodcastViewSet,
+    PostViewSet,
+)
 from serve_media import serve_media
 from users.views import UserViewSet
 
@@ -15,12 +20,12 @@ router.register(prefix="users", viewset=UserViewSet, basename="user")
 router.register(prefix="podcasts", viewset=PodcastViewSet, basename="podcast")
 router.register(prefix="episodes", viewset=EpisodeViewSet, basename="episode")
 router.register(prefix="contents", viewset=PodcastContentViewSet, basename="content")
+router.register(prefix="posts", viewset=PostViewSet, basename="post")
 
 
 urlpatterns = [
     path("", include(router.urls)),
     path("admin/", admin.site.urls),
-    path("rss/<str:slug>/", view=podcast_rss, name="rss"),
     path("mdeditor/", include("mdeditor.urls")),
 ]
 urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=serve_media))

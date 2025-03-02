@@ -10,7 +10,7 @@ from mdeditor.widgets import MDEditorWidget
 from PIL import Image
 from pydub.utils import mediainfo
 
-from podcasts.models import Episode, Podcast, PodcastLink
+from podcasts.models import Episode, Podcast, PodcastLink, Post
 
 
 class PodcastLinkInline(admin.TabularInline):
@@ -139,3 +139,17 @@ class EpisodeAdmin(admin.ModelAdmin):
     def update_audio_file_dbfs_array(self, instance: Episode, file: BinaryIO, format_name: str):
         instance.update_audio_file_dbfs_array(file=file, format_name=format_name, save=True)
         file.close()
+
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ("name", "is_published", "is_draft", "podcast", "published")
+    formfield_overrides = {
+        models.TextField: {"widget": MDEditorWidget},
+    }
+    fields = (
+        "podcast",
+        "name",
+        ("is_draft", "published"),
+        "description",
+    )

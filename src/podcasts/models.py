@@ -7,8 +7,8 @@ from django.utils import timezone
 from iso639 import iter_langs
 from markdown import markdown
 from mdeditor.fields import MDTextField
-from slugify import slugify
 from polymorphic.models import PolymorphicModel
+from slugify import slugify
 
 from podcasts.markdown import MarkdownExtension
 from podcasts.utils import get_audio_file_dbfs_array
@@ -157,6 +157,9 @@ class PodcastContent(PolymorphicModel):
             return markdown(self.description, extensions=["nl2br", "smarty", MarkdownExtension()])
         return None
 
+    def __str__(self):
+        return self.name
+
     def _get_base_slug(self):
         return slugify(self.name)
 
@@ -191,11 +194,6 @@ class Episode(PodcastContent):
     audio_content_type = models.CharField(max_length=100, blank=True)
     audio_file_length = models.PositiveIntegerField(blank=True)
 
-    def __str__(self):
-        if self.number is not None:
-            return f"[{self.number}] {self.name}"
-        return self.name
-
     def _get_base_slug(self):
         base_slug = slugify(self.name)
         if self.number is not None:
@@ -207,3 +205,7 @@ class Episode(PodcastContent):
 
         if save:
             self.save()
+
+
+class Post(PodcastContent):
+    ...

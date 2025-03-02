@@ -28,6 +28,7 @@ dependencies = [
     "django-polymorphic",
     "mysqlclient",
     "django-cors-headers",
+    "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
 ]
 dynamic = ["version"]
 

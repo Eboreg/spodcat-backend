@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "polymorphic",
     "users",
     "podcasts",
+    "logs",
 ]
 if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")

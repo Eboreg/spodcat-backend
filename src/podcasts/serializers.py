@@ -3,13 +3,24 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.urls import reverse
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import ResourceRelatedField, PolymorphicResourceRelatedField
+from rest_framework_json_api.relations import (
+    PolymorphicResourceRelatedField,
+    ResourceRelatedField,
+)
 
-from podcasts.models import Category, Episode, Podcast, PodcastContent, PodcastLink
+from podcasts.models import (
+    Category,
+    Episode,
+    Podcast,
+    PodcastContent,
+    PodcastLink,
+    Post,
+)
 
 
 class EpisodeSerializer(serializers.ModelSerializer):
     description_html = serializers.SerializerMethodField()
+    audio_url = serializers.SerializerMethodField()
 
     included_serializers = {
         "podcast": "podcasts.serializers.PodcastSerializer",
@@ -19,6 +30,9 @@ class EpisodeSerializer(serializers.ModelSerializer):
         model = Episode
         exclude = ["polymorphic_ctype"]
 
+    def get_audio_url(self, obj: Episode):
+        return urljoin(settings.ROOT_URL, reverse("episode-audio", args=(obj.slug,)))
+
     def get_description_html(self, obj: Episode):
         return obj.description_html
 
@@ -26,11 +40,32 @@ class EpisodeSerializer(serializers.ModelSerializer):
 class PartialEpisodeSerializer(EpisodeSerializer):
     class Meta:
         model = Episode
-        fields = ["name", "podcast", "number", "published", "duration_seconds", "audio_file", "slug"]
+        fields = ["name", "podcast", "number", "published", "duration_seconds", "audio_file", "slug", "audio_url"]
+
+
+class PostSerializer(serializers.ModelSerializer):
+    description_html = serializers.SerializerMethodField()
+
+    included_serializers = {
+        "podcast": "podcasts.serializers.PodcastSerializer",
+    }
+
+    class Meta:
+        model = Post
+        exclude = ["polymorphic_ctype"]
+
+    def get_description_html(self, obj: Episode):
+        return obj.description_html
+
+
+class PartialPostSerializer(PostSerializer):
+    class Meta:
+        model = Post
+        fields = ["name", "podcast", "published", "slug"]
 
 
 class PodcastContentSerializer(serializers.PolymorphicModelSerializer):
-    polymorphic_serializers = [EpisodeSerializer]
+    polymorphic_serializers = [EpisodeSerializer, PostSerializer]
     included_serializers = {
         "podcast": "podcasts.serializers.PodcastSerializer",
     }
@@ -41,7 +76,7 @@ class PodcastContentSerializer(serializers.PolymorphicModelSerializer):
 
 
 class PartialPodcastContentSerializer(PodcastContentSerializer):
-    polymorphic_serializers = [PartialEpisodeSerializer]
+    polymorphic_serializers = [PartialEpisodeSerializer, PartialPostSerializer]
 
     class Meta:
         model = PodcastContent
@@ -82,7 +117,7 @@ class PodcastSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_rss_url(self, obj: Podcast):
-        return urljoin(settings.ROOT_URL, reverse("rss", kwargs={"slug": obj.slug}))
+        return urljoin(settings.ROOT_URL, reverse("podcast-rss", args=(obj.slug,)))
 
     def get_description_html(self, obj: Podcast):
         return obj.description_html
