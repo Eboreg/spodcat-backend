@@ -1,7 +1,3 @@
-from urllib.parse import urljoin
-
-from django.conf import settings
-from django.urls import reverse
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import (
     PolymorphicResourceRelatedField,
@@ -31,7 +27,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
         exclude = ["polymorphic_ctype"]
 
     def get_audio_url(self, obj: Episode):
-        return urljoin(settings.ROOT_URL, reverse("episode-audio", args=(obj.slug,)))
+        return obj.audio_url
 
     def get_description_html(self, obj: Episode):
         return obj.description_html
@@ -40,7 +36,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
 class PartialEpisodeSerializer(EpisodeSerializer):
     class Meta:
         model = Episode
-        fields = ["name", "podcast", "number", "published", "duration_seconds", "audio_file", "slug", "audio_url"]
+        fields = ["name", "podcast", "number", "published", "duration_seconds", "slug", "audio_url"]
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -117,7 +113,7 @@ class PodcastSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_rss_url(self, obj: Podcast):
-        return urljoin(settings.ROOT_URL, reverse("podcast-rss", args=(obj.slug,)))
+        return obj.rss_url
 
     def get_description_html(self, obj: Podcast):
         return obj.description_html

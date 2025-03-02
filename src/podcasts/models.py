@@ -1,8 +1,11 @@
 from html import escape
 from typing import TYPE_CHECKING, BinaryIO
+from urllib.parse import urljoin
 
+from django.conf import settings
 from django.contrib import admin
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from iso639 import iter_langs
 from markdown import markdown
@@ -130,6 +133,10 @@ class Podcast(models.Model):
     def published_episodes(self) -> "models.QuerySet[Episode]":
         return self.contents.instance_of(Episode)
 
+    @property
+    def rss_url(self):
+        return urljoin(settings.ROOT_URL, reverse("podcast-rss", args=(self.slug,)))
+
     def __str__(self):
         return self.name
 
@@ -193,6 +200,10 @@ class Episode(PodcastContent):
     dbfs_array = models.JSONField(blank=True, default=list)
     audio_content_type = models.CharField(max_length=100, blank=True)
     audio_file_length = models.PositiveIntegerField(blank=True)
+
+    @property
+    def audio_url(self):
+        return urljoin(settings.ROOT_URL, reverse("episode-audio", args=(self.slug,)))
 
     def _get_base_slug(self):
         base_slug = slugify(self.name)

@@ -106,7 +106,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/{episode.slug}"))
             fe.podcast.itunes_duration(round(episode.duration_seconds))
             fe.enclosure(
-                url=episode.audio_file.url,
+                url=episode.audio_url,
                 type=episode.audio_content_type,
                 length=episode.audio_file_length,
             )
