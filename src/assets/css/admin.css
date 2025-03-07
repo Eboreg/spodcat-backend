@@ -1,3 +1,12 @@
 .markdownx .markdownx-preview * {
     color: var(--body-fg) !important;
 }
+
+.inline-group .tabular tr td.original,
+.inline-group .tabular th.original {
+    display: none;
+}
+
+.inline-group .tabular tr.has_original td {
+    padding-top: 8px !important;
+}

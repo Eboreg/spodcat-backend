@@ -4,16 +4,29 @@ from threading import Thread
 from typing import BinaryIO
 
 from django.contrib import admin
-from django.contrib.admin.widgets import AutocompleteSelectMultiple
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.forms import Field, ModelForm, ModelMultipleChoiceField, TimeInput
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from mdeditor.widgets import MDEditorWidget
 from PIL import Image
 from pydub.utils import mediainfo
 
-from podcasts.models import Episode, Podcast, PodcastLink, Post, EpisodeSong, Artist
+from podcasts.fields import (
+    ArtistAutocompleteWidget,
+    ArtistMultipleChoiceField,
+    EpisodeSongForm,
+    seconds_to_timestamp,
+)
+from podcasts.models import (
+    Artist,
+    Episode,
+    EpisodeSong,
+    Podcast,
+    PodcastLink,
+    Post,
+)
 
 
 class PodcastLinkInline(admin.TabularInline):
@@ -97,74 +110,37 @@ class PodcastAdmin(admin.ModelAdmin):
         return instance
 
 
-class ArtistMultipleChoiceField(ModelMultipleChoiceField):
-    def clean(self, value):
-        value = self.prepare_value(value)
-        new_value = []
-        for pk in value:
-            if isinstance(pk, str) and pk.startswith("NEW--"):
-                name = pk[5:]
-                artist = self.queryset.filter(name__iexact=name).first()
-                if not artist:
-                    artist = self.queryset.create(name=name)
-                new_value.append(artist.pk)
-            else:
-                new_value.append(pk)
-        return super().clean(new_value)
-
-
-def seconds_to_timestamp(value: int):
-    hours = int(value / 60 / 60)
-    minutes = int(value / 60 % 60)
-    seconds = int(value % 60 % 60)
-    return f"{hours}:{minutes:02d}:{seconds:02d}"
-
-
-class TimestampField(Field):
-    widget = TimeInput
-
-    def prepare_value(self, value):
-        if isinstance(value, int):
-            return seconds_to_timestamp(value)
-        return super().prepare_value(value)
-
-    def to_python(self, value):
-        if isinstance(value, str) and value:
-            value = value.replace(".", ":")
-            parts = value.split(":")
-            seconds = int(parts[-1]) if len(parts) > 0 else 0
-            minutes = int(parts[-2]) if len(parts) > 1 else 0
-            hours = int(parts[-3]) if len(parts) > 2 else 0
-            return seconds + (minutes * 60) + (hours * 60 * 60)
-        return super().to_python(value)
-
-
-class EpisodeSongForm(ModelForm):
-    timestamp = TimestampField()
-
-
 class EpisodeSongInline(admin.TabularInline):
     model = EpisodeSong
-    extra = 10
     autocomplete_fields = ["artists"]
     form = EpisodeSongForm
+    fields = ["episode", "name", "timestamp", "artists", "comment"]
 
-    def formfield_for_manytomany(self, db_field, request, **kwargs):
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name == "artists":
             kwargs["queryset"] = Artist.objects.all()
-            kwargs["widget"] = AutocompleteSelectMultiple(
+            kwargs["widget"] = ArtistAutocompleteWidget(
                 field=db_field,
                 admin_site=self.admin_site,
                 using=kwargs.get("using"),
             )
             kwargs["required"] = False
             return ArtistMultipleChoiceField(**kwargs)
-        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+    def get_extra(self, request, obj=None, **kwargs):
+        if obj is None:
+            return 10
+        return 3
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("artists")
 
 
 @admin.register(Episode)
 class EpisodeAdmin(admin.ModelAdmin):
-    list_display = ("name", "number", "is_published", "is_draft", "podcast", "published")
+    list_display = ("name", "number", "is_published", "is_draft", "podcast_str", "published")
     formfield_overrides = {
         models.TextField: {"widget": MDEditorWidget},
     }
@@ -180,9 +156,21 @@ class EpisodeAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("duration_seconds", "audio_content_type", "audio_file_length")
     inlines = [EpisodeSongInline]
+    list_filter = ["is_draft", "published", "podcast"]
 
     class Media:
         js = ["assets/js/episode_song.js"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("podcast")
+
+    @admin.display(description="podcast", ordering="podcast")
+    def podcast_str(self, obj: Episode):
+        return format_html(
+            "<a href=\"{url}\">{name}</a>",
+            url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
+            name=str(obj.podcast),
+        )
 
     def save_form(self, request, form, change):
         instance: Episode = super().save_form(request, form, change)
@@ -248,6 +236,28 @@ class ArtistSongCountFilter(admin.SimpleListFilter):
             return queryset.filter(song_count__gte=2, song_count__lte=10)
         if self.value() == "10-":
             return queryset.filter(song_count__gt=10)
+        return queryset
+
+
+class ArtistSongInline(admin.TabularInline):
+    model = EpisodeSong.artists.through
+    extra = 0
+    fields = ["song", "episode"]
+    readonly_fields = ["song", "episode"]
+    verbose_name = "song"
+    verbose_name_plural = "songs"
+
+    def episode(self, obj):
+        return obj.episodesong.episode
+
+    def song(self, obj):
+        return obj.episodesong.name
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("episodesong__episode")
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 @admin.register(Artist)
@@ -255,6 +265,7 @@ class ArtistAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     list_display = ["name", "song_count"]
     list_filter = [ArtistSongCountFilter]
+    inlines = [ArtistSongInline]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(song_count=models.Count("songs"))
@@ -269,19 +280,31 @@ class EpisodeSongAdmin(admin.ModelAdmin):
     list_display = ["name", "artists_str", "episode_str", "timestamp_str"]
     ordering = ["-episode__number", "timestamp"]
     search_fields = ["name", "artists__name", "comment"]
+    filter_horizontal = ["artists"]
+    form = EpisodeSongForm
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("artists").select_related("episode")
 
     @admin.display(description="episode", ordering="episode__number")
     def episode_str(self, obj: EpisodeSong):
-        if obj.episode.number is not None:
-            return f"{obj.episode.number}. {obj.episode.name}"
-        return obj.episode.name
+        return format_html(
+            "<a href=\"{url}\">{name}</a>",
+            url=reverse("admin:podcasts_episode_change", args=(obj.episode.pk,)),
+            name=str(obj.episode),
+        )
 
     @admin.display(description="artists")
     def artists_str(self, obj: EpisodeSong):
-        return mark_safe("<br>".join(a.name for a in obj.artists.all()))
+        return mark_safe(
+            "<br>".join(
+                format_html(
+                    "<a href=\"{url}\">{name}</a>",
+                    url=reverse("admin:podcasts_artist_change", args=(a.pk,)),
+                    name=a.name,
+                ) for a in obj.artists.all()
+            )
+        )
 
     @admin.display(description="timestamp", ordering="timestamp")
     def timestamp_str(self, obj: EpisodeSong):

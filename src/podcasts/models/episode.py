@@ -26,6 +26,11 @@ class Episode(PodcastContent):
     def audio_url(self):
         return urljoin(settings.ROOT_URL, reverse("episode-audio", args=(self.slug,)))
 
+    def __str__(self):
+        if self.number is not None:
+            return f"{self.number}. {self.name}"
+        return self.name
+
     def _get_base_slug(self):
         base_slug = slugify(self.name)
         if self.number is not None:

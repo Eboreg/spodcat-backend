@@ -5,14 +5,14 @@ from rest_framework_json_api.relations import (
 )
 
 from podcasts.models import (
+    Artist,
     Category,
     Episode,
+    EpisodeSong,
     Podcast,
     PodcastContent,
     PodcastLink,
     Post,
-    Artist,
-    EpisodeSong,
 )
 
 
