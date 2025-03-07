@@ -4,6 +4,7 @@ from threading import Thread
 from typing import BinaryIO
 
 from django.contrib import admin
+from django.core.files.images import ImageFile
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.urls import reverse
@@ -73,10 +74,14 @@ class PodcastAdmin(admin.ModelAdmin):
                 im.thumbnail((int(im.width * ratio), int(im.height * ratio)))
                 im.save(buf, format=im.format)
 
-            instance.cover_thumbnail.save(name=filename, content=buf, save=False)
+            instance.cover_mimetype = im.get_format_mimetype()
+            instance.cover_thumbnail_mimetype = im.get_format_mimetype()
+            instance.cover_thumbnail.save(name=filename, content=ImageFile(file=buf), save=False)
 
         else:
             instance.cover_thumbnail.delete(save=False)
+            instance.cover_mimetype = None
+            instance.cover_thumbnail_mimetype = None
 
     def handle_favicon(self, instance: Podcast, file: UploadedFile | None):
         if file:

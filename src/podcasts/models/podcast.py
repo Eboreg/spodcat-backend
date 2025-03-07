@@ -44,7 +44,18 @@ class Podcast(models.Model):
     )
     cover_height = models.PositiveIntegerField(null=True, default=None)
     cover_width = models.PositiveIntegerField(null=True, default=None)
-    cover_thumbnail = models.ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
+    cover_mimetype = models.CharField(max_length=50, null=True, default=None)
+    cover_thumbnail = models.ImageField(
+        null=True,
+        default=None,
+        blank=True,
+        upload_to=podcast_image_path,
+        height_field="cover_thumbnail_height",
+        width_field="cover_thumbnail_width",
+    )
+    cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
+    cover_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
+    cover_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
     banner = models.ImageField(
         null=True,
         default=None,
