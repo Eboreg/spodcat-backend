@@ -9,7 +9,7 @@ from markdown import markdown
 from mdeditor.fields import MDTextField
 
 from podcasts.markdown import MarkdownExtension
-from podcasts.validators import podcast_cover_validator
+from podcasts.validators import podcast_cover_validator, podcast_slug_validator
 
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ def podcast_image_path(instance: "Podcast", filename: str):
 
 
 class Podcast(models.Model):
-    slug = models.SlugField(primary_key=True)
+    slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator])
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
     description = MDTextField(null=True, default=None, blank=True)
