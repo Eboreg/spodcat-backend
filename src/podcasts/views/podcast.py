@@ -60,6 +60,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["get"], detail=True)
     # pylint: disable=no-member
     def rss(self, request: Request, pk: str):
+        is_singleton: bool = self.get_queryset().count() == 1
         podcast: Podcast = self.get_queryset().prefetch_related("owners", "categories").get(slug=pk)
         authors = ", ".join(o.get_full_name() for o in podcast.owners.all())
         categories = [c.to_dict() for c in podcast.categories.all()]
@@ -70,7 +71,12 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         fg.load_extension("podcast")
         fg = cast(PodcastFeedGenerator, fg)
         fg.title(podcast.name)
-        fg.link(href=urljoin(settings.FRONTEND_ROOT_URL, pk))
+
+        if is_singleton:
+            fg.link(href=settings.FRONTEND_ROOT_URL)
+        else:
+            fg.link(href=urljoin(settings.FRONTEND_ROOT_URL, pk))
+
         if podcast.tagline:
             description = "<![CDATA[" + podcast.tagline + "]]>"
             fg.description(description)
@@ -78,10 +84,12 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         if podcast.cover:
             fg.image(podcast.cover.url)
             fg.podcast.itunes_image(podcast.cover.url)
+
         for owner in podcast.owners.all():
             if owner.get_full_name() and owner.email:
                 fg.podcast.itunes_owner(name=owner.get_full_name(), email=owner.email)
                 break
+
         if authors:
             fg.podcast.itunes_author(authors)
         if podcast.language:
@@ -97,7 +105,10 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.description("<![CDATA[" + episode.description_html + "]]>")
             fe.published(episode.published)
             fe.podcast.itunes_episode(episode.number)
-            fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/{episode.slug}"))
+            if is_singleton:
+                fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"episode/{episode.slug}"))
+            else:
+                fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/episode/{episode.slug}"))
             fe.podcast.itunes_duration(round(episode.duration_seconds))
             fe.enclosure(
                 url=episode.audio_url,
