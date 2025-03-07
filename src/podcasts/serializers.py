@@ -11,15 +11,39 @@ from podcasts.models import (
     PodcastContent,
     PodcastLink,
     Post,
+    Artist,
+    EpisodeSong,
 )
+
+
+class ArtistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Artist
+        fields = "__all__"
+
+
+class EpisodeSongSerializer(serializers.ModelSerializer):
+    included_serializers = {
+        "artists": "podcasts.serializers.ArtistSerializer",
+    }
+
+    class Meta:
+        model = EpisodeSong
+        fields = "__all__"
 
 
 class EpisodeSerializer(serializers.ModelSerializer):
     description_html = serializers.SerializerMethodField()
     audio_url = serializers.SerializerMethodField()
+    songs = PolymorphicResourceRelatedField(
+        EpisodeSongSerializer,
+        queryset=EpisodeSong.objects,
+        many=True,
+    )
 
     included_serializers = {
         "podcast": "podcasts.serializers.PodcastSerializer",
+        "songs": "podcasts.serializers.EpisodeSongSerializer",
     }
 
     class Meta:

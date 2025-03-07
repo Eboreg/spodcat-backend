@@ -3,8 +3,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.db.models import Prefetch
-from django.http import HttpResponse, HttpResponseRedirect
-from django.utils import timezone
+from django.http import HttpResponse
 from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
@@ -14,14 +13,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
 
-from logs.models import (
-    EpisodeAudioRequestLog,
-    PodcastContentRequestLog,
-    PodcastRequestLog,
-    PodcastRssRequestLog,
-)
+from logs.models import PodcastRequestLog, PodcastRssRequestLog
 from podcasts import serializers
-from podcasts.models import Episode, Podcast, PodcastContent, Post
+from podcasts.models import Podcast, PodcastContent
 
 
 class PodcastFeedGenerator(FeedGenerator):
@@ -113,39 +107,3 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.guid(guid=f"{podcast.slug}-{episode.slug}", permalink=False)
 
         return HttpResponse(content=fg.rss_str(pretty=True), content_type="application/xml; charset=utf-8")
-
-
-class PodcastContentViewSet(views.ReadOnlyModelViewSet):
-    serializer_class = serializers.PodcastContentSerializer
-    select_for_includes = {
-        "podcast": ["podcast"],
-    }
-
-    def get_queryset(self, *args, **kwargs):
-        return PodcastContent.objects.filter(published__lte=timezone.now(), is_draft=False)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        PodcastContentRequestLog.create(request=request, content=instance)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
-
-class EpisodeViewSet(PodcastContentViewSet):
-    serializer_class = serializers.EpisodeSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        return Episode.objects.filter(published__lte=timezone.now(), is_draft=False)
-
-    @action(methods=["get"], detail=True)
-    def audio(self, request: Request, pk: str):
-        episode: Episode = self.get_queryset().get(slug=pk)
-        EpisodeAudioRequestLog.create(request=request, content=episode)
-        return HttpResponseRedirect(episode.audio_file.url)
-
-
-class PostViewSet(PodcastContentViewSet):
-    serializer_class = serializers.PostSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        return Post.objects.filter(published__lte=timezone.now(), is_draft=False)
