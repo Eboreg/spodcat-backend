@@ -6,7 +6,7 @@ from django.db import models
 from django.urls import reverse
 from iso639 import iter_langs
 from markdown import markdown
-from mdeditor.fields import MDTextField
+from martor.models import MartorField
 
 from podcasts.markdown import MarkdownExtension
 from podcasts.validators import podcast_cover_validator, podcast_slug_validator
@@ -32,7 +32,7 @@ class Podcast(models.Model):
     slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator])
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
-    description = MDTextField(null=True, default=None, blank=True)
+    description = MartorField(null=True, default=None, blank=True)
     cover = models.ImageField(
         null=True,
         default=None,

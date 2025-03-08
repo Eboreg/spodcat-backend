@@ -23,12 +23,11 @@ dependencies = [
     "python-slugify",
     "django-storages[azure]",
     "whitenoise",
-    "markdown",
-    "django-mdeditor",
     "django-polymorphic",
     "mysqlclient",
     "django-cors-headers",
     "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
+    "martor",
 ]
 dynamic = ["version"]
 

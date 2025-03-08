@@ -36,9 +36,9 @@ INSTALLED_APPS = [
     "django_extensions",
     "rest_framework",
     "rest_framework_json_api",
-    "mdeditor",
     "corsheaders",
     "polymorphic",
+    "martor",
     "users",
     "podcasts",
     "logs",
@@ -60,6 +60,8 @@ if DEBUG:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = "urls"
+
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
 TEMPLATES = [
     {
@@ -135,7 +137,7 @@ STORAGES = {
     "default": {"BACKEND": "storages.backends.azure_storage.AzureStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
-MEDIA_URL = f"https://growplanet.blob.core.windows.net/{AZURE_CONTAINER}/"
+MEDIA_URL = f"https://musikensmakt.blob.core.windows.net/{AZURE_CONTAINER}/"
 
 
 # Default primary key field type
@@ -175,16 +177,18 @@ JSON_API_FORMAT_FIELD_NAMES = "dasherize"
 JSON_API_FORMAT_TYPES = "dasherize"
 
 
-# mdeditor
-MDEDITOR_CONFIGS = {
-    "default": {
-        "theme": "dark",
-        "preview_theme": "dark",
-        "editor_theme": "pastel-on-dark",
-        "language": "en",
-        "lineWrapping": True,
-    }
+# martor
+MARTOR_ENABLE_CONFIGS = {
+    "emoji": "true",
+    "imgur": "true",
+    "mention": "false",
+    "jquery": "true",
+    "living": "true",
+    "spellcheck": "false",
+    "h1js": "true",
 }
+MARTOR_ENABLE_LABEL = True
+MARTOR_UPLOAD_URL = "/markdown-image-upload/"
 
 
 # django-cors-headers

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.db import models
 from django.utils import timezone
 from markdown import markdown
-from mdeditor.fields import MDTextField
+from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
 from slugify import slugify
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class PodcastContent(PolymorphicModel):
     slug = models.SlugField(primary_key=True, max_length=100)
     name = models.CharField(max_length=100)
-    description = MDTextField(null=True, default=None, blank=True)
+    description = MartorField(null=True, default=None, blank=True)
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.PROTECT, related_name="contents")
     published = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
