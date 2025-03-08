@@ -14,6 +14,10 @@ def markdown_image_upload(request: HttpRequest):
     if image:
         path = os.path.join("uploads", image.name)
         new_path = default_storage.save(path, image)
-        return JsonResponse({"status": 200, "link": default_storage.url(new_path)})
+        return JsonResponse({
+            "status": 200,
+            "link": default_storage.url(new_path),
+            "name": new_path.split("/")[-1],
+        })
 
     return HttpResponse("Invalid request")

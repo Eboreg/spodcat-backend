@@ -1,6 +1,7 @@
+from django import forms
+from django.conf import settings
 from django.contrib.admin.widgets import AutocompleteSelectMultiple
 from django.core.validators import EMPTY_VALUES
-from django.forms import Field, ModelForm, ModelMultipleChoiceField, TimeInput
 
 
 def seconds_to_timestamp(value: int):
@@ -11,6 +12,25 @@ def seconds_to_timestamp(value: int):
 
 
 class ArtistAutocompleteWidget(AutocompleteSelectMultiple):
+    @property
+    def media(self):
+        extra = "" if settings.DEBUG else ".min"
+
+        return forms.Media(
+            js=(
+                f"admin/js/vendor/jquery/jquery{extra}.js",
+                f"admin/js/vendor/select2/select2.full{extra}.js",
+                "admin/js/jquery.init.js",
+                "assets/js/artist_autocomplete.js",
+            ),
+            css={
+                "screen": (
+                    f"admin/css/vendor/select2/select2{extra}.css",
+                    "admin/css/autocomplete.css",
+                ),
+            },
+        )
+
     def optgroups(self, name, value, attr=None):
         selected_choices = {str(v) for v in value if str(v) not in EMPTY_VALUES}
         subgroup = []
@@ -19,7 +39,7 @@ class ArtistAutocompleteWidget(AutocompleteSelectMultiple):
         return [(None, subgroup, 0)]
 
 
-class ArtistMultipleChoiceField(ModelMultipleChoiceField):
+class ArtistMultipleChoiceField(forms.ModelMultipleChoiceField):
     def __init__(self, queryset, **kwargs):
         super().__init__(queryset, **kwargs)
         self._choices = list(queryset)
@@ -39,8 +59,8 @@ class ArtistMultipleChoiceField(ModelMultipleChoiceField):
         return super().clean(new_value)
 
 
-class TimestampField(Field):
-    widget = TimeInput
+class TimestampField(forms.Field):
+    widget = forms.TimeInput
 
     def prepare_value(self, value):
         if isinstance(value, int):
@@ -58,5 +78,5 @@ class TimestampField(Field):
         return super().to_python(value)
 
 
-class EpisodeSongForm(ModelForm):
+class EpisodeSongForm(forms.ModelForm):
     timestamp = TimestampField()

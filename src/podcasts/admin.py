@@ -163,9 +163,6 @@ class EpisodeAdmin(admin.ModelAdmin):
     inlines = [EpisodeSongInline]
     list_filter = ["is_draft", "published", "podcast"]
 
-    class Media:
-        js = ["assets/js/episode_song.js"]
-
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("podcast")
 
