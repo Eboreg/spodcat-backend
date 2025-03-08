@@ -119,7 +119,7 @@ class EpisodeSongInline(admin.TabularInline):
     model = EpisodeSong
     autocomplete_fields = ["artists"]
     form = EpisodeSongForm
-    fields = ["episode", "name", "timestamp", "artists", "comment"]
+    fields = ["episode", "timestamp", "name", "artists", "comment"]
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name == "artists":
