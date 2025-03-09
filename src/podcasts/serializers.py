@@ -40,6 +40,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
         queryset=EpisodeSong.objects,
         many=True,
     )
+    has_songs = serializers.SerializerMethodField()
 
     included_serializers = {
         "podcast": "podcasts.serializers.PodcastSerializer",
@@ -56,11 +57,14 @@ class EpisodeSerializer(serializers.ModelSerializer):
     def get_description_html(self, obj: Episode):
         return obj.description_html
 
+    def get_has_songs(self, obj: Episode):
+        return obj.songs.exists()
+
 
 class PartialEpisodeSerializer(EpisodeSerializer):
     class Meta:
         model = Episode
-        fields = ["name", "podcast", "number", "published", "duration_seconds", "slug", "audio_url"]
+        fields = ["name", "podcast", "number", "published", "duration_seconds", "slug", "audio_url", "has_songs"]
 
 
 class PostSerializer(serializers.ModelSerializer):

@@ -1,4 +1,4 @@
-from typing import BinaryIO
+from typing import TYPE_CHECKING, BinaryIO
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -8,6 +8,12 @@ from slugify import slugify
 
 from podcasts.models.podcast_content import PodcastContent
 from podcasts.utils import get_audio_file_dbfs_array
+
+
+if TYPE_CHECKING:
+    from django.db.models.manager import RelatedManager
+
+    from podcasts.models.episode_song import EpisodeSong
 
 
 def episode_audio_file_path(instance: "Episode", filename: str):
@@ -21,6 +27,8 @@ class Episode(PodcastContent):
     dbfs_array = models.JSONField(blank=True, default=list)
     audio_content_type = models.CharField(max_length=100, blank=True)
     audio_file_length = models.PositiveIntegerField(blank=True)
+
+    songs: "RelatedManager[EpisodeSong]"
 
     @property
     def audio_url(self):
