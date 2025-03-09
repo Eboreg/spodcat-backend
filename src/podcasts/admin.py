@@ -10,11 +10,12 @@ from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from martor.widgets import AdminMartorWidget
+from martor.models import MartorField
 from PIL import Image
 from pydub.utils import mediainfo
 
 from podcasts.fields import (
+    AdminMartorWidget,
     ArtistAutocompleteWidget,
     ArtistMultipleChoiceField,
     EpisodeSongForm,
@@ -48,7 +49,7 @@ class PodcastAdmin(admin.ModelAdmin):
         "categories",
     )
     formfield_overrides = {
-        models.TextField: {"widget": AdminMartorWidget},
+        MartorField: {"widget": AdminMartorWidget},
     }
     inlines = [PodcastLinkInline]
 
@@ -147,7 +148,7 @@ class EpisodeSongInline(admin.TabularInline):
 class EpisodeAdmin(admin.ModelAdmin):
     list_display = ("name", "number", "is_published", "is_draft", "podcast_str", "published")
     formfield_overrides = {
-        models.TextField: {"widget": AdminMartorWidget},
+        MartorField: {"widget": AdminMartorWidget},
     }
     fields = (
         "podcast",
@@ -207,7 +208,7 @@ class EpisodeAdmin(admin.ModelAdmin):
 class PostAdmin(admin.ModelAdmin):
     list_display = ("name", "is_published", "is_draft", "podcast", "published")
     formfield_overrides = {
-        models.TextField: {"widget": AdminMartorWidget},
+        MartorField: {"widget": AdminMartorWidget},
     }
     fields = (
         "podcast",

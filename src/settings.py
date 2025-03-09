@@ -178,15 +178,6 @@ JSON_API_FORMAT_TYPES = "dasherize"
 
 
 # martor
-MARTOR_ENABLE_CONFIGS = {
-    "emoji": "true",
-    "imgur": "true",
-    "mention": "false",
-    "jquery": "true",
-    "living": "true",
-    "spellcheck": "false",
-    "h1js": "true",
-}
 MARTOR_ENABLE_LABEL = True
 MARTOR_UPLOAD_URL = "/markdown-image-upload/"
 

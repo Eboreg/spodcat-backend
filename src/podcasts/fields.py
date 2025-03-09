@@ -1,7 +1,11 @@
 from django import forms
 from django.conf import settings
-from django.contrib.admin.widgets import AutocompleteSelectMultiple
+from django.contrib.admin.widgets import (
+    AdminTextareaWidget,
+    AutocompleteSelectMultiple,
+)
 from django.core.validators import EMPTY_VALUES
+from martor.widgets import MartorWidget as BaseMartorWidget
 
 
 def seconds_to_timestamp(value: int):
@@ -80,3 +84,34 @@ class TimestampField(forms.Field):
 
 class EpisodeSongForm(forms.ModelForm):
     timestamp = TimestampField()
+
+
+class MartorWidget(BaseMartorWidget):
+    class Media:
+        extend = False
+        css = {
+            "all": (
+                "plugins/css/bootstrap.min.css",
+                "martor/css/martor-admin.min.css",
+                "plugins/css/ace.min.css",
+                "plugins/css/resizable.min.css",
+                "assets/css/martor.css",
+            )
+        }
+
+        js = (
+            "plugins/js/jquery.min.js",
+            "plugins/js/bootstrap.min.js",
+            "plugins/js/ace.js",
+            "plugins/js/mode-markdown.js",
+            "plugins/js/ext-language_tools.js",
+            "plugins/js/theme-github.js",
+            "plugins/js/highlight.min.js",
+            "plugins/js/resizable.min.js",
+            "plugins/js/emojis.min.js",
+            "martor/js/martor.bootstrap.min.js",
+        )
+
+
+class AdminMartorWidget(MartorWidget, AdminTextareaWidget):
+    pass
