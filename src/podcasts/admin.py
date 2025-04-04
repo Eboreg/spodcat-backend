@@ -62,7 +62,7 @@ class PodcastAdmin(admin.ModelAdmin):
                 im.thumbnail((int(instance.banner.width * ratio), int(instance.banner.height * ratio)))
                 im.save(buf, format=im.format)
 
-            instance.banner.save(name=instance.banner.name, content=buf, save=False)
+            instance.banner.save(name=instance.banner.name, content=ImageFile(file=buf), save=False)
 
     def handle_cover(self, instance: Podcast):
         if instance.cover:

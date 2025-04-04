@@ -29,7 +29,7 @@ def podcast_image_path(instance: "Podcast", filename: str):
 
 
 class Podcast(models.Model):
-    slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator])
+    slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator], help_text="Will be used in URLs.")
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
     description = MartorField(null=True, default=None, blank=True)
@@ -41,6 +41,7 @@ class Podcast(models.Model):
         upload_to=podcast_image_path,
         height_field="cover_height",
         width_field="cover_width",
+        help_text="This is the round 'avatar' image.",
     )
     cover_height = models.PositiveIntegerField(null=True, default=None)
     cover_width = models.PositiveIntegerField(null=True, default=None)
@@ -63,6 +64,8 @@ class Podcast(models.Model):
         upload_to=podcast_image_path,
         height_field="banner_height",
         width_field="banner_width",
+        verbose_name="Banner image",
+        help_text="Should be >= 960px wide and have aspect ratio 3:1.",
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
@@ -70,7 +73,7 @@ class Podcast(models.Model):
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
     owners: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts")
     language = models.CharField(max_length=5, choices=get_language_choices, null=True, blank=True, default=None)
-    categories: "RelatedManager[Category]" = models.ManyToManyField("podcasts.Category")
+    categories: "RelatedManager[Category]" = models.ManyToManyField("podcasts.Category", blank=True)
 
     contents: "PolymorphicManager"
 
