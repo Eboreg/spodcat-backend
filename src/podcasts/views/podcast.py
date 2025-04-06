@@ -59,20 +59,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     prefetch_for_includes = {
         "categories": ["categories"],
         "contents": [
-            Prefetch(
-                "contents",
-                queryset=PodcastContent.objects.only(
-                    "Episode___audio_file",
-                    "Episode___duration_seconds",
-                    "Episode___number",
-                    "Episode___podcastcontent_ptr_id",
-                    "name",
-                    "podcast",
-                    "polymorphic_ctype_id",
-                    "published",
-                    "slug",
-                ).filter(published__lte=timezone.now(), is_draft=False),
-            ),
+            Prefetch("contents", queryset=PodcastContent.objects.partial().visible().prefetch_related("songs")),
         ],
         "links": ["links"],
         "owners": ["owners"],

@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from django.contrib import admin
 from django.db import models
@@ -10,6 +10,7 @@ from polymorphic.models import PolymorphicModel
 from slugify import slugify
 
 from podcasts.markdown import MarkdownExtension
+from podcasts.querysets import PodcastContentQuerySet
 
 
 if TYPE_CHECKING:
@@ -25,6 +26,8 @@ class PodcastContent(PolymorphicModel):
     published = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
     is_draft = models.BooleanField(verbose_name="Draft", default=False)
+
+    objects: models.Manager[Self] = PodcastContentQuerySet.as_manager()
 
     class Meta:
         ordering = ["-published"]

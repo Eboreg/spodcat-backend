@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "polymorphic",
     "martor",
+    "django_filters",
     "users",
     "podcasts",
     "logs",

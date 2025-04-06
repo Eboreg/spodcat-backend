@@ -1,3 +1,4 @@
+from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from rest_framework.decorators import action
@@ -6,13 +7,21 @@ from rest_framework.request import Request
 from logs.models import EpisodeAudioRequestLog
 from podcasts import serializers
 from podcasts.models import Episode
+from podcasts.models.podcast_content import PodcastContent
 from podcasts.views.podcast_content import PodcastContentViewSet
 
 
 class EpisodeViewSet(PodcastContentViewSet):
     serializer_class = serializers.EpisodeSerializer
     prefetch_for_includes = {
+        "songs.artists": ["songs__artists"],
         "songs": ["songs__artists"],
+        "podcast.contents": [
+            Prefetch(
+                "podcast__contents",
+                queryset=PodcastContent.objects.partial().visible().prefetch_related("songs"),
+            ),
+        ],
         "__all__": ["songs"],
     }
     filterset_fields = ("slug", "podcast")
@@ -24,4 +33,4 @@ class EpisodeViewSet(PodcastContentViewSet):
         return HttpResponseRedirect(episode.audio_file.url)
 
     def get_queryset(self, *args, **kwargs):
-        return Episode.objects.filter(published__lte=timezone.now(), is_draft=False)
+        return super().get_queryset(*args, **kwargs).filter(published__lte=timezone.now(), is_draft=False)
