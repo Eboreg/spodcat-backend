@@ -1,14 +1,24 @@
-from typing import TYPE_CHECKING
+import mimetypes
+import os
+from io import BytesIO
+from typing import TYPE_CHECKING, Self
 from urllib.parse import urljoin
 
+import feedparser
+import requests
 from django.conf import settings
+from django.core.files.images import ImageFile
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 from iso639 import iter_langs
 from markdown import markdown
 from martor.models import MartorField
+from PIL import Image
+from slugify import slugify
 
 from podcasts.markdown import MarkdownExtension
+from podcasts.utils import delete_storage_file, downscale_image
 from podcasts.validators import podcast_cover_validator, podcast_slug_validator
 
 
@@ -16,7 +26,7 @@ if TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
     from polymorphic.managers import PolymorphicManager
 
-    from podcasts.models import Category, Episode
+    from podcasts.models import Category
     from users.models import User
 
 
@@ -88,13 +98,78 @@ class Podcast(models.Model):
         return None
 
     @property
-    def published_episodes(self) -> "models.QuerySet[Episode]":
-        from podcasts.models.episode import Episode
-        return self.contents.instance_of(Episode)
-
-    @property
     def rss_url(self):
         return urljoin(settings.ROOT_URL, reverse("podcast-rss", args=(self.slug,)))
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def from_feed(cls, feed: feedparser.FeedParserDict, podcast: Self | None = None):
+        from podcasts.models import Category
+        from users.models import User
+
+        if not podcast:
+            podcast = cls()
+
+        podcast.name = feed.title
+        if not podcast.slug:
+            podcast.slug = slugify(feed.title)
+
+        if "description" in feed:
+            podcast.description = feed.description
+
+        if "image" in feed and "href" in feed.image and feed.image.href:
+            response = requests.get(feed.image.href, timeout=10)
+            if response.ok:
+                suffix = ""
+                content_type = response.headers.get("Content-Type", "")
+                if content_type:
+                    suffix = mimetypes.guess_extension(content_type) or ("." + content_type.split("/")[-1])
+                podcast.cover.save(
+                    name=f"cover{suffix}",
+                    content=ImageFile(file=BytesIO(response.content)),
+                    save=False,
+                )
+                podcast.handle_uploaded_cover()
+
+        if "language" in feed:
+            podcast.language = feed.language
+
+        podcast.save()
+
+        if "tags" in feed:
+            tags = [t["term"] for t in feed.tags]
+            podcast.categories.set(Category.objects.filter(Q(cat__in=tags) | Q(sub__in=tags)))
+        if "authors" in feed:
+            podcast.owners.set(User.objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a]))
+
+        return podcast
+
+    def handle_uploaded_banner(self, save: bool = False):
+        downscale_image(self.banner, max_width=960, max_height=320, save=save)
+
+    def handle_uploaded_cover(self, save: bool = False):
+        delete_storage_file(self.cover_thumbnail)
+        if self.cover:
+            stem, suffix = os.path.splitext(self.cover.name)
+            thumbnail_filename = f"{stem}-thumbnail.{suffix}"
+            buf = BytesIO()
+
+            with Image.open(self.cover) as im:
+                ratio = 150 / max(im.width, im.height)
+                im.thumbnail((int(im.width * ratio), int(im.height * ratio)))
+                im.save(buf, format=im.format)
+                self.cover_mimetype = im.get_format_mimetype()
+                self.cover_thumbnail_mimetype = im.get_format_mimetype()
+
+            self.cover_thumbnail.save(name=thumbnail_filename, content=ImageFile(file=buf), save=save)
+
+        else:
+            self.cover_mimetype = None
+            self.cover_thumbnail_mimetype = None
+            if save:
+                self.save()
+
+    def handle_uploaded_favicon(self, save: bool = False):
+        downscale_image(self.favicon, max_width=100, max_height=100, save=save)

@@ -2,6 +2,8 @@ from html import escape
 
 from django.db import models
 
+from podcasts.data import CATEGORIES
+
 
 class Category(models.Model):
     cat = models.CharField(max_length=50)
@@ -15,6 +17,23 @@ class Category(models.Model):
         if self.sub:
             return f"{self.cat} / {self.sub}"
         return self.cat
+
+    @classmethod
+    def bootstrap(cls):
+        categories = list(cls.objects.all())
+        new_categories = []
+
+        def conditional_append(cat: str, sub: str | None):
+            if len([c for c in categories if c.cat == cat and c.sub == sub]) == 0:
+                new_categories.append(cls(cat=cat, sub=sub))
+
+        for cat, subs in CATEGORIES.items():
+            conditional_append(cat=cat, sub=None)
+            for sub in subs:
+                conditional_append(cat=cat, sub=sub)
+
+        if new_categories:
+            cls.objects.bulk_create(new_categories)
 
     def to_dict(self):
         if self.sub:

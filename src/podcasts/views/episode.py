@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect
+from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework.request import Request
 
@@ -14,10 +15,13 @@ class EpisodeViewSet(PodcastContentViewSet):
         "songs": ["songs__artists"],
         "__all__": ["songs"],
     }
-    queryset = Episode.objects.all()
+    filterset_fields = ("slug", "podcast")
 
     @action(methods=["get"], detail=True)
     def audio(self, request: Request, pk: str):
         episode: Episode = self.get_queryset().get(slug=pk)
         EpisodeAudioRequestLog.create(request=request, content=episode)
         return HttpResponseRedirect(episode.audio_file.url)
+
+    def get_queryset(self, *args, **kwargs):
+        return Episode.objects.filter(published__lte=timezone.now(), is_draft=False)

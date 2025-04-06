@@ -64,7 +64,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
 class PartialEpisodeSerializer(EpisodeSerializer):
     class Meta:
         model = Episode
-        fields = ["name", "podcast", "number", "published", "duration_seconds", "slug", "audio_url", "has_songs"]
+        fields = ["name", "podcast", "number", "published", "duration_seconds", "slug", "id", "audio_url", "has_songs"]
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -85,7 +85,7 @@ class PostSerializer(serializers.ModelSerializer):
 class PartialPostSerializer(PostSerializer):
     class Meta:
         model = Post
-        fields = ["name", "podcast", "published", "slug"]
+        fields = ["name", "podcast", "published", "slug", "id"]
 
 
 class PodcastContentSerializer(serializers.PolymorphicModelSerializer):
@@ -104,7 +104,7 @@ class PartialPodcastContentSerializer(PodcastContentSerializer):
 
     class Meta:
         model = PodcastContent
-        fields = ["name", "podcast", "published", "slug"]
+        fields = ["name", "podcast", "published", "slug", "id"]
 
 
 class PodcastLinkSerializer(serializers.ModelSerializer):

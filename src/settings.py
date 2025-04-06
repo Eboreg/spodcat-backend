@@ -124,6 +124,7 @@ FORMAT_MODULE_PATH = ["formats"]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
+# https://django-storages.readthedocs.io/en/latest/backends/azure.html
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
 STATICFILES_DIRS = [("assets", SRC_DIR / "assets")]
@@ -132,12 +133,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 AZURE_ACCOUNT_NAME = "musikensmakt"
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_FILES_KEY")
 AZURE_CONTAINER = "podcast-backend"
+AZURE_LOCATION = ENVIRONMENT
 
 STORAGES = {
     "default": {"BACKEND": "storages.backends.azure_storage.AzureStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
-MEDIA_URL = f"https://musikensmakt.blob.core.windows.net/{AZURE_CONTAINER}/"
+MEDIA_URL = f"https://musikensmakt.blob.core.windows.net/{AZURE_CONTAINER}/{ENVIRONMENT}/"
 
 
 # Default primary key field type
@@ -164,7 +166,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": (
         "rest_framework_json_api.filters.QueryParameterValidationFilter",
         "rest_framework_json_api.filters.OrderingFilter",
-        "rest_framework.filters.SearchFilter",
+        "rest_framework_json_api.django_filters.DjangoFilterBackend",
     ),
     "SEARCH_PARAM": "filter[search]",
     "TEST_REQUEST_RENDERER_CLASSES": (

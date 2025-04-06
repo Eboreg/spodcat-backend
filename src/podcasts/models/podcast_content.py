@@ -1,3 +1,4 @@
+import uuid
 from typing import TYPE_CHECKING
 
 from django.contrib import admin
@@ -16,7 +17,8 @@ if TYPE_CHECKING:
 
 
 class PodcastContent(PolymorphicModel):
-    slug = models.SlugField(primary_key=True, max_length=100)
+    slug = models.SlugField(max_length=100)
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     name = models.CharField(max_length=100)
     description = MartorField(null=True, default=None, blank=True)
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.PROTECT, related_name="contents")
@@ -27,6 +29,9 @@ class PodcastContent(PolymorphicModel):
     class Meta:
         ordering = ["-published"]
         indexes = [models.Index(fields=["-published"])]
+        constraints = [
+            models.UniqueConstraint(fields=["slug", "podcast"], name="podcasts__podcastcontent__slug_podcast__uq"),
+        ]
 
     @property
     def description_html(self):

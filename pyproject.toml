@@ -15,7 +15,7 @@ dependencies = [
     "python-dotenv",
     "django-extensions",
     "djangorestframework",
-    "djangorestframework-jsonapi[django-polymorphic]",
+    "djangorestframework-jsonapi[django-polymorphic,django-filter]",
     "pillow",
     "pydub",
     "feedgen",
@@ -28,6 +28,7 @@ dependencies = [
     "django-cors-headers",
     "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
     "martor",
+    "feedparser",
 ]
 dynamic = ["version"]
 
@@ -41,6 +42,7 @@ dev = [
     "pylint-django",
     "pylint",
     "types-markdown",
+    "types-requests",
 ]
 
 [project.scripts]
@@ -66,6 +68,7 @@ disable = [
     "too-many-locals",
     "too-many-return-statements",
     "too-many-statements",
+    "unused-argument",
 ]
 ignore = [".venv", "node_modules"]
 ignore-patterns = ["^\\.#", ".*\\.pyi", "apps\\.py"]

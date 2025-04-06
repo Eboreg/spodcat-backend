@@ -1,9 +1,18 @@
-from typing import TYPE_CHECKING, BinaryIO
+import datetime
+import mimetypes
+import tempfile
+from time import struct_time
+from typing import IO, TYPE_CHECKING, Literal, Self
 from urllib.parse import urljoin
 
+import feedparser
+import requests
 from django.conf import settings
+from django.core.files import File
 from django.db import models
 from django.urls import reverse
+from klaatu_python.utils import getitem0_nullable
+from pydub.utils import mediainfo
 from slugify import slugify
 
 from podcasts.models.podcast_content import PodcastContent
@@ -13,7 +22,7 @@ from podcasts.utils import get_audio_file_dbfs_array
 if TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
 
-    from podcasts.models.episode_song import EpisodeSong
+    from podcasts.models import EpisodeSong, Podcast
 
 
 def episode_audio_file_path(instance: "Episode", filename: str):
@@ -22,13 +31,14 @@ def episode_audio_file_path(instance: "Episode", filename: str):
 
 class Episode(PodcastContent):
     number = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
-    audio_file = models.FileField(upload_to=episode_audio_file_path)
-    duration_seconds = models.FloatField(blank=True, verbose_name="duration")
+    audio_file = models.FileField(upload_to=episode_audio_file_path, null=True, default=None, blank=True)
+    duration_seconds = models.FloatField(blank=True, verbose_name="duration", default=0.0)
     dbfs_array = models.JSONField(blank=True, default=list)
     audio_content_type = models.CharField(max_length=100, blank=True)
-    audio_file_length = models.PositiveIntegerField(blank=True)
+    audio_file_length = models.PositiveIntegerField(blank=True, default=0)
 
     songs: "RelatedManager[EpisodeSong]"
+    objects: models.Manager[Self]
 
     @property
     def audio_url(self):
@@ -39,13 +49,99 @@ class Episode(PodcastContent):
             return f"{self.number}. {self.name}"
         return self.name
 
-    def _get_base_slug(self):
+    @classmethod
+    def from_feed(
+        cls,
+        entry: feedparser.FeedParserDict,
+        podcast: "Podcast",
+        on_conflict: Literal["ignore", "update"] = "ignore",
+    ) -> Self:
+        episode: Self | None = None
+        try:
+            number = int(entry.itunes_episode)
+        except Exception:
+            number = None
+
+        if number is not None:
+            episode = cls.objects.filter(podcast=podcast, number=number).first()
+            if episode and on_conflict == "ignore":
+                return episode
+        if not episode:
+            episode = cls(podcast=podcast, number=number)
+
+        episode.name = entry.title
+
+        if "description" in entry:
+            episode.description = entry.description
+
+        if "published_parsed" in entry and isinstance(entry.published_parsed, struct_time):
+            episode.published = datetime.datetime(
+                year=entry.published_parsed.tm_year,
+                month=entry.published_parsed.tm_mon,
+                day=entry.published_parsed.tm_mday,
+                hour=entry.published_parsed.tm_hour,
+                minute=entry.published_parsed.tm_min,
+                second=entry.published_parsed.tm_sec,
+                tzinfo=datetime.timezone.utc,
+            )
+
+        if "itunes_duration" in entry and entry.itunes_duration:
+            if isinstance(entry.itunes_duration, str) and ":" in entry.itunes_duration:
+                parts = entry.itunes_duration.split(":")
+                duration_seconds = float(parts[-1])
+                if len(parts) > 1:
+                    duration_seconds += float(parts[-2]) * 60
+                if len(parts) > 2:
+                    duration_seconds += float(parts[-3]) * 60 * 60
+                episode.duration_seconds = duration_seconds
+            else:
+                try:
+                    episode.duration_seconds = float(entry.itunes_duration)
+                except ValueError:
+                    pass
+
+        if "links" in entry:
+            link = getitem0_nullable(entry.links, lambda l: l.get("rel", "") == "enclosure")
+            if link and "href" in link:
+                response = requests.get(link.href, timeout=60)
+                if response.ok:
+                    episode.audio_content_type = response.headers.get("Content-Type", "")
+                    prefix, suffix = episode.generate_audio_filename()
+                    filename = f"{prefix}{suffix}"
+
+                    with tempfile.NamedTemporaryFile(suffix=suffix) as file:
+                        file.write(response.content)
+                        episode.audio_file.save(name=filename, content=File(file=file), save=False)
+                        info = mediainfo(file.name)
+                        episode.duration_seconds = float(info["duration"])
+                        episode.audio_file_length = len(response.content)
+                        file.seek(0)
+                        episode.update_audio_file_dbfs_array(file=file, format_name=info["format_name"], save=False)
+
+        episode.save()
+        return episode
+
+    def _get_base_slug(self) -> str:
         base_slug = slugify(self.name)
         if self.number is not None:
             base_slug = f"{self.number}-" + base_slug
         return base_slug
 
-    def update_audio_file_dbfs_array(self, file: BinaryIO, format_name: str, save: bool = True):
+    def generate_audio_filename(self) -> tuple[str, str]:
+        suffix = mimetypes.guess_extension(self.audio_content_type)
+        if not suffix:
+            if self.audio_content_type:
+                suffix = "." + self.audio_content_type.split("/")[-1]
+            else:
+                suffix = ""
+        if self.number is not None:
+            name = f"{self.number:04d}"
+        else:
+            name = slugify(self.name, max_length=50)
+        assert suffix is not None
+        return name, suffix
+
+    def update_audio_file_dbfs_array(self, file: IO, format_name: str, save: bool = True):
         self.dbfs_array = get_audio_file_dbfs_array(file, format_name)
 
         if save:
