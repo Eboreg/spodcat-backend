@@ -1,4 +1,5 @@
 import math
+import os
 from io import BytesIO
 from typing import BinaryIO, Generator
 
@@ -43,3 +44,18 @@ def downscale_image(image: ImageFieldFile, max_width: int, max_height: int, save
 def delete_storage_file(file: FieldFile):
     if file:
         file.storage.delete(name=file.name)
+
+
+def generate_thumbnail(from_field: ImageFieldFile, to_field: ImageFieldFile, size: int, save: bool = False):
+    stem, suffix = os.path.splitext(os.path.basename(from_field.name))
+    thumbnail_filename = f"{stem}-thumbnail{suffix}"
+    buf = BytesIO()
+
+    with Image.open(from_field) as im:
+        ratio = size / max(im.width, im.height)
+        im.thumbnail((int(im.width * ratio), int(im.height * ratio)))
+        im.save(buf, format=im.format)
+        mimetype = im.get_format_mimetype()
+
+    to_field.save(name=thumbnail_filename, content=ImageFile(file=buf), save=save)
+    return mimetype

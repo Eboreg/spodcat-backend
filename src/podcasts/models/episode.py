@@ -2,6 +2,7 @@ import datetime
 import logging
 import mimetypes
 import tempfile
+from io import BytesIO
 from time import struct_time
 from typing import IO, TYPE_CHECKING, Self
 from urllib.parse import urljoin
@@ -10,6 +11,7 @@ import feedparser
 import requests
 from django.conf import settings
 from django.core.files import File
+from django.core.files.images import ImageFile
 from django.db import models
 from django.urls import reverse
 from klaatu_python.utils import getitem0_nullable
@@ -17,8 +19,13 @@ from markdownify import markdownify
 from pydub.utils import mediainfo
 from slugify import slugify
 
+from podcasts.models.fields import ImageField
 from podcasts.models.podcast_content import PodcastContent
-from podcasts.utils import delete_storage_file, get_audio_file_dbfs_array
+from podcasts.utils import (
+    delete_storage_file,
+    generate_thumbnail,
+    get_audio_file_dbfs_array,
+)
 
 
 if TYPE_CHECKING:
@@ -34,6 +41,10 @@ def episode_audio_file_path(instance: "Episode", filename: str):
     return f"{instance.podcast.slug}/episodes/{filename}"
 
 
+def episode_image_path(instance: "Episode", filename: str):
+    return f"{instance.podcast.slug}/images/{filename}"
+
+
 class Episode(PodcastContent):
     season = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
     number = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
@@ -42,6 +53,28 @@ class Episode(PodcastContent):
     dbfs_array = models.JSONField(blank=True, default=list)
     audio_content_type = models.CharField(max_length=100, blank=True)
     audio_file_length = models.PositiveIntegerField(blank=True, default=0)
+    image = ImageField(
+        null=True,
+        default=None,
+        blank=True,
+        upload_to=episode_image_path,
+        height_field="image_height",
+        width_field="image_width",
+    )
+    image_height = models.PositiveIntegerField(null=True, default=None)
+    image_width = models.PositiveIntegerField(null=True, default=None)
+    image_mimetype = models.CharField(max_length=50, null=True, default=None)
+    image_thumbnail = ImageField(
+        null=True,
+        default=None,
+        blank=True,
+        upload_to=episode_image_path,
+        height_field="image_thumbnail_height",
+        width_field="image_thumbnail_width",
+    )
+    image_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
+    image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
+    image_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
 
     songs: "RelatedManager[EpisodeSong]"
     objects: models.Manager[Self]
@@ -97,6 +130,22 @@ class Episode(PodcastContent):
                 except ValueError:
                     pass
 
+        if "image" in entry and "href" in entry.image and entry.image.href:
+            logger.info("Importing episode image: %s", entry.image.href)
+            response = requests.get(entry.image.href, timeout=10)
+            if response.ok:
+                suffix = ""
+                content_type = response.headers.get("Content-Type", "")
+                if content_type:
+                    suffix = mimetypes.guess_extension(content_type) or ("." + content_type.split("/")[-1])
+                delete_storage_file(self.image)
+                self.image.save(
+                    name=f"{self.generate_filename_stem()}{suffix}",
+                    content=ImageFile(file=BytesIO(response.content)),
+                    save=False,
+                )
+                self.handle_uploaded_image()
+
         if "links" in entry:
             link = getitem0_nullable(entry.links, lambda l: l.get("rel", "") == "enclosure")
             if link and "href" in link:
@@ -120,6 +169,18 @@ class Episode(PodcastContent):
                         self.update_audio_file_dbfs_array(file=file, format_name=info["format_name"], save=False)
 
         self.save()
+
+    def handle_uploaded_image(self, save: bool = False):
+        delete_storage_file(self.image_thumbnail)
+        if self.image:
+            mimetype = generate_thumbnail(self.image, self.image_thumbnail, 150, save)
+            self.image_mimetype = mimetype
+            self.image_thumbnail_mimetype = mimetype
+        else:
+            self.image_mimetype = None
+            self.image_thumbnail_mimetype = None
+        if save:
+            self.save()
 
     @classmethod
     def from_feed(
@@ -214,7 +275,10 @@ class Episode(PodcastContent):
                 suffix = "." + self.audio_content_type.split("/")[-1]
             else:
                 suffix = ""
+        assert suffix is not None
+        return self.generate_filename_stem(), suffix
 
+    def generate_filename_stem(self) -> str:
         numbers = []
         name = ""
 
@@ -226,8 +290,7 @@ class Episode(PodcastContent):
             name += "".join(numbers) + "-"
         name += slugify(self.name, max_length=50)
 
-        assert suffix is not None
-        return name, suffix
+        return name
 
     def update_audio_file_dbfs_array(self, file: IO, format_name: str, save: bool = True):
         self.dbfs_array = get_audio_file_dbfs_array(file, format_name)

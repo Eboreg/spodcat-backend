@@ -270,6 +270,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "name",
         ("is_draft", "published"),
         "audio_file",
+        "image",
         "description",
         "duration_seconds",
         "audio_content_type",
@@ -308,6 +309,10 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     def save_form(self, request, form, change):
         instance: Episode = super().save_form(request, form, change)
 
+        if "image" in form.changed_data:
+            if "image" in form.initial:
+                delete_storage_file(form.initial["image"])
+            instance.handle_uploaded_image()
         if "audio_file" in form.changed_data:
             if "audio_file" in form.initial:
                 delete_storage_file(form.initial["audio_file"])

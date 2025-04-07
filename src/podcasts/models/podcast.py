@@ -1,6 +1,5 @@
 import logging
 import mimetypes
-import os
 from io import BytesIO
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
@@ -16,11 +15,14 @@ from iso639 import iter_langs
 from markdown import markdown
 from markdownify import markdownify
 from martor.models import MartorField
-from PIL import Image
 
 from podcasts.markdown import MarkdownExtension
 from podcasts.models.fields import ImageField
-from podcasts.utils import delete_storage_file, downscale_image
+from podcasts.utils import (
+    delete_storage_file,
+    downscale_image,
+    generate_thumbnail,
+)
 from podcasts.validators import podcast_cover_validator, podcast_slug_validator
 
 
@@ -156,24 +158,14 @@ class Podcast(models.Model):
     def handle_uploaded_cover(self, save: bool = False):
         delete_storage_file(self.cover_thumbnail)
         if self.cover:
-            stem, suffix = os.path.splitext(os.path.basename(self.cover.name))
-            thumbnail_filename = f"{stem}-thumbnail{suffix}"
-            buf = BytesIO()
-
-            with Image.open(self.cover) as im:
-                ratio = 150 / max(im.width, im.height)
-                im.thumbnail((int(im.width * ratio), int(im.height * ratio)))
-                im.save(buf, format=im.format)
-                self.cover_mimetype = im.get_format_mimetype()
-                self.cover_thumbnail_mimetype = im.get_format_mimetype()
-
-            self.cover_thumbnail.save(name=thumbnail_filename, content=ImageFile(file=buf), save=save)
-
+            mimetype = generate_thumbnail(self.cover, self.cover_thumbnail, 150, save)
+            self.cover_mimetype = mimetype
+            self.cover_thumbnail_mimetype = mimetype
         else:
             self.cover_mimetype = None
             self.cover_thumbnail_mimetype = None
-            if save:
-                self.save()
+        if save:
+            self.save()
 
     def handle_uploaded_favicon(self, save: bool = False):
         downscale_image(self.favicon, max_width=100, max_height=100, save=save)
