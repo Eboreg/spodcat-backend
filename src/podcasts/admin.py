@@ -253,7 +253,7 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("podcast")
-        if field:
+        if field and not request.user.is_superuser:
             field.queryset = field.queryset.filter(owners=request.user)
         return Form
 
