@@ -46,6 +46,19 @@ def podcast_image_path(instance: "Podcast", filename: str):
 
 
 class Podcast(models.Model):
+    FONT_FAMILIES = [
+        "Anton",
+        "Deutsche Uncialis",
+        "Fascinate Inline",
+        "Futura Display BQ",
+        "Limelight",
+        "Lobster",
+        "Roboto Black",
+        "Roboto Serif Bold",
+        "Unifraktur Cook",
+    ]
+    FONT_SIZES = ["small", "normal", "large"]
+
     slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator], help_text="Will be used in URLs.")
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
@@ -88,9 +101,27 @@ class Podcast(models.Model):
     banner_width = models.PositiveIntegerField(null=True, default=None)
     favicon = ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
-    owners: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts")
+    authors: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts", blank=True)
+    owner: "User | None" = models.ForeignKey(
+        "users.User",
+        related_name="owned_podcasts",
+        blank=True,
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
     language = models.CharField(max_length=5, choices=get_language_choices, null=True, blank=True, default=None)
     categories: "RelatedManager[Category]" = models.ManyToManyField("podcasts.Category", blank=True)
+    name_font_family = models.CharField(
+        max_length=50,
+        choices=[(c, c) for c in FONT_FAMILIES],
+        default="Unifraktur Cook",
+    )
+    name_font_size = models.CharField(
+        max_length=10,
+        choices=[(c, c) for c in FONT_SIZES],
+        default="normal",
+    )
 
     contents: "PolymorphicManager"
     links: "RelatedManager[PodcastLink]"
@@ -150,7 +181,7 @@ class Podcast(models.Model):
             tags = [t["term"] for t in feed.tags]
             self.categories.add(*list(Category.objects.filter(Q(cat__in=tags) | Q(sub__in=tags))))
         if "authors" in feed:
-            self.owners.add(*list(User.objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a])))
+            self.authors.add(*list(User.objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a])))
 
     def handle_uploaded_banner(self, save: bool = False):
         downscale_image(self.banner, max_width=960, max_height=320, save=save)

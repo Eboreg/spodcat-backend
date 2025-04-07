@@ -9,6 +9,7 @@ from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
+from django.db.models import Q
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -60,7 +61,7 @@ class PodcastChangeSlugForm(ModelForm):
             old_instance = Podcast.objects.get(slug=self.initial["slug"])
             self.instance.save()
             self.instance.refresh_from_db()
-            self.instance.owners.set(old_instance.owners.all())
+            self.instance.authors.set(old_instance.authors.all())
             self.instance.categories.set(old_instance.categories.all())
             self.instance.links.set(old_instance.links.all())
             PodcastRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
@@ -72,16 +73,18 @@ class PodcastChangeSlugForm(ModelForm):
 
 @admin.register(Podcast)
 class PodcastAdmin(admin.ModelAdmin):
-    filter_horizontal = ["categories", "owners"]
+    filter_horizontal = ["categories", "authors"]
     fields = (
         ("name", "slug"),
         "tagline",
         ("cover", "banner"),
         "favicon",
         "language",
+        ("name_font_family", "name_font_size"),
+        "owner",
         "description",
         "categories",
-        "owners",
+        "authors",
     )
     add_fields = (
         ("name", "slug"),
@@ -95,7 +98,7 @@ class PodcastAdmin(admin.ModelAdmin):
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
     }
-    list_display = ("name", "slug", "owners_str", "frontend_link")
+    list_display = ("name", "slug", "authors_str", "frontend_link")
     inlines = [PodcastLinkInline]
     save_on_top = True
     readonly_fields = ("slug",)
@@ -106,10 +109,15 @@ class PodcastAdmin(admin.ModelAdmin):
         return self.add_fields
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("owners")
+        return super().get_queryset(request).prefetch_related("authors").select_related("owner")
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser or obj is None or request.user in obj.owners.all()
+        return (
+            request.user.is_superuser or
+            obj is None or
+            request.user == obj.owner or
+            request.user in obj.authors.all()
+        )
 
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
@@ -173,15 +181,15 @@ class PodcastAdmin(admin.ModelAdmin):
             },
         )
 
-    @admin.display(description="owners")
-    def owners_str(self, obj: Podcast):
+    @admin.display(description="authors")
+    def authors_str(self, obj: Podcast):
         return mark_safe(
             "<br>".join(
                 format_html(
                     "<a href=\"{url}\">{user}</a>",
                     url=reverse("admin:users_user_change", args=(u.pk,)),
                     user=str(u),
-                ) for u in obj.owners.all()
+                ) for u in obj.authors.all()
             )
         )
 
@@ -189,7 +197,8 @@ class PodcastAdmin(admin.ModelAdmin):
         instance: Podcast = super().save_form(request, form, change)
 
         if not change:
-            instance.owners.add(request.user)
+            instance.authors.add(request.user)
+            instance.owner = request.user
         if "cover" in form.changed_data:
             if "cover" in form.initial:
                 delete_storage_file(form.initial["cover"])
@@ -245,7 +254,12 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
     save_on_top = True
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser or obj is None or request.user in obj.podcast.owners.all()
+        return (
+            request.user.is_superuser or
+            obj is None or
+            request.user == obj.podcast.owner or
+            request.user in obj.podcast.authors.all()
+        )
 
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
@@ -254,11 +268,15 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("podcast")
         if field and not request.user.is_superuser:
-            field.queryset = field.queryset.filter(owners=request.user)
+            field.queryset = field.queryset.filter(Q(authors=request.user) | Q(owner=request.user)).distinct()
         return Form
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("podcast").prefetch_related("podcast__owners")
+        return (
+            super().get_queryset(request)
+            .select_related("podcast", "podcast__owner")
+            .prefetch_related("podcast__authors")
+        )
 
 
 @admin.register(Episode)
@@ -405,7 +423,12 @@ class ArtistAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         if request.user.is_superuser or obj is None:
             return True
-        return not Podcast.objects.filter(contents__episode__songs__artists=obj).exclude(owners=request.user).exists()
+        return not (
+            Podcast.objects
+            .filter(contents__episode__songs__artists=obj)
+            .exclude(Q(authors=request.user) | Q(owner=request.user))
+            .exists()
+        )
 
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
@@ -425,10 +448,19 @@ class EpisodeSongAdmin(admin.ModelAdmin):
     save_on_top = True
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("artists", "episode__podcast__owners")
+        return (
+            super().get_queryset(request)
+            .prefetch_related("artists", "episode__podcast__authors")
+            .select_related("episode__podcast__owner")
+        )
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser or obj is None or request.user in obj.episode.podcast.owners.all()
+        return (
+            request.user.is_superuser or
+            obj is None or
+            request.user == obj.episode.podcast.owner or
+            request.user in obj.episode.podcast.authors.all()
+        )
 
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
@@ -437,7 +469,11 @@ class EpisodeSongAdmin(admin.ModelAdmin):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("episode")
         if field:
-            field.queryset = field.queryset.filter(podcast__owners=request.user)
+            field.queryset = (
+                field.queryset
+                .filter(Q(podcast__authors=request.user) | Q(podcast__owner=request.user))
+                .distinct()
+            )
         return Form
 
     @admin.display(description="episode", ordering="episode__number")

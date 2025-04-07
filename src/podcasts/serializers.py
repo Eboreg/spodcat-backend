@@ -130,7 +130,7 @@ class PodcastSerializer(serializers.ModelSerializer):
     description_html = serializers.SerializerMethodField()
 
     included_serializers = {
-        "owners": "users.serializers.UserSerializer",
+        "authors": "users.serializers.UserSerializer",
         "categories": "podcasts.serializers.CategorySerializer",
         "links": "podcasts.serializers.PodcastLinkSerializer",
         "contents": "podcasts.serializers.PartialPodcastContentSerializer",
