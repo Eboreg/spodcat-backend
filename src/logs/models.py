@@ -30,16 +30,16 @@ class AbstractRequestLog(models.Model):
 
 
 class PodcastRequestLog(AbstractRequestLog):
-    podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE)
+    podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests")
 
 
-class PodcastRssRequestLog(PodcastRequestLog):
-    ...
+class PodcastRssRequestLog(AbstractRequestLog):
+    podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
 
 
 class PodcastContentRequestLog(AbstractRequestLog):
-    content = models.ForeignKey("podcasts.PodcastContent", on_delete=models.CASCADE)
+    content = models.ForeignKey("podcasts.PodcastContent", on_delete=models.CASCADE, related_name="requests")
 
 
-class EpisodeAudioRequestLog(PodcastContentRequestLog):
-    ...
+class EpisodeAudioRequestLog(AbstractRequestLog):
+    content = models.ForeignKey("podcasts.PodcastContent", on_delete=models.CASCADE, related_name="audio_requests")

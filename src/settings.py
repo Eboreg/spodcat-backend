@@ -195,6 +195,22 @@ CORS_ALLOWED_ORIGINS = [
     "https://podd.huseli.us",
 ]
 
+
+# logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+}
+
 # Own stuff
 FRONTEND_ROOT_URL = os.environ.get("FRONTEND_ROOT_URL")
 ROOT_URL = os.environ.get("ROOT_URL")

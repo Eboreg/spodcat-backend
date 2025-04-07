@@ -1,7 +1,8 @@
+import logging
 import mimetypes
 import os
 from io import BytesIO
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
 import feedparser
@@ -13,11 +14,12 @@ from django.db.models import Q
 from django.urls import reverse
 from iso639 import iter_langs
 from markdown import markdown
+from markdownify import markdownify
 from martor.models import MartorField
 from PIL import Image
-from slugify import slugify
 
 from podcasts.markdown import MarkdownExtension
+from podcasts.models.fields import ImageField
 from podcasts.utils import delete_storage_file, downscale_image
 from podcasts.validators import podcast_cover_validator, podcast_slug_validator
 
@@ -26,8 +28,11 @@ if TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
     from polymorphic.managers import PolymorphicManager
 
-    from podcasts.models import Category
+    from podcasts.models import Category, PodcastLink
     from users.models import User
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_language_choices():
@@ -43,7 +48,7 @@ class Podcast(models.Model):
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
     description = MartorField(null=True, default=None, blank=True)
-    cover = models.ImageField(
+    cover = ImageField(
         null=True,
         default=None,
         blank=True,
@@ -56,7 +61,7 @@ class Podcast(models.Model):
     cover_height = models.PositiveIntegerField(null=True, default=None)
     cover_width = models.PositiveIntegerField(null=True, default=None)
     cover_mimetype = models.CharField(max_length=50, null=True, default=None)
-    cover_thumbnail = models.ImageField(
+    cover_thumbnail = ImageField(
         null=True,
         default=None,
         blank=True,
@@ -67,7 +72,7 @@ class Podcast(models.Model):
     cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     cover_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     cover_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
-    banner = models.ImageField(
+    banner = ImageField(
         null=True,
         default=None,
         blank=True,
@@ -79,13 +84,14 @@ class Podcast(models.Model):
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
-    favicon = models.ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
+    favicon = ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
     owners: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts")
     language = models.CharField(max_length=5, choices=get_language_choices, null=True, blank=True, default=None)
     categories: "RelatedManager[Category]" = models.ManyToManyField("podcasts.Category", blank=True)
 
     contents: "PolymorphicManager"
+    links: "RelatedManager[PodcastLink]"
 
     class Meta:
         ordering = ["name"]
@@ -98,53 +104,51 @@ class Podcast(models.Model):
         return None
 
     @property
+    def frontend_url(self):
+        return urljoin(settings.FRONTEND_ROOT_URL, self.slug)
+
+    @property
     def rss_url(self):
         return urljoin(settings.ROOT_URL, reverse("podcast-rss", args=(self.slug,)))
 
     def __str__(self):
         return self.name
 
-    @classmethod
-    def from_feed(cls, feed: feedparser.FeedParserDict, podcast: Self | None = None):
+    def update_from_feed(self, feed: feedparser.FeedParserDict):
         from podcasts.models import Category
         from users.models import User
 
-        if not podcast:
-            podcast = cls()
-
-        podcast.name = feed.title
-        if not podcast.slug:
-            podcast.slug = slugify(feed.title)
+        self.name = markdownify(feed.title)
 
         if "description" in feed:
-            podcast.description = feed.description
+            self.description = markdownify(feed.description)
 
         if "image" in feed and "href" in feed.image and feed.image.href:
+            logger.info("Importing cover image: %s", feed.image.href)
             response = requests.get(feed.image.href, timeout=10)
             if response.ok:
                 suffix = ""
                 content_type = response.headers.get("Content-Type", "")
                 if content_type:
                     suffix = mimetypes.guess_extension(content_type) or ("." + content_type.split("/")[-1])
-                podcast.cover.save(
+                delete_storage_file(self.cover)
+                self.cover.save(
                     name=f"cover{suffix}",
                     content=ImageFile(file=BytesIO(response.content)),
                     save=False,
                 )
-                podcast.handle_uploaded_cover()
+                self.handle_uploaded_cover()
 
         if "language" in feed:
-            podcast.language = feed.language
+            self.language = feed.language
 
-        podcast.save()
+        self.save()
 
         if "tags" in feed:
             tags = [t["term"] for t in feed.tags]
-            podcast.categories.set(Category.objects.filter(Q(cat__in=tags) | Q(sub__in=tags)))
+            self.categories.add(*list(Category.objects.filter(Q(cat__in=tags) | Q(sub__in=tags))))
         if "authors" in feed:
-            podcast.owners.set(User.objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a]))
-
-        return podcast
+            self.owners.add(*list(User.objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a])))
 
     def handle_uploaded_banner(self, save: bool = False):
         downscale_image(self.banner, max_width=960, max_height=320, save=save)
@@ -152,8 +156,8 @@ class Podcast(models.Model):
     def handle_uploaded_cover(self, save: bool = False):
         delete_storage_file(self.cover_thumbnail)
         if self.cover:
-            stem, suffix = os.path.splitext(self.cover.name)
-            thumbnail_filename = f"{stem}-thumbnail.{suffix}"
+            stem, suffix = os.path.splitext(os.path.basename(self.cover.name))
+            thumbnail_filename = f"{stem}-thumbnail{suffix}"
             buf = BytesIO()
 
             with Image.open(self.cover) as im:

@@ -6,6 +6,8 @@ from users.models import User
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
+    save_on_top = True
+
     def has_add_permission(self, request):
         return request.user.is_superuser
 

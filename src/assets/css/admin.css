@@ -6,3 +6,7 @@
 .inline-group .tabular tr.has_original td {
     padding-top: 8px !important;
 }
+
+.submit-row {
+    align-items: center;
+}

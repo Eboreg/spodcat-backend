@@ -29,6 +29,7 @@ dependencies = [
     "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
     "martor",
     "feedparser",
+    "markdownify",
 ]
 dynamic = ["version"]
 

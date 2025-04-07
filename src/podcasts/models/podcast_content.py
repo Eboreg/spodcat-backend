@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Self
 
 from django.contrib import admin
 from django.db import models
+from django.db.models import Case, Q, Value as V, When
+from django.db.models.functions import Now
 from django.utils import timezone
 from markdown import markdown
 from martor.models import MartorField
@@ -48,8 +50,12 @@ class PodcastContent(PolymorphicModel):
     def _get_base_slug(self):
         return slugify(self.name)
 
-    @admin.display(boolean=True)
-    def is_published(self):
+    @admin.display(
+        boolean=True,
+        description="visible",
+        ordering=Case(When(Q(is_draft=False, published__lte=Now()), then=V(1)), default=V(0)),
+    )
+    def is_visible(self):
         return self.published <= timezone.now() and not self.is_draft
 
     def generate_slug(self):

@@ -1,16 +1,24 @@
 import tempfile
+from functools import update_wrapper
 from threading import Thread
 from typing import BinaryIO
 
 from django.contrib import admin
+from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
+from django.contrib.admin.utils import unquote
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
+from django.forms import ModelForm
+from django.http import HttpRequest, HttpResponseRedirect
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from martor.models import MartorField
 from pydub.utils import mediainfo
 
+from logs.models import PodcastRequestLog, PodcastRssRequestLog
 from podcasts.fields import (
     AdminMartorWidget,
     ArtistAutocompleteWidget,
@@ -26,12 +34,40 @@ from podcasts.models import (
     PodcastLink,
     Post,
 )
+from podcasts.models.podcast_content import PodcastContent
 from podcasts.utils import delete_storage_file
 
 
 class PodcastLinkInline(admin.TabularInline):
     model = PodcastLink
     extra = 0
+
+
+class PodcastChangeSlugForm(ModelForm):
+    class Meta:
+        model = Podcast
+        fields = ["slug"]
+
+    def clean_slug(self):
+        slug = self.cleaned_data["slug"]
+        if self.has_changed() and Podcast.objects.filter(slug=slug).exists():
+            raise ValidationError(f"Another podcast with slug={slug} exists.")
+        return slug
+
+    def save(self, commit=True):
+        if commit and self.has_changed():
+            assert isinstance(self.instance, Podcast)
+            old_instance = Podcast.objects.get(slug=self.initial["slug"])
+            self.instance.save()
+            self.instance.refresh_from_db()
+            self.instance.owners.set(old_instance.owners.all())
+            self.instance.categories.set(old_instance.categories.all())
+            self.instance.links.set(old_instance.links.all())
+            PodcastRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
+            PodcastRssRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
+            PodcastContent.objects.filter(podcast=old_instance).update(podcast=self.instance)
+            old_instance.delete()
+        return self.instance
 
 
 @admin.register(Podcast)
@@ -47,10 +83,27 @@ class PodcastAdmin(admin.ModelAdmin):
         "categories",
         "owners",
     )
+    add_fields = (
+        ("name", "slug"),
+        "tagline",
+        ("cover", "banner"),
+        "favicon",
+        "language",
+        "description",
+        "categories",
+    )
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
     }
+    list_display = ("name", "slug", "owners_str", "frontend_link")
     inlines = [PodcastLinkInline]
+    save_on_top = True
+    readonly_fields = ("slug",)
+
+    def get_fields(self, request, obj=None):
+        if obj:
+            return self.fields
+        return self.add_fields
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("owners")
@@ -61,9 +114,82 @@ class PodcastAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
 
+    def frontend_link(self, obj: Podcast):
+        return mark_safe(f"<a href=\"{obj.frontend_url}\" target=\"_blank\">{obj.frontend_url}</a>")
+
+    def get_urls(self):
+        from django.urls import path
+
+        def wrap(view):
+            def wrapper(*args, **kwargs):
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+
+            setattr(wrapper, "model_admin", self)
+            return update_wrapper(wrapper, view)
+
+        return [
+            path(
+                "<path:object_id>/change_slug/",
+                wrap(self.change_slug_view),
+                name=f"{self.opts.app_label}_{self.opts.model_name}_change_slug",
+            ),
+        ] + super().get_urls()
+
+    def change_slug_view(self, request: HttpRequest, object_id):
+        obj = self.get_object(request, unquote(object_id))
+
+        if not self.has_change_permission(request, obj):
+            raise PermissionDenied
+
+        if obj is None:
+            return self._get_obj_does_not_exist_redirect(request, self.opts, object_id)
+
+        if request.method == "POST":
+            form = PodcastChangeSlugForm(request.POST, instance=obj)
+            if form.is_valid():
+                form.save(commit=True)
+                self.message_user(request, "The slug was changed.")
+                return HttpResponseRedirect(
+                    add_preserved_filters(
+                        {
+                            "preserved_filters": self.get_preserved_filters(request),
+                            "opts": self.opts,
+                        },
+                        reverse(
+                            f"admin:{self.opts.app_label}_{self.opts.model_name}_changelist",
+                            current_app=self.admin_site.name,
+                        ),
+                    )
+                )
+        else:
+            form = PodcastChangeSlugForm(instance=obj)
+
+        return TemplateResponse(
+            request=request,
+            template=f"admin/{self.opts.app_label}/{self.opts.model_name}/change_slug.html",
+            context={
+                "opts": self.opts,
+                "form": form,
+            },
+        )
+
+    @admin.display(description="owners")
+    def owners_str(self, obj: Podcast):
+        return mark_safe(
+            "<br>".join(
+                format_html(
+                    "<a href=\"{url}\">{user}</a>",
+                    url=reverse("admin:users_user_change", args=(u.pk,)),
+                    user=str(u),
+                ) for u in obj.owners.all()
+            )
+        )
+
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
 
+        if not change:
+            instance.owners.add(request.user)
         if "cover" in form.changed_data:
             if "cover" in form.initial:
                 delete_storage_file(form.initial["cover"])
@@ -116,6 +242,7 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
     }
+    save_on_top = True
 
     def has_change_permission(self, request, obj=None):
         return request.user.is_superuser or obj is None or request.user in obj.podcast.owners.all()
@@ -136,10 +263,11 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
 
 @admin.register(Episode)
 class EpisodeAdmin(BasePodcastContentAdmin):
-    list_display = ("name", "number", "is_published", "is_draft", "podcast_str", "published")
+    list_display = ("name", "number", "is_visible", "is_draft", "podcast_str", "published")
     fields = (
         ("podcast", "slug"),
-        ("number", "name"),
+        ("season", "number"),
+        "name",
         ("is_draft", "published"),
         "audio_file",
         "description",
@@ -201,7 +329,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
 @admin.register(Post)
 class PostAdmin(BasePodcastContentAdmin):
-    list_display = ("name", "is_published", "is_draft", "podcast", "published")
+    list_display = ("name", "is_visible", "is_draft", "podcast", "published")
     fields = (
         "podcast",
         "name",
@@ -264,6 +392,7 @@ class ArtistAdmin(admin.ModelAdmin):
     list_display = ["name", "song_count"]
     list_filter = [ArtistSongCountFilter]
     inlines = [ArtistSongInline]
+    save_on_top = True
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(song_count=models.Count("songs"))
@@ -288,6 +417,7 @@ class EpisodeSongAdmin(admin.ModelAdmin):
     search_fields = ["name", "artists__name", "comment"]
     filter_horizontal = ["artists"]
     form = EpisodeSongForm
+    save_on_top = True
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("artists", "episode__podcast__owners")

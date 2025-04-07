@@ -1,5 +1,7 @@
 from django.db import models
 
+from podcasts.models.fields import ImageField
+
 
 def podcast_link_icon_path(instance: "PodcastLink", filename: str):
     return f"{instance.podcast.slug}/images/links/{filename}"
@@ -21,7 +23,7 @@ class PodcastLink(models.Model):
         TERTIARY = "tertiary", "Tertiary"
 
     icon = models.CharField(max_length=10, choices=Icon, null=True, default=None)
-    custom_icon = models.ImageField(upload_to=podcast_link_icon_path, null=True, default=None, blank=True)
+    custom_icon = ImageField(upload_to=podcast_link_icon_path, null=True, default=None, blank=True)
     url = models.URLField()
     label = models.CharField(max_length=100)
     podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="links")
