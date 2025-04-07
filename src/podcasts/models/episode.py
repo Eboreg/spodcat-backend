@@ -53,25 +53,11 @@ class Episode(PodcastContent):
     dbfs_array = models.JSONField(blank=True, default=list)
     audio_content_type = models.CharField(max_length=100, blank=True)
     audio_file_length = models.PositiveIntegerField(blank=True, default=0)
-    image = ImageField(
-        null=True,
-        default=None,
-        blank=True,
-        upload_to=episode_image_path,
-        height_field="image_height",
-        width_field="image_width",
-    )
+    image = ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
     image_height = models.PositiveIntegerField(null=True, default=None)
     image_width = models.PositiveIntegerField(null=True, default=None)
     image_mimetype = models.CharField(max_length=50, null=True, default=None)
-    image_thumbnail = ImageField(
-        null=True,
-        default=None,
-        blank=True,
-        upload_to=episode_image_path,
-        height_field="image_thumbnail_height",
-        width_field="image_thumbnail_width",
-    )
+    image_thumbnail = ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
     image_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     image_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
@@ -139,6 +125,7 @@ class Episode(PodcastContent):
                 if content_type:
                     suffix = mimetypes.guess_extension(content_type) or ("." + content_type.split("/")[-1])
                 delete_storage_file(self.image)
+                # pylint: disable=no-member
                 self.image.save(
                     name=f"{self.generate_filename_stem()}{suffix}",
                     content=ImageFile(file=BytesIO(response.content)),
@@ -160,6 +147,7 @@ class Episode(PodcastContent):
                     with tempfile.NamedTemporaryFile(suffix=suffix) as file:
                         logger.info("Saving audio file: %s", filename)
                         file.write(response.content)
+                        # pylint: disable=no-member
                         self.audio_file.save(name=filename, content=File(file=file), save=False)
                         info = mediainfo(file.name)
                         self.duration_seconds = float(info["duration"])
@@ -170,15 +158,24 @@ class Episode(PodcastContent):
 
         self.save()
 
+    # pylint: disable=no-member
     def handle_uploaded_image(self, save: bool = False):
         delete_storage_file(self.image_thumbnail)
         if self.image:
             mimetype = generate_thumbnail(self.image, self.image_thumbnail, 150, save)
             self.image_mimetype = mimetype
             self.image_thumbnail_mimetype = mimetype
+            self.image_height = self.image.height
+            self.image_width = self.image.width
+            self.image_thumbnail_height = self.image_thumbnail.height
+            self.image_thumbnail_width = self.image_thumbnail.width
         else:
             self.image_mimetype = None
             self.image_thumbnail_mimetype = None
+            self.image_height = None
+            self.image_width = None
+            self.image_thumbnail_height = None
+            self.image_thumbnail_width = None
         if save:
             self.save()
 

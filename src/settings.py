@@ -22,6 +22,7 @@ DEBUG = env_boolean("DEBUG")
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ".localhost,127.0.0.1,[::1]").split(",")
 INTERNAL_IPS = os.environ.get("INTERNAL_IPS", "127.0.0.1").split(",")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
+DJANGO_DB = os.environ.get("DJANGO_DB", ENVIRONMENT)
 
 
 # Application definition
@@ -99,7 +100,7 @@ DATABASES: dict[str, dict] = {
         "USER": os.environ.get("MYSQL_USER", ""),
     }
 }
-DATABASES["default"] = DATABASES[ENVIRONMENT].copy()
+DATABASES["default"] = DATABASES[DJANGO_DB].copy()
 
 
 # Password validation

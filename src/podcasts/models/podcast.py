@@ -69,8 +69,6 @@ class Podcast(models.Model):
         blank=True,
         validators=[podcast_cover_validator],
         upload_to=podcast_image_path,
-        height_field="cover_height",
-        width_field="cover_width",
         help_text="This is the round 'avatar' image.",
     )
     cover_height = models.PositiveIntegerField(null=True, default=None)
@@ -81,8 +79,6 @@ class Podcast(models.Model):
         default=None,
         blank=True,
         upload_to=podcast_image_path,
-        height_field="cover_thumbnail_height",
-        width_field="cover_thumbnail_width",
     )
     cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     cover_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
@@ -92,8 +88,6 @@ class Podcast(models.Model):
         default=None,
         blank=True,
         upload_to=podcast_image_path,
-        height_field="banner_height",
-        width_field="banner_width",
         verbose_name="Banner image",
         help_text="Should be >= 960px wide and have aspect ratio 3:1.",
     )
@@ -165,6 +159,7 @@ class Podcast(models.Model):
                 if content_type:
                     suffix = mimetypes.guess_extension(content_type) or ("." + content_type.split("/")[-1])
                 delete_storage_file(self.cover)
+                # pylint: disable=no-member
                 self.cover.save(
                     name=f"cover{suffix}",
                     content=ImageFile(file=BytesIO(response.content)),
@@ -183,18 +178,36 @@ class Podcast(models.Model):
         if "authors" in feed:
             self.authors.add(*list(User.objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a])))
 
+    # pylint: disable=no-member
     def handle_uploaded_banner(self, save: bool = False):
         downscale_image(self.banner, max_width=960, max_height=320, save=save)
+        if self.banner:
+            self.banner_height = self.banner.height
+            self.banner_width = self.banner.width
+        else:
+            self.banner_height = None
+            self.banner_width = None
+        if save:
+            self.save()
 
+    # pylint: disable=no-member
     def handle_uploaded_cover(self, save: bool = False):
         delete_storage_file(self.cover_thumbnail)
         if self.cover:
             mimetype = generate_thumbnail(self.cover, self.cover_thumbnail, 150, save)
             self.cover_mimetype = mimetype
             self.cover_thumbnail_mimetype = mimetype
+            self.cover_height = self.cover.height
+            self.cover_width = self.cover.width
+            self.cover_thumbnail_height = self.cover_thumbnail.height
+            self.cover_thumbnail_width = self.cover_thumbnail.width
         else:
             self.cover_mimetype = None
             self.cover_thumbnail_mimetype = None
+            self.cover_height = None
+            self.cover_width = None
+            self.cover_thumbnail_height = None
+            self.cover_thumbnail_width = None
         if save:
             self.save()
 

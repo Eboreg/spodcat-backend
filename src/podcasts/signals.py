@@ -9,6 +9,8 @@ from podcasts.utils import delete_storage_file
 @receiver(pre_delete, sender=Episode, dispatch_uid="on_episode_pre_delete")
 def on_episode_pre_delete(sender, instance: Episode, **kwargs):
     delete_storage_file(instance.audio_file)
+    delete_storage_file(instance.image)
+    delete_storage_file(instance.image_thumbnail)
 
 
 @receiver(pre_delete, sender=Podcast, dispatch_uid="on_podcast_pre_delete")
