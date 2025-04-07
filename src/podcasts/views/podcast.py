@@ -118,6 +118,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/episode/{episode.slug}"))
             fe.podcast.itunes_duration(round(episode.duration_seconds))
             fe.content_encoded.content_encoded(episode.description_html)
+            if episode.image:
+                fe.podcast.itunes_image(episode.image.url)
             fe.enclosure(
                 url=episode.audio_url,
                 type=episode.audio_content_type,
