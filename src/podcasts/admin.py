@@ -9,7 +9,7 @@ from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -98,10 +98,22 @@ class PodcastAdmin(admin.ModelAdmin):
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
     }
-    list_display = ("name", "slug", "authors_str", "frontend_link")
+    list_display = ("name", "slug", "authors_str", "view_count", "total_view_count", "play_count", "frontend_link")
     inlines = [PodcastLinkInline]
     save_on_top = True
     readonly_fields = ("slug",)
+
+    @admin.display(description="views", ordering="view_count")
+    def view_count(self, obj):
+        return obj.view_count
+
+    @admin.display(description="views recursive", ordering="total_view_count")
+    def total_view_count(self, obj):
+        return obj.total_view_count
+
+    @admin.display(description="plays", ordering="play_count")
+    def play_count(self, obj):
+        return obj.play_count
 
     def get_fields(self, request, obj=None):
         if obj:
@@ -109,7 +121,17 @@ class PodcastAdmin(admin.ModelAdmin):
         return self.add_fields
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("authors").select_related("owner")
+        return (
+            super().get_queryset(request)
+            .prefetch_related("authors")
+            .select_related("owner")
+            .alias(content_view_count=Count("contents__requests", distinct=True))
+            .annotate(
+                view_count=Count("requests", distinct=True),
+                total_view_count=F("content_view_count") + F("view_count"),
+                play_count=Count("contents__audio_requests", distinct=True),
+            )
+        )
 
     def has_change_permission(self, request, obj=None):
         return (
