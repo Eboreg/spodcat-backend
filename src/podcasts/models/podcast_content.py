@@ -39,15 +39,15 @@ class PodcastContent(PolymorphicModel):
         ]
 
     @property
-    def description_html(self):
+    def description_html(self) -> str:
         if self.description:
             return markdown(self.description, extensions=["nl2br", "smarty", MarkdownExtension()])
-        return None
+        return ""
 
     def __str__(self):
         return self.name
 
-    def _get_base_slug(self):
+    def _get_base_slug(self) -> str:
         return slugify(self.name)
 
     @admin.display(
@@ -55,10 +55,10 @@ class PodcastContent(PolymorphicModel):
         description="visible",
         ordering=Case(When(Q(is_draft=False, published__lte=Now()), then=V(1)), default=V(0)),
     )
-    def is_visible(self):
+    def is_visible(self) -> bool:
         return self.published <= timezone.now() and not self.is_draft
 
-    def generate_slug(self):
+    def generate_slug(self) -> str:
         slugs = [e.slug for e in self._meta.model.objects.filter(podcast=self.podcast)]
         base_slug = self._get_base_slug()
         slug = base_slug

@@ -17,7 +17,6 @@ from markdownify import markdownify
 from martor.models import MartorField
 
 from podcasts.markdown import MarkdownExtension
-from podcasts.models.fields import ImageField
 from podcasts.utils import (
     delete_storage_file,
     downscale_image,
@@ -63,7 +62,7 @@ class Podcast(models.Model):
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
     description = MartorField(null=True, default=None, blank=True)
-    cover = ImageField(
+    cover = models.ImageField(
         null=True,
         default=None,
         blank=True,
@@ -74,7 +73,7 @@ class Podcast(models.Model):
     cover_height = models.PositiveIntegerField(null=True, default=None)
     cover_width = models.PositiveIntegerField(null=True, default=None)
     cover_mimetype = models.CharField(max_length=50, null=True, default=None)
-    cover_thumbnail = ImageField(
+    cover_thumbnail = models.ImageField(
         null=True,
         default=None,
         blank=True,
@@ -83,7 +82,7 @@ class Podcast(models.Model):
     cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     cover_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     cover_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
-    banner = ImageField(
+    banner = models.ImageField(
         null=True,
         default=None,
         blank=True,
@@ -93,7 +92,7 @@ class Podcast(models.Model):
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
-    favicon = ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
+    favicon = models.ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
     authors: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts", blank=True)
     owner: "User | None" = models.ForeignKey(
@@ -125,17 +124,17 @@ class Podcast(models.Model):
         indexes = [models.Index(fields=["name"])]
 
     @property
-    def description_html(self):
+    def description_html(self) -> str:
         if self.description:
             return markdown(self.description, extensions=["nl2br", "smarty", MarkdownExtension()])
-        return None
+        return ""
 
     @property
-    def frontend_url(self):
+    def frontend_url(self) -> str:
         return urljoin(settings.FRONTEND_ROOT_URL, self.slug)
 
     @property
-    def rss_url(self):
+    def rss_url(self) -> str:
         return urljoin(settings.ROOT_URL, reverse("podcast-rss", args=(self.slug,)))
 
     def __str__(self):

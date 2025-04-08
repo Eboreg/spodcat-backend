@@ -6,9 +6,6 @@ from django.core.management import BaseCommand
 from podcasts.models import Episode, Podcast
 
 
-logging.getLogger("podcasts").setLevel(logging.INFO)
-
-
 def bool_input(prompt: str, default: bool = True) -> bool:
     alternatives = "[Y/n]" if default else "[y/N]"
     reply = input(f"{prompt} {alternatives} ")
@@ -25,6 +22,7 @@ class Command(BaseCommand):
         parser.add_argument("--interactive", "-i", action="store_true")
 
     def handle(self, *args, **options):
+        logging.getLogger("podcasts").setLevel(logging.INFO)
         update = options["update"]
         slug = options["slug"]
         interactive = options["interactive"]

@@ -78,7 +78,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         exclude = ["polymorphic_ctype"]
 
-    def get_description_html(self, obj: Episode):
+    def get_description_html(self, obj: Episode) -> str:
         return obj.description_html
 
 
@@ -140,8 +140,8 @@ class PodcastSerializer(serializers.ModelSerializer):
         model = Podcast
         fields = "__all__"
 
-    def get_rss_url(self, obj: Podcast):
+    def get_rss_url(self, obj: Podcast) -> str:
         return obj.rss_url
 
-    def get_description_html(self, obj: Podcast):
+    def get_description_html(self, obj: Podcast) -> str:
         return obj.description_html

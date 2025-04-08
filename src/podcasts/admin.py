@@ -9,7 +9,7 @@ from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -252,6 +252,7 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
         MartorField: {"widget": AdminMartorWidget},
     }
     save_on_top = True
+    search_fields = ["name", "description", "slug"]
 
     def has_change_permission(self, request, obj=None):
         return (
@@ -276,12 +277,22 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
             super().get_queryset(request)
             .select_related("podcast", "podcast__owner")
             .prefetch_related("podcast__authors")
+            .annotate(view_count=Count("requests", distinct=True), play_count=Count("audio_requests", distinct=True))
         )
 
 
 @admin.register(Episode)
 class EpisodeAdmin(BasePodcastContentAdmin):
-    list_display = ("name", "number", "is_visible", "is_draft", "podcast_str", "published")
+    list_display = (
+        "name",
+        "number",
+        "is_visible",
+        "is_draft",
+        "podcast_link",
+        "published",
+        "view_count",
+        "play_count",
+    )
     fields = (
         ("podcast", "slug"),
         ("season", "number"),
@@ -297,14 +308,23 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     readonly_fields = ("duration_seconds", "audio_content_type", "audio_file_length", "slug")
     inlines = [EpisodeSongInline]
     list_filter = ["is_draft", "published", "podcast"]
+    search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
 
     @admin.display(description="podcast", ordering="podcast")
-    def podcast_str(self, obj: Episode):
+    def podcast_link(self, obj: Episode):
         return format_html(
             "<a href=\"{url}\">{name}</a>",
             url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
             name=str(obj.podcast),
         )
+
+    @admin.display(description="plays", ordering="play_count")
+    def play_count(self, obj):
+        return obj.play_count
+
+    @admin.display(description="views", ordering="view_count")
+    def view_count(self, obj):
+        return obj.view_count
 
     def handle_audio_file(self, instance: Episode, audio_file: UploadedFile):
         suffix = "." + audio_file.name.split(".")[-1]

@@ -65,11 +65,11 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         "authors": ["authors"],
     }
 
-    def retrieve(self, request, *args, **kwargs):
+    @action(methods=["post"], detail=True)
+    def ping(self, request: Request, pk: str):
         instance = self.get_object()
         PodcastRequestLog.create(request=request, podcast=instance)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        return Response()
 
     @action(methods=["get"], detail=True)
     # pylint: disable=no-member

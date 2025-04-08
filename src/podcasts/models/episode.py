@@ -19,7 +19,6 @@ from markdownify import markdownify
 from pydub.utils import mediainfo
 from slugify import slugify
 
-from podcasts.models.fields import ImageField
 from podcasts.models.podcast_content import PodcastContent
 from podcasts.utils import (
     delete_storage_file,
@@ -31,7 +30,7 @@ from podcasts.utils import (
 if TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
 
-    from podcasts.models import EpisodeSong, Podcast
+    from podcasts.models import EpisodeSong
 
 
 logger = logging.getLogger(__name__)
@@ -53,11 +52,11 @@ class Episode(PodcastContent):
     dbfs_array = models.JSONField(blank=True, default=list)
     audio_content_type = models.CharField(max_length=100, blank=True)
     audio_file_length = models.PositiveIntegerField(blank=True, default=0)
-    image = ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
+    image = models.ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
     image_height = models.PositiveIntegerField(null=True, default=None)
     image_width = models.PositiveIntegerField(null=True, default=None)
     image_mimetype = models.CharField(max_length=50, null=True, default=None)
-    image_thumbnail = ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
+    image_thumbnail = models.ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
     image_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     image_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
@@ -66,7 +65,7 @@ class Episode(PodcastContent):
     objects: models.Manager[Self]
 
     @property
-    def audio_url(self):
+    def audio_url(self) -> str:
         return urljoin(settings.ROOT_URL, reverse("episode-audio", args=(self.slug,)))
 
     def __str__(self):
@@ -178,86 +177,6 @@ class Episode(PodcastContent):
             self.image_thumbnail_width = None
         if save:
             self.save()
-
-    @classmethod
-    def from_feed(
-        cls,
-        entry: feedparser.FeedParserDict,
-        podcast: "Podcast",
-        update: bool = False,
-    ) -> Self:
-        episode: Self | None = None
-        try:
-            number = int(entry.itunes_episode)
-        except Exception:
-            number = None
-
-        if number is not None:
-            episode = cls.objects.filter(podcast=podcast, number=number).first()
-            if episode:
-                if not update:
-                    logger.info("Episode %d already exists and update=False - skipping", number)
-                    return episode
-                logger.info("Episode %d already exists and update=True - updating", number)
-
-        if not episode:
-            logger.info("Creating episode: %s", entry.title)
-            episode = cls(podcast=podcast, number=number)
-
-        episode.name = entry.title
-
-        if "description" in entry:
-            episode.description = entry.description
-
-        if "published_parsed" in entry and isinstance(entry.published_parsed, struct_time):
-            episode.published = datetime.datetime(
-                year=entry.published_parsed.tm_year,
-                month=entry.published_parsed.tm_mon,
-                day=entry.published_parsed.tm_mday,
-                hour=entry.published_parsed.tm_hour,
-                minute=entry.published_parsed.tm_min,
-                second=entry.published_parsed.tm_sec,
-                tzinfo=datetime.timezone.utc,
-            )
-
-        if "itunes_duration" in entry and entry.itunes_duration:
-            if isinstance(entry.itunes_duration, str) and ":" in entry.itunes_duration:
-                parts = entry.itunes_duration.split(":")
-                duration_seconds = float(parts[-1])
-                if len(parts) > 1:
-                    duration_seconds += float(parts[-2]) * 60
-                if len(parts) > 2:
-                    duration_seconds += float(parts[-3]) * 60 * 60
-                episode.duration_seconds = duration_seconds
-            else:
-                try:
-                    episode.duration_seconds = float(entry.itunes_duration)
-                except ValueError:
-                    pass
-
-        if "links" in entry:
-            link = getitem0_nullable(entry.links, lambda l: l.get("rel", "") == "enclosure")
-            if link and "href" in link:
-                logger.info("Fetching audio file: %s", link.href)
-                response = requests.get(link.href, timeout=60)
-                if response.ok:
-                    episode.audio_content_type = response.headers.get("Content-Type", "")
-                    prefix, suffix = episode.generate_audio_filename()
-                    filename = f"{prefix}{suffix}"
-
-                    with tempfile.NamedTemporaryFile(suffix=suffix) as file:
-                        logger.info("Saving audio file: %s", filename)
-                        file.write(response.content)
-                        episode.audio_file.save(name=filename, content=File(file=file), save=False)
-                        info = mediainfo(file.name)
-                        episode.duration_seconds = float(info["duration"])
-                        episode.audio_file_length = len(response.content)
-                        file.seek(0)
-                        logger.info("Updating dBFS array for audio file")
-                        episode.update_audio_file_dbfs_array(file=file, format_name=info["format_name"], save=False)
-
-        episode.save()
-        return episode
 
     def _get_base_slug(self) -> str:
         base_slug = slugify(self.name)
