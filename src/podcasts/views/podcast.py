@@ -6,11 +6,9 @@ from django.db.models import Max, Prefetch
 from django.http import HttpResponse
 from django.utils import timezone
 from feedgen.entry import FeedEntry
-from feedgen.ext.base import BaseEntryExtension
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
-from feedgen.util import xml_elem
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,35 +20,12 @@ from podcasts.models import Podcast, PodcastContent
 from podcasts.models.episode import Episode
 
 
-class ContentEncodedExtension(BaseEntryExtension):
-    def __init__(self):
-        self.__content_encoded = None
-
-    def extend_ns(self):
-        return {"content": "http://purl.org/rss/1.0/modules/content/"}
-
-    def extend_rss(self, feed):
-        namespace = "http://purl.org/rss/1.0/modules/content/"
-
-        if self.__content_encoded:
-            content_encoded = xml_elem("{%s}encoded" % namespace, feed)
-            content_encoded.text = self.__content_encoded
-
-        return feed
-
-    def content_encoded(self, content_encoded=None):
-        if content_encoded is not None:
-            self.__content_encoded = f"<![CDATA[{content_encoded}]]>"
-        return self.__content_encoded
-
-
 class PodcastFeedGenerator(FeedGenerator):
     podcast: PodcastExtension
 
 
 class PodcastFeedEntry(FeedEntry):
     podcast: PodcastEntryExtension
-    content_encoded: ContentEncodedExtension
 
 
 class PodcastViewSet(views.ReadOnlyModelViewSet):
@@ -112,16 +87,16 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
 
         for episode in episode_qs:
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
-            fe.register_extension("content_encoded", ContentEncodedExtension)
             fe.title(episode.name)
-            fe.description(f"<![CDATA[{episode.description_html}]]>")
+            fe.content(episode.description_html, type="CDATA")
+            fe.description(episode.description)
+            fe.podcast.itunes_summary(episode.description)
             fe.published(episode.published)
             fe.podcast.itunes_season(episode.season)
             fe.podcast.itunes_episode(episode.number)
             fe.podcast.itunes_episode_type("full")
             fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/episode/{episode.slug}"))
             fe.podcast.itunes_duration(round(episode.duration_seconds))
-            fe.content_encoded.content_encoded(episode.description_html)
             if episode.image:
                 fe.podcast.itunes_image(episode.image.url)
             fe.enclosure(
