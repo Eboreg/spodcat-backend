@@ -1,3 +1,4 @@
+import re
 import uuid
 from typing import TYPE_CHECKING, Self
 
@@ -42,6 +43,13 @@ class PodcastContent(PolymorphicModel):
     def description_html(self) -> str:
         if self.description:
             return markdown(self.description, extensions=["nl2br", "smarty", MarkdownExtension()])
+        return ""
+
+    @property
+    def description_text(self) -> str:
+        if self.description:
+            # Basic stripping of Markdown image tags:
+            return re.sub(r"[\r\n]*!\[.*?\]\(.*?\)", "", self.description).strip()
         return ""
 
     def __str__(self):
