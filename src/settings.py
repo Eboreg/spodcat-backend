@@ -28,7 +28,6 @@ DJANGO_DB = os.environ.get("DJANGO_DB", ENVIRONMENT)
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -42,7 +41,8 @@ INSTALLED_APPS = [
     "martor",
     "django_filters",
     "users",
-    "podcasts",
+    "podcasts.apps.PodcastsConfig",
+    "podcasts.apps.PodcastsAdminConfig",
     "logs",
 ]
 if DEBUG:

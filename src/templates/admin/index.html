@@ -1,0 +1,19 @@
+{% extends "admin/index.html" %}
+
+{% block sidebar %}
+<div id="sidebar">
+    <div class="module">
+        <h3>Comments awaiting approval</h3>
+        <ul class="actionlist">
+            {% for comment in comments_awaiting_approval %}
+                <li class="changelink">
+                    <a href="{% url "admin:podcasts_comment_change" comment.id %}">
+                        {{ comment.created|date:"SHORT_DATE_FORMAT" }}: {{ comment.name }} ({{ comment.podcast_content }})
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {{ block.super }}
+</div>
+{% endblock sidebar %}

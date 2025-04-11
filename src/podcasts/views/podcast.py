@@ -74,7 +74,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fg.lastBuildDate(last_published)
         if podcast.cover:
             fg.image(podcast.cover.url)
-        if podcast.owner and podcast.owner.email and podcast.owner.get_full_name():
+        if podcast.owner.email and podcast.owner.get_full_name():
             fg.podcast.itunes_owner(name=podcast.owner.get_full_name(), email=podcast.owner.email)
         if authors:
             fg.author(authors)

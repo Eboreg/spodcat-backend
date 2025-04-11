@@ -141,7 +141,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
         if not podcast_content.podcast.require_comment_approval:
             attrs["is_approved"] = True
-        elif podcast_content.podcast.owner and podcast_content.podcast.owner.email:
+        elif podcast_content.podcast.owner.email:
             admin_url = urljoin(settings.ROOT_URL, reverse("admin:podcasts_comment_changelist")) + \
                 f"?is_approved__exact=0&podcast_content__podcast__slug__exact={podcast_content.podcast.slug}"
             email_text = f"You have a new comment for {podcast_content.podcast.name} awaiting approval. " + \

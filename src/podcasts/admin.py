@@ -100,7 +100,16 @@ class PodcastAdmin(admin.ModelAdmin):
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
     }
-    list_display = ("name", "slug", "authors_str", "view_count", "total_view_count", "play_count", "frontend_link")
+    list_display = (
+        "name",
+        "slug",
+        "owner_link",
+        "author_links",
+        "view_count",
+        "total_view_count",
+        "play_count",
+        "frontend_link",
+    )
     inlines = [PodcastLinkInline]
     save_on_top = True
     readonly_fields = ("slug",)
@@ -206,7 +215,7 @@ class PodcastAdmin(admin.ModelAdmin):
         )
 
     @admin.display(description="authors")
-    def authors_str(self, obj: Podcast):
+    def author_links(self, obj: Podcast):
         return mark_safe(
             "<br>".join(
                 format_html(
@@ -215,6 +224,14 @@ class PodcastAdmin(admin.ModelAdmin):
                     user=str(u),
                 ) for u in obj.authors.all()
             )
+        )
+
+    @admin.display(description="owner")
+    def owner_link(self, obj: Podcast):
+        return format_html(
+            "<a href=\"{url}\">{user}</a>",
+            url=reverse("admin:users_user_change", args=(obj.owner.pk,)),
+            user=str(obj.owner),
         )
 
     def save_form(self, request, form, change):
@@ -309,6 +326,7 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
 class EpisodeAdmin(BasePodcastContentAdmin):
     list_display = (
         "name",
+        "season",
         "number",
         "is_visible",
         "is_draft",

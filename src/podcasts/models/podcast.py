@@ -95,14 +95,7 @@ class Podcast(models.Model):
     favicon = models.ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
     authors: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts", blank=True)
-    owner: "User | None" = models.ForeignKey(
-        "users.User",
-        related_name="owned_podcasts",
-        blank=True,
-        null=True,
-        default=None,
-        on_delete=models.SET_NULL,
-    )
+    owner: "User" = models.ForeignKey("users.User", related_name="owned_podcasts", on_delete=models.PROTECT)
     language = models.CharField(max_length=5, choices=get_language_choices, null=True, blank=True, default=None)
     categories: "RelatedManager[Category]" = models.ManyToManyField("podcasts.Category", blank=True)
     name_font_family = models.CharField(
