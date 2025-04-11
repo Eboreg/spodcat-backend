@@ -10,3 +10,5 @@
 /media
 /notes.txt
 /static
+/build
+/uwsgi.ini
