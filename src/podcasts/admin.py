@@ -29,6 +29,7 @@ from podcasts.fields import (
 )
 from podcasts.models import (
     Artist,
+    Comment,
     Episode,
     EpisodeSong,
     Podcast,
@@ -81,6 +82,7 @@ class PodcastAdmin(admin.ModelAdmin):
         "favicon",
         "language",
         ("name_font_family", "name_font_size"),
+        ("enable_comments", "require_comment_approval"),
         "owner",
         "description",
         "categories",
@@ -541,3 +543,67 @@ class EpisodeSongAdmin(admin.ModelAdmin):
     @admin.display(description="timestamp", ordering="timestamp")
     def timestamp_str(self, obj: EpisodeSong):
         return seconds_to_timestamp(obj.timestamp)
+
+
+@admin.action(description="Approve comments")
+def approve_comments(modeladmin, request, queryset):
+    queryset.update(is_approved=True)
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ["name", "truncated_text", "created", "is_approved", "content_link"]
+    readonly_fields = ["podcast_content", "name", "text"]
+    actions = [approve_comments]
+    list_filter = ["is_approved", "podcast_content__podcast"]
+
+    @admin.display(description="content")
+    def content_link(self, obj: Comment):
+        content_class = obj.podcast_content.get_real_instance_class()
+        if content_class is Episode:
+            view = "admin:podcasts_episode_change"
+        elif content_class is Post:
+            view = "admin:podcasts_post_change"
+        else:
+            return ""
+
+        return format_html(
+            "<a href=\"{url}\">{name}</a>",
+            url=reverse(view, args=(obj.podcast_content.pk,)),
+            name=str(obj.podcast_content),
+        )
+
+    @admin.display(description="text")
+    def truncated_text(self, obj: Comment):
+        if len(obj.text) > 1000:
+            return obj.text[:1000] + "..."
+        return obj.text
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        Form = super().get_form(request, obj, change, **kwargs)
+        field = Form.base_fields.get("podcast_content")
+        if field:
+            field.queryset = (
+                field.queryset
+                .filter(Q(podcast__authors=request.user) | Q(podcast__owner=request.user))
+                .distinct()
+            )
+        return Form
+
+    def get_queryset(self, request):
+        return (
+            super().get_queryset(request)
+            .prefetch_related("podcast_content__podcast__authors")
+            .select_related("podcast_content__podcast__owner")
+        )
+
+    def has_change_permission(self, request, obj=None):
+        return (
+            request.user.is_superuser or
+            obj is None or
+            request.user == obj.podcast_content.podcast.owner or
+            request.user in obj.podcast_content.podcast.authors.all()
+        )
+
+    def has_delete_permission(self, request, obj=None):
+        return self.has_change_permission(request, obj)

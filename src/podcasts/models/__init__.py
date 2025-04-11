@@ -1,5 +1,7 @@
 from .artist import Artist
 from .category import Category
+from .challenge import Challenge
+from .comment import Comment
 from .episode import Episode, episode_audio_file_path
 from .episode_song import EpisodeSong
 from .podcast import Podcast, get_language_choices, podcast_image_path
@@ -11,6 +13,8 @@ from .post import Post
 __all__ = [
     "Artist",
     "Category",
+    "Challenge",
+    "Comment",
     "episode_audio_file_path",
     "Episode",
     "EpisodeSong",

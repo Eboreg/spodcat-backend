@@ -6,8 +6,7 @@ from rest_framework.request import Request
 
 from logs.models import EpisodeAudioRequestLog
 from podcasts import serializers
-from podcasts.models import Episode
-from podcasts.models.podcast_content import PodcastContent
+from podcasts.models import Comment, Episode, PodcastContent
 from podcasts.views.podcast_content import PodcastContentViewSet
 
 
@@ -22,7 +21,7 @@ class EpisodeViewSet(PodcastContentViewSet):
                 queryset=PodcastContent.objects.partial().visible().prefetch_related("songs"),
             ),
         ],
-        "__all__": ["songs"],
+        "__all__": ["songs", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
     }
     filterset_fields = ("slug", "podcast")
 

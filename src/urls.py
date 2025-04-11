@@ -5,6 +5,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from podcasts.views import (
+    ChallengeViewSet,
+    CommentViewSet,
     EpisodeViewSet,
     PodcastContentViewSet,
     PodcastViewSet,
@@ -22,6 +24,8 @@ router.register(prefix="podcasts", viewset=PodcastViewSet, basename="podcast")
 router.register(prefix="episodes", viewset=EpisodeViewSet, basename="episode")
 router.register(prefix="contents", viewset=PodcastContentViewSet, basename="content")
 router.register(prefix="posts", viewset=PostViewSet, basename="post")
+router.register(prefix="challenges", viewset=ChallengeViewSet, basename="challenge")
+router.register(prefix="comments", viewset=CommentViewSet, basename="comment")
 
 
 urlpatterns = [

@@ -213,6 +213,16 @@ LOGGING = {
     },
 }
 
+
+# Email
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "podd@huseli.us")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "podd@huseli.us")
+EMAIL_PORT = os.environ.get("EMAIL_PORT", 587)
+EMAIL_USE_TLS = env_boolean("EMAIL_USE_TLS")
+
+
 # Own stuff
 FRONTEND_ROOT_URL = os.environ.get("FRONTEND_ROOT_URL")
 ROOT_URL = os.environ.get("ROOT_URL")

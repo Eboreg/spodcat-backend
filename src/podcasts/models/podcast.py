@@ -115,6 +115,8 @@ class Podcast(models.Model):
         choices=[(c, c) for c in FONT_SIZES],
         default="normal",
     )
+    enable_comments = models.BooleanField(default=False)
+    require_comment_approval = models.BooleanField(default=True)
 
     contents: "PolymorphicManager"
     links: "RelatedManager[PodcastLink]"
