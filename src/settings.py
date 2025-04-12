@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from django.http import HttpRequest
+
 
 def env_boolean(key: str):
     return key in os.environ and os.environ[key].lower() not in ("false", "no", "0")
@@ -45,8 +47,6 @@ INSTALLED_APPS = [
     "podcasts.apps.PodcastsAdminConfig",
     "logs",
 ]
-if DEBUG:
-    INSTALLED_APPS.append("debug_toolbar")
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -58,8 +58,15 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-if DEBUG:
+
+try:
+    # pylint: disable=unused-import
+    import debug_toolbar
+
+    INSTALLED_APPS.append("debug_toolbar")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+except ImportError:
+    pass
 
 ROOT_URLCONF = "urls"
 
@@ -71,7 +78,7 @@ TEMPLATES = [
         "DIRS": [SRC_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
-            "debug": True,
+            "debug": DEBUG,
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
@@ -221,6 +228,19 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "podd@huseli.us")
 EMAIL_PORT = os.environ.get("EMAIL_PORT", 587)
 EMAIL_USE_TLS = env_boolean("EMAIL_USE_TLS")
+
+
+# django-debug-toolbar
+def show_toolbar(request: HttpRequest):
+    from django.conf import settings
+
+    remote_addr = str(request.META.get("REMOTE_ADDR", ""))
+    return settings.DEBUG and (remote_addr in settings.INTERNAL_IPS or remote_addr.startswith("192.168.1"))
+
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": show_toolbar,
+}
 
 
 # Own stuff

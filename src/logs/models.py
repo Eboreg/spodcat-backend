@@ -1,6 +1,12 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 from klaatu_django.db import TruncatedCharField
 from rest_framework.request import Request
+
+
+if TYPE_CHECKING:
+    from podcasts.models import Podcast, PodcastContent
 
 
 class AbstractRequestLog(models.Model):
@@ -29,17 +35,43 @@ class AbstractRequestLog(models.Model):
         )
 
 
-class PodcastRequestLog(AbstractRequestLog):
-    podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests")
+class AbstractPodcastRequestLog(AbstractRequestLog):
+    podcast: "Podcast"
+
+    class Meta:
+        abstract = True
 
 
-class PodcastRssRequestLog(AbstractRequestLog):
-    podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
+class AbstractPodcastContentRequestLog(AbstractRequestLog):
+    content: "PodcastContent"
+
+    class Meta:
+        abstract = True
 
 
-class PodcastContentRequestLog(AbstractRequestLog):
-    content = models.ForeignKey("podcasts.PodcastContent", on_delete=models.CASCADE, related_name="requests")
+class PodcastRequestLog(AbstractPodcastRequestLog):
+    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests")
 
 
-class EpisodeAudioRequestLog(AbstractRequestLog):
-    content = models.ForeignKey("podcasts.PodcastContent", on_delete=models.CASCADE, related_name="audio_requests")
+class PodcastRssRequestLog(AbstractPodcastRequestLog):
+    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
+
+    class Meta:
+        verbose_name = "podcast RSS request log"
+        verbose_name_plural = "podcast RSS request logs"
+
+
+class PodcastContentRequestLog(AbstractPodcastContentRequestLog):
+    content: "PodcastContent" = models.ForeignKey(
+        "podcasts.PodcastContent",
+        on_delete=models.CASCADE,
+        related_name="requests",
+    )
+
+
+class EpisodeAudioRequestLog(AbstractPodcastContentRequestLog):
+    content: "PodcastContent" = models.ForeignKey(
+        "podcasts.PodcastContent",
+        on_delete=models.CASCADE,
+        related_name="audio_requests",
+    )
