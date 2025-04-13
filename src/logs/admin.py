@@ -8,6 +8,7 @@ from logs.models import (
     PodcastContentRequestLog,
     PodcastRequestLog,
     PodcastRssRequestLog,
+    UserAgentType,
 )
 from podcasts.models.episode import Episode
 from podcasts.models.post import Post
@@ -24,10 +25,28 @@ class LogAdmin(admin.ModelAdmin):
         return False
 
 
+class UserAgentTypeFilter(admin.SimpleListFilter):
+    parameter_name = "user_agent_type"
+    title = "user agent type"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("except_bot", "All except Bot"),
+            *UserAgentType.choices,
+        ]
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+        if self.value() == "except_bot":
+            return queryset.exclude(user_agent_type=UserAgentType.BOT)
+        return queryset.filter(user_agent_type=self.value())
+
+
 @admin.register(PodcastRequestLog, PodcastRssRequestLog)
 class PodcastRequestLogAdmin(LogAdmin):
     list_display = ["created", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
-    list_filter = ["created", "podcast", "user_agent_type"]
+    list_filter = ["created", "podcast", UserAgentTypeFilter]
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("podcast")
@@ -44,7 +63,7 @@ class PodcastRequestLogAdmin(LogAdmin):
 @admin.register(PodcastContentRequestLog)
 class PodcastContentRequestLogAdmin(LogAdmin):
     list_display = ["created", "content_link", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
-    list_filter = ["created", "content__podcast", "user_agent_type"]
+    list_filter = ["created", "content__podcast", UserAgentTypeFilter]
 
     @admin.display(description="content", ordering="content__name")
     def content_link(self, obj: PodcastContentRequestLog):
@@ -86,7 +105,7 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "user_agent_name",
         "user_agent_type",
     ]
-    list_filter = ["created", "podcast", "user_agent_type"]
+    list_filter = ["created", "podcast", UserAgentTypeFilter]
 
     @admin.display(description="episode", ordering="episode__name")
     def episode_link(self, obj: PodcastContentAudioRequestLog):
