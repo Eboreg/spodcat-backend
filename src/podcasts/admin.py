@@ -124,7 +124,7 @@ class PodcastAdmin(admin.ModelAdmin):
         return mark_safe(
             "<br>".join(
                 format_html(
-                    "<a href=\"{url}\">{user}</a>",
+                    '<a class="nowrap" href="{url}">{user}</a>',
                     url=reverse("admin:users_user_change", args=(u.pk,)),
                     user=str(u),
                 ) for u in obj.authors.all()
@@ -170,7 +170,7 @@ class PodcastAdmin(admin.ModelAdmin):
         )
 
     def frontend_link(self, obj: Podcast):
-        return mark_safe(f"<a href=\"{obj.frontend_url}\" target=\"_blank\">{obj.frontend_url}</a>")
+        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">{obj.frontend_url}</a>')
 
     def get_fields(self, request, obj=None):
         if obj:
@@ -226,7 +226,7 @@ class PodcastAdmin(admin.ModelAdmin):
     @admin.display(description="owner")
     def owner_link(self, obj: Podcast):
         return format_html(
-            "<a href=\"{url}\">{user}</a>",
+            '<a class="nowrap" href="{url}">{user}</a>',
             url=reverse("admin:users_user_change", args=(obj.owner.pk,)),
             user=str(obj.owner),
         )
@@ -398,7 +398,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     @admin.display(description="podcast", ordering="podcast")
     def podcast_link(self, obj: Episode):
         return format_html(
-            "<a href=\"{url}\">{name}</a>",
+            '<a class="nowrap" href="{url}">{name}</a>',
             url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
             name=str(obj.podcast),
         )
@@ -535,7 +535,7 @@ class EpisodeSongAdmin(admin.ModelAdmin):
         return mark_safe(
             "<br>".join(
                 format_html(
-                    "<a href=\"{url}\">{name}</a>",
+                    '<a href="{url}">{name}</a>',
                     url=reverse("admin:podcasts_artist_change", args=(a.pk,)),
                     name=a.name,
                 ) for a in obj.artists.all()
@@ -545,7 +545,7 @@ class EpisodeSongAdmin(admin.ModelAdmin):
     @admin.display(description="episode", ordering="episode__number")
     def episode_str(self, obj: EpisodeSong):
         return format_html(
-            "<a href=\"{url}\">{name}</a>",
+            '<a href="{url}">{name}</a>',
             url=reverse("admin:podcasts_episode_change", args=(obj.episode.pk,)),
             name=str(obj.episode),
         )
@@ -607,7 +607,7 @@ class CommentAdmin(admin.ModelAdmin):
             return ""
 
         return format_html(
-            "<a href=\"{url}\">{name}</a>",
+            '<a href="{url}">{name}</a>',
             url=reverse(view, args=(obj.podcast_content.pk,)),
             name=str(obj.podcast_content),
         )

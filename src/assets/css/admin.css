@@ -52,3 +52,7 @@
     margin-bottom: 10px;
     padding-left: 18px;
 }
+
+.nowrap {
+    white-space: nowrap;
+}

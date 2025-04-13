@@ -35,7 +35,7 @@ class PodcastRequestLogAdmin(LogAdmin):
     @admin.display(description="podcast", ordering="podcast__name")
     def podcast_link(self, obj: AbstractPodcastRequestLog):
         return format_html(
-            "<a href=\"{url}\">{name}</a>",
+            '<a class="nowrap" href="{url}">{name}</a>',
             url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
             name=str(obj.podcast),
         )
@@ -57,7 +57,7 @@ class PodcastContentRequestLogAdmin(LogAdmin):
             return ""
 
         return format_html(
-            "<a href=\"{url}\">{name}</a>",
+            '<a href="{url}">{name}</a>',
             url=reverse(view, args=(obj.content.pk,)),
             name=str(obj.content),
         )
@@ -68,7 +68,7 @@ class PodcastContentRequestLogAdmin(LogAdmin):
     @admin.display(description="podcast", ordering="content__podcast__name")
     def podcast_link(self, obj: PodcastContentRequestLog):
         return format_html(
-            "<a href=\"{url}\">{name}</a>",
+            '<a class="nowrap" href="{url}">{name}</a>',
             url=reverse("admin:podcasts_podcast_change", args=(obj.content.podcast.pk,)),
             name=str(obj.content.podcast),
         )
@@ -92,7 +92,7 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
     def episode_link(self, obj: PodcastContentAudioRequestLog):
         if obj.episode:
             return format_html(
-                "<a href=\"{url}\">{name}</a>",
+                '<a href="{url}">{name}</a>',
                 url=reverse("admin:podcasts_episode_change", args=(obj.episode.pk,)),
                 name=str(obj.episode),
             )
@@ -113,7 +113,7 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
     @admin.display(description="podcast", ordering="podcast__name")
     def podcast_link(self, obj: PodcastContentAudioRequestLog):
         return format_html(
-            "<a href=\"{url}\">{name}</a>",
+            '<a class="nowrap" href="{url}">{name}</a>',
             url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
             name=str(obj.podcast),
         )
