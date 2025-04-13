@@ -89,12 +89,14 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 qs = parse_qs(urlparse(row["Uri"]).query)
                 rss_user_agent_slug = qs["_from"][0] if "_from" in qs else None
 
+                remote_addr = row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None
+
                 result.append(
                     PodcastContentAudioRequestLog(
                         podcast=podcast,
                         episode=episode,
                         created=row["TimeGenerated"],
-                        remote_addr=row["CallerIpAddress"],
+                        remote_addr=remote_addr,
                         remote_host="",
                         user_agent=row["UserAgentHeader"],
                         referer=row["ReferrerHeader"],
