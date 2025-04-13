@@ -88,7 +88,6 @@ class EpisodeSongForm(forms.ModelForm):
 
 class MartorWidget(BaseMartorWidget):
     class Media:
-        extend = False
         css = {
             "all": (
                 "plugins/css/bootstrap.min.css",
@@ -98,6 +97,8 @@ class MartorWidget(BaseMartorWidget):
                 "assets/css/martor.css",
             )
         }
+
+        extend = False
 
         js = (
             "plugins/js/jquery.min.js",

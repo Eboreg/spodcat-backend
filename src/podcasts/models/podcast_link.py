@@ -20,13 +20,13 @@ class PodcastLink(models.Model):
         SECONDARY = "secondary", "Secondary"
         TERTIARY = "tertiary", "Tertiary"
 
-    icon = models.CharField(max_length=10, choices=Icon, null=True, default=None)
     custom_icon = models.ImageField(upload_to=podcast_link_icon_path, null=True, default=None, blank=True)
-    url = models.URLField()
+    icon = models.CharField(max_length=10, choices=Icon, null=True, default=None)
     label = models.CharField(max_length=100)
-    podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="links")
     order = models.PositiveSmallIntegerField(default=0)
+    podcast = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="links")
     theme = models.CharField(max_length=10, choices=Theme, default=Theme.PRIMARY)
+    url = models.URLField()
 
     class Meta:
         ordering = ["order"]

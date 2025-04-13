@@ -29,8 +29,6 @@ class PodcastFeedEntry(FeedEntry):
 
 
 class PodcastViewSet(views.ReadOnlyModelViewSet):
-    queryset = Podcast.objects.all()
-    serializer_class = serializers.PodcastSerializer
     prefetch_for_includes = {
         "categories": ["categories"],
         "contents": [
@@ -39,6 +37,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         "links": ["links"],
         "authors": ["authors"],
     }
+    queryset = Podcast.objects.all()
+    serializer_class = serializers.PodcastSerializer
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):

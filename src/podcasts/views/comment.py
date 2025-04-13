@@ -6,5 +6,5 @@ from podcasts.models.comment import Comment
 
 
 class CommentViewSet(CreateModelMixin, views.ReadOnlyModelViewSet):
-    serializer_class = serializers.CommentSerializer
     queryset = Comment.objects.filter(is_approved=True)
+    serializer_class = serializers.CommentSerializer

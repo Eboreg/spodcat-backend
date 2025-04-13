@@ -30,6 +30,7 @@ dependencies = [
     "martor",
     "feedparser",
     "markdownify",
+    "azure-monitor-query",
 ]
 dynamic = ["version"]
 

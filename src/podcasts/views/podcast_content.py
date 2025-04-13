@@ -10,11 +10,11 @@ from podcasts.models import PodcastContent
 
 
 class PodcastContentViewSet(views.ReadOnlyModelViewSet):
-    serializer_class = serializers.PodcastContentSerializer
+    queryset = PodcastContent.objects.all()
     select_for_includes = {
         "podcast": ["podcast"],
     }
-    queryset = PodcastContent.objects.all()
+    serializer_class = serializers.PodcastContentSerializer
 
     def filter_queryset(self, queryset):
         return super().filter_queryset(queryset).filter(published__lte=timezone.now(), is_draft=False)

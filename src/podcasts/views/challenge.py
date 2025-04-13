@@ -10,5 +10,5 @@ from podcasts.models.challenge import Challenge
 
 
 class ChallengeViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):
-    serializer_class = serializers.ChallengeSerializer
     queryset = Challenge.objects.all()
+    serializer_class = serializers.ChallengeSerializer

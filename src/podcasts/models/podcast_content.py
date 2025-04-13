@@ -21,14 +21,14 @@ if TYPE_CHECKING:
 
 
 class PodcastContent(PolymorphicModel):
-    slug = models.SlugField(max_length=100)
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    name = models.CharField(max_length=100)
+    created = models.DateTimeField(auto_now_add=True)
     description = MartorField(null=True, default=None, blank=True)
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    is_draft = models.BooleanField(verbose_name="Draft", default=False)
+    name = models.CharField(max_length=100)
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.PROTECT, related_name="contents")
     published = models.DateTimeField(default=timezone.now)
-    created = models.DateTimeField(auto_now_add=True)
-    is_draft = models.BooleanField(verbose_name="Draft", default=False)
+    slug = models.SlugField(max_length=100)
 
     objects: models.Manager[Self] = PodcastContentQuerySet.as_manager()
 
@@ -58,14 +58,6 @@ class PodcastContent(PolymorphicModel):
     def _get_base_slug(self) -> str:
         return slugify(self.name)
 
-    @admin.display(
-        boolean=True,
-        description="visible",
-        ordering=Case(When(Q(is_draft=False, published__lte=Now()), then=V(1)), default=V(0)),
-    )
-    def is_visible(self) -> bool:
-        return self.published <= timezone.now() and not self.is_draft
-
     def generate_slug(self) -> str:
         slugs = [e.slug for e in self._meta.model.objects.filter(podcast=self.podcast)]
         base_slug = self._get_base_slug()
@@ -77,6 +69,14 @@ class PodcastContent(PolymorphicModel):
             i += 1
 
         return slug
+
+    @admin.display(
+        boolean=True,
+        description="visible",
+        ordering=Case(When(Q(is_draft=False, published__lte=Now()), then=V(1)), default=V(0)),
+    )
+    def is_visible(self) -> bool:
+        return self.published <= timezone.now() and not self.is_draft
 
     def save(self, *args, **kwargs):
         if not self.slug:

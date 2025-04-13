@@ -26,8 +26,8 @@ from podcasts.models import (
 
 class ArtistSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Artist
         fields = "__all__"
+        model = Artist
 
 
 class EpisodeSongSerializer(serializers.ModelSerializer):
@@ -36,30 +36,30 @@ class EpisodeSongSerializer(serializers.ModelSerializer):
     }
 
     class Meta:
-        model = EpisodeSong
         fields = "__all__"
+        model = EpisodeSong
 
 
 class EpisodeSerializer(serializers.ModelSerializer):
-    description_html = serializers.SerializerMethodField()
     audio_url = serializers.SerializerMethodField()
+    comments = ResourceRelatedField(queryset=Comment.objects, many=True)
+    description_html = serializers.SerializerMethodField()
+    has_songs = serializers.SerializerMethodField()
     songs = PolymorphicResourceRelatedField(
         EpisodeSongSerializer,
         queryset=EpisodeSong.objects,
         many=True,
     )
-    has_songs = serializers.SerializerMethodField()
-    comments = ResourceRelatedField(queryset=Comment.objects, many=True)
 
     included_serializers = {
+        "comments": "podcasts.serializers.CommentSerializer",
         "podcast": "podcasts.serializers.PodcastSerializer",
         "songs": "podcasts.serializers.EpisodeSongSerializer",
-        "comments": "podcasts.serializers.CommentSerializer",
     }
 
     class Meta:
-        model = Episode
         exclude = ["polymorphic_ctype"]
+        model = Episode
 
     def get_audio_url(self, obj: Episode):
         return obj.audio_url
@@ -73,22 +73,22 @@ class EpisodeSerializer(serializers.ModelSerializer):
 
 class PartialEpisodeSerializer(EpisodeSerializer):
     class Meta:
-        model = Episode
         fields = ["name", "podcast", "number", "published", "duration_seconds", "slug", "id", "audio_url", "has_songs"]
+        model = Episode
 
 
 class PostSerializer(serializers.ModelSerializer):
-    description_html = serializers.SerializerMethodField()
     comments = ResourceRelatedField(queryset=Comment.objects, many=True)
+    description_html = serializers.SerializerMethodField()
 
     included_serializers = {
-        "podcast": "podcasts.serializers.PodcastSerializer",
         "comments": "podcasts.serializers.CommentSerializer",
+        "podcast": "podcasts.serializers.PodcastSerializer",
     }
 
     class Meta:
-        model = Post
         exclude = ["polymorphic_ctype"]
+        model = Post
 
     def get_description_html(self, obj: Episode) -> str:
         return obj.description_html
@@ -96,31 +96,31 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PartialPostSerializer(PostSerializer):
     class Meta:
-        model = Post
         fields = ["name", "podcast", "published", "slug", "id"]
+        model = Post
 
 
 class PodcastContentSerializer(serializers.PolymorphicModelSerializer):
-    polymorphic_serializers = [EpisodeSerializer, PostSerializer]
     included_serializers = {
         "podcast": "podcasts.serializers.PodcastSerializer",
     }
+    polymorphic_serializers = [EpisodeSerializer, PostSerializer]
 
     class Meta:
-        model = PodcastContent
         fields = "__all__"
+        model = PodcastContent
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    is_approved = serializers.BooleanField(read_only=True)
     challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects, write_only=True)
     challenge_answer = serializers.IntegerField(write_only=True)
+    is_approved = serializers.BooleanField(read_only=True)
     podcast_content = PolymorphicResourceRelatedField(PodcastContentSerializer, queryset=PodcastContent.objects)
     text_html = serializers.SerializerMethodField()
 
     class Meta:
-        model = Comment
         fields = "__all__"
+        model = Comment
 
     def get_text_html(self, obj: Comment):
         return obj.text_html
@@ -167,57 +167,57 @@ class PartialPodcastContentSerializer(PodcastContentSerializer):
     polymorphic_serializers = [PartialEpisodeSerializer, PartialPostSerializer]
 
     class Meta:
-        model = PodcastContent
         fields = ["name", "podcast", "published", "slug", "id"]
+        model = PodcastContent
 
 
 class PodcastLinkSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PodcastLink
         fields = "__all__"
+        model = PodcastLink
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
         fields = "__all__"
+        model = Category
 
 
 class PodcastSerializer(serializers.ModelSerializer):
-    links = ResourceRelatedField(queryset=PodcastLink.objects, many=True)
-    rss_url = serializers.SerializerMethodField()
     contents = PolymorphicResourceRelatedField(
         PartialPodcastContentSerializer,
         queryset=PodcastContent.objects,
         many=True,
     )
     description_html = serializers.SerializerMethodField()
+    links = ResourceRelatedField(queryset=PodcastLink.objects, many=True)
+    rss_url = serializers.SerializerMethodField()
 
     included_serializers = {
         "authors": "users.serializers.UserSerializer",
         "categories": "podcasts.serializers.CategorySerializer",
-        "links": "podcasts.serializers.PodcastLinkSerializer",
         "contents": "podcasts.serializers.PartialPodcastContentSerializer",
+        "links": "podcasts.serializers.PodcastLinkSerializer",
     }
 
     class Meta:
-        model = Podcast
         fields = "__all__"
-
-    def get_rss_url(self, obj: Podcast) -> str:
-        return obj.rss_url
+        model = Podcast
 
     def get_description_html(self, obj: Podcast) -> str:
         return obj.description_html
 
+    def get_rss_url(self, obj: Podcast) -> str:
+        return obj.rss_url
+
 
 class ChallengeSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(read_only=True)
     challenge_string = serializers.SerializerMethodField()
+    id = serializers.UUIDField(read_only=True)
 
     class Meta:
-        model = Challenge
         fields = ["id", "challenge_string"]
+        model = Challenge
 
     def get_challenge_string(self, obj: Challenge):
         return obj.challenge_string

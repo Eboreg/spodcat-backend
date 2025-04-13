@@ -11,8 +11,8 @@ def generate_term():
 class Challenge(models.Model):
     NUMBER_STRINGS = ["noll", "ett", "två", "tre", "fyra", "fem", "sex", "sju", "åtta", "nio"]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     created = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     term1 = models.PositiveSmallIntegerField(default=generate_term)
     term2 = models.PositiveSmallIntegerField(default=generate_term)
 

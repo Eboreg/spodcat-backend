@@ -19,20 +19,20 @@ from users.views import UserViewSet
 
 router = DefaultRouter()
 
-router.register(prefix="users", viewset=UserViewSet, basename="user")
-router.register(prefix="podcasts", viewset=PodcastViewSet, basename="podcast")
-router.register(prefix="episodes", viewset=EpisodeViewSet, basename="episode")
-router.register(prefix="contents", viewset=PodcastContentViewSet, basename="content")
-router.register(prefix="posts", viewset=PostViewSet, basename="post")
 router.register(prefix="challenges", viewset=ChallengeViewSet, basename="challenge")
 router.register(prefix="comments", viewset=CommentViewSet, basename="comment")
+router.register(prefix="contents", viewset=PodcastContentViewSet, basename="content")
+router.register(prefix="episodes", viewset=EpisodeViewSet, basename="episode")
+router.register(prefix="podcasts", viewset=PodcastViewSet, basename="podcast")
+router.register(prefix="posts", viewset=PostViewSet, basename="post")
+router.register(prefix="users", viewset=UserViewSet, basename="user")
 
 
 urlpatterns = [
     path("", include(router.urls)),
     path("admin/", admin.site.urls),
-    path("martor/", include("martor.urls")),
     path("markdown-image-upload/", markdown_image_upload),
+    path("martor/", include("martor.urls")),
 ]
 urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=serve_media))
 

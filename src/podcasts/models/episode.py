@@ -45,24 +45,24 @@ def episode_image_path(instance: "Episode", filename: str):
 
 
 class Episode(PodcastContent):
-    season = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
-    number = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
-    audio_file = models.FileField(upload_to=episode_audio_file_path, null=True, default=None, blank=True)
-    duration_seconds = models.FloatField(blank=True, verbose_name="duration", default=0.0)
-    dbfs_array = models.JSONField(blank=True, default=list)
     audio_content_type = models.CharField(max_length=100, blank=True)
+    audio_file = models.FileField(upload_to=episode_audio_file_path, null=True, default=None, blank=True)
     audio_file_length = models.PositiveIntegerField(blank=True, default=0)
+    dbfs_array = models.JSONField(blank=True, default=list)
+    duration_seconds = models.FloatField(blank=True, verbose_name="duration", default=0.0)
     image = models.ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
     image_height = models.PositiveIntegerField(null=True, default=None)
-    image_width = models.PositiveIntegerField(null=True, default=None)
     image_mimetype = models.CharField(max_length=50, null=True, default=None)
     image_thumbnail = models.ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
     image_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
-    image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     image_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
+    image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
+    image_width = models.PositiveIntegerField(null=True, default=None)
+    number = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
+    season = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
 
-    songs: "RelatedManager[EpisodeSong]"
     objects: models.Manager[Self]
+    songs: "RelatedManager[EpisodeSong]"
 
     @property
     def audio_url(self) -> str:
@@ -72,6 +72,63 @@ class Episode(PodcastContent):
         if self.number is not None:
             return f"{self.number}. {self.name}"
         return self.name
+
+    def _get_base_slug(self) -> str:
+        base_slug = slugify(self.name)
+        if self.number is not None:
+            base_slug = f"{self.number}-" + base_slug
+        return base_slug
+
+    def generate_audio_filename(self) -> tuple[str, str]:
+        suffix = mimetypes.guess_extension(self.audio_content_type)
+        if not suffix:
+            if self.audio_content_type:
+                suffix = "." + self.audio_content_type.split("/")[-1]
+            else:
+                suffix = ""
+        assert suffix is not None
+        return self.generate_filename_stem(), suffix
+
+    def generate_filename_stem(self) -> str:
+        numbers = []
+        name = ""
+
+        if self.season is not None:
+            numbers.append(f"S{self.season:02d}")
+        if self.number is not None:
+            numbers.append(f"E{self.number:02d}")
+        if numbers:
+            name += "".join(numbers) + "-"
+        name += slugify(self.name, max_length=50)
+
+        return name
+
+    # pylint: disable=no-member
+    def handle_uploaded_image(self, save: bool = False):
+        delete_storage_file(self.image_thumbnail)
+        if self.image:
+            mimetype = generate_thumbnail(self.image, self.image_thumbnail, 150, save)
+            self.image_mimetype = mimetype
+            self.image_thumbnail_mimetype = mimetype
+            self.image_height = self.image.height
+            self.image_width = self.image.width
+            self.image_thumbnail_height = self.image_thumbnail.height
+            self.image_thumbnail_width = self.image_thumbnail.width
+        else:
+            self.image_mimetype = None
+            self.image_thumbnail_mimetype = None
+            self.image_height = None
+            self.image_width = None
+            self.image_thumbnail_height = None
+            self.image_thumbnail_width = None
+        if save:
+            self.save()
+
+    def update_audio_file_dbfs_array(self, file: IO, format_name: str, save: bool = True):
+        self.dbfs_array = get_audio_file_dbfs_array(file, format_name)
+
+        if save:
+            self.save()
 
     def update_from_feed(self, entry: feedparser.FeedParserDict):
         try:
@@ -156,60 +213,3 @@ class Episode(PodcastContent):
                         self.update_audio_file_dbfs_array(file=file, format_name=info["format_name"], save=False)
 
         self.save()
-
-    # pylint: disable=no-member
-    def handle_uploaded_image(self, save: bool = False):
-        delete_storage_file(self.image_thumbnail)
-        if self.image:
-            mimetype = generate_thumbnail(self.image, self.image_thumbnail, 150, save)
-            self.image_mimetype = mimetype
-            self.image_thumbnail_mimetype = mimetype
-            self.image_height = self.image.height
-            self.image_width = self.image.width
-            self.image_thumbnail_height = self.image_thumbnail.height
-            self.image_thumbnail_width = self.image_thumbnail.width
-        else:
-            self.image_mimetype = None
-            self.image_thumbnail_mimetype = None
-            self.image_height = None
-            self.image_width = None
-            self.image_thumbnail_height = None
-            self.image_thumbnail_width = None
-        if save:
-            self.save()
-
-    def _get_base_slug(self) -> str:
-        base_slug = slugify(self.name)
-        if self.number is not None:
-            base_slug = f"{self.number}-" + base_slug
-        return base_slug
-
-    def generate_audio_filename(self) -> tuple[str, str]:
-        suffix = mimetypes.guess_extension(self.audio_content_type)
-        if not suffix:
-            if self.audio_content_type:
-                suffix = "." + self.audio_content_type.split("/")[-1]
-            else:
-                suffix = ""
-        assert suffix is not None
-        return self.generate_filename_stem(), suffix
-
-    def generate_filename_stem(self) -> str:
-        numbers = []
-        name = ""
-
-        if self.season is not None:
-            numbers.append(f"S{self.season:02d}")
-        if self.number is not None:
-            numbers.append(f"E{self.number:02d}")
-        if numbers:
-            name += "".join(numbers) + "-"
-        name += slugify(self.name, max_length=50)
-
-        return name
-
-    def update_audio_file_dbfs_array(self, file: IO, format_name: str, save: bool = True):
-        self.dbfs_array = get_audio_file_dbfs_array(file, format_name)
-
-        if save:
-            self.save()

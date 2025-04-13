@@ -9,7 +9,8 @@ from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, FloatField, Q, Sum, Value as V
+from django.db.models.functions import Cast, Coalesce
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -47,8 +48,8 @@ class PodcastLinkInline(admin.TabularInline):
 
 class PodcastChangeSlugForm(ModelForm):
     class Meta:
-        model = Podcast
         fields = ["slug"]
+        model = Podcast
 
     def clean_slug(self):
         slug = self.cleaned_data["slug"]
@@ -74,7 +75,15 @@ class PodcastChangeSlugForm(ModelForm):
 
 @admin.register(Podcast)
 class PodcastAdmin(admin.ModelAdmin):
-    filter_horizontal = ["categories", "authors"]
+    add_fields = (
+        ("name", "slug"),
+        "tagline",
+        ("cover", "banner"),
+        "favicon",
+        "language",
+        "description",
+        "categories",
+    )
     fields = (
         ("name", "slug"),
         "tagline",
@@ -88,18 +97,11 @@ class PodcastAdmin(admin.ModelAdmin):
         "categories",
         "authors",
     )
-    add_fields = (
-        ("name", "slug"),
-        "tagline",
-        ("cover", "banner"),
-        "favicon",
-        "language",
-        "description",
-        "categories",
-    )
+    filter_horizontal = ["categories", "authors"]
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
     }
+    inlines = [PodcastLinkInline]
     list_display = (
         "name",
         "slug",
@@ -110,71 +112,20 @@ class PodcastAdmin(admin.ModelAdmin):
         "play_count",
         "frontend_link",
     )
-    inlines = [PodcastLinkInline]
-    save_on_top = True
     readonly_fields = ("slug",)
+    save_on_top = True
 
-    @admin.display(description="views", ordering="view_count")
-    def view_count(self, obj):
-        return obj.view_count
-
-    @admin.display(description="views recursive", ordering="total_view_count")
-    def total_view_count(self, obj):
-        return obj.total_view_count
-
-    @admin.display(description="plays", ordering="play_count")
-    def play_count(self, obj):
-        return obj.play_count
-
-    def get_fields(self, request, obj=None):
-        if obj:
-            return self.fields
-        return self.add_fields
-
-    def get_queryset(self, request):
-        return (
-            super().get_queryset(request)
-            .prefetch_related("authors")
-            .select_related("owner")
-            .alias(content_view_count=Count("contents__requests", distinct=True))
-            .annotate(
-                view_count=Count("requests", distinct=True),
-                total_view_count=F("content_view_count") + F("view_count"),
-                play_count=Count("contents__audio_requests", distinct=True),
+    @admin.display(description="authors")
+    def author_links(self, obj: Podcast):
+        return mark_safe(
+            "<br>".join(
+                format_html(
+                    "<a href=\"{url}\">{user}</a>",
+                    url=reverse("admin:users_user_change", args=(u.pk,)),
+                    user=str(u),
+                ) for u in obj.authors.all()
             )
         )
-
-    def has_change_permission(self, request, obj=None):
-        return (
-            request.user.is_superuser or
-            obj is None or
-            request.user == obj.owner or
-            request.user in obj.authors.all()
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        return self.has_change_permission(request, obj)
-
-    def frontend_link(self, obj: Podcast):
-        return mark_safe(f"<a href=\"{obj.frontend_url}\" target=\"_blank\">{obj.frontend_url}</a>")
-
-    def get_urls(self):
-        from django.urls import path
-
-        def wrap(view):
-            def wrapper(*args, **kwargs):
-                return self.admin_site.admin_view(view)(*args, **kwargs)
-
-            setattr(wrapper, "model_admin", self)
-            return update_wrapper(wrapper, view)
-
-        return [
-            path(
-                "<path:object_id>/change_slug/",
-                wrap(self.change_slug_view),
-                name=f"{self.opts.app_label}_{self.opts.model_name}_change_slug",
-            ),
-        ] + super().get_urls()
 
     def change_slug_view(self, request: HttpRequest, object_id):
         obj = self.get_object(request, unquote(object_id))
@@ -214,17 +165,55 @@ class PodcastAdmin(admin.ModelAdmin):
             },
         )
 
-    @admin.display(description="authors")
-    def author_links(self, obj: Podcast):
-        return mark_safe(
-            "<br>".join(
-                format_html(
-                    "<a href=\"{url}\">{user}</a>",
-                    url=reverse("admin:users_user_change", args=(u.pk,)),
-                    user=str(u),
-                ) for u in obj.authors.all()
+    def frontend_link(self, obj: Podcast):
+        return mark_safe(f"<a href=\"{obj.frontend_url}\" target=\"_blank\">{obj.frontend_url}</a>")
+
+    def get_fields(self, request, obj=None):
+        if obj:
+            return self.fields
+        return self.add_fields
+
+    def get_queryset(self, request):
+        return (
+            super().get_queryset(request)
+            .prefetch_related("authors")
+            .select_related("owner")
+            .alias(content_view_count=Count("contents__requests", distinct=True))
+            .annotate(
+                view_count=Count("requests", distinct=True),
+                total_view_count=F("content_view_count") + F("view_count"),
+                play_count=Count("contents__audio_requests", distinct=True),
             )
         )
+
+    def get_urls(self):
+        from django.urls import path
+
+        def wrap(view):
+            def wrapper(*args, **kwargs):
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+
+            setattr(wrapper, "model_admin", self)
+            return update_wrapper(wrapper, view)
+
+        return [
+            path(
+                "<path:object_id>/change_slug/",
+                wrap(self.change_slug_view),
+                name=f"{self.opts.app_label}_{self.opts.model_name}_change_slug",
+            ),
+        ] + super().get_urls()
+
+    def has_change_permission(self, request, obj=None):
+        return (
+            request.user.is_superuser or
+            obj is None or
+            request.user == obj.owner or
+            request.user in obj.authors.all()
+        )
+
+    def has_delete_permission(self, request, obj=None):
+        return self.has_change_permission(request, obj)
 
     @admin.display(description="owner")
     def owner_link(self, obj: Podcast):
@@ -233,6 +222,10 @@ class PodcastAdmin(admin.ModelAdmin):
             url=reverse("admin:users_user_change", args=(obj.owner.pk,)),
             user=str(obj.owner),
         )
+
+    @admin.display(description="plays", ordering="play_count")
+    def play_count(self, obj):
+        return obj.play_count
 
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
@@ -259,12 +252,20 @@ class PodcastAdmin(admin.ModelAdmin):
 
         return instance
 
+    @admin.display(description="views recursive", ordering="total_view_count")
+    def total_view_count(self, obj):
+        return obj.total_view_count
+
+    @admin.display(description="views", ordering="view_count")
+    def view_count(self, obj):
+        return obj.view_count
+
 
 class EpisodeSongInline(admin.TabularInline):
-    model = EpisodeSong
     autocomplete_fields = ["artists"]
-    form = EpisodeSongForm
     fields = ["episode", "timestamp", "name", "artists", "comment"]
+    form = EpisodeSongForm
+    model = EpisodeSong
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name == "artists":
@@ -295,17 +296,6 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
     save_on_top = True
     search_fields = ["name", "description", "slug"]
 
-    def has_change_permission(self, request, obj=None):
-        return (
-            request.user.is_superuser or
-            obj is None or
-            request.user == obj.podcast.owner or
-            request.user in obj.podcast.authors.all()
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        return self.has_change_permission(request, obj)
-
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("podcast")
@@ -318,23 +308,23 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
             super().get_queryset(request)
             .select_related("podcast", "podcast__owner")
             .prefetch_related("podcast__authors")
-            .annotate(view_count=Count("requests", distinct=True), play_count=Count("audio_requests", distinct=True))
+            .annotate(view_count=Count("requests", distinct=True))
         )
+
+    def has_change_permission(self, request, obj=None):
+        return (
+            request.user.is_superuser or
+            obj is None or
+            request.user == obj.podcast.owner or
+            request.user in obj.podcast.authors.all()
+        )
+
+    def has_delete_permission(self, request, obj=None):
+        return self.has_change_permission(request, obj)
 
 
 @admin.register(Episode)
 class EpisodeAdmin(BasePodcastContentAdmin):
-    list_display = (
-        "name",
-        "season",
-        "number",
-        "is_visible",
-        "is_draft",
-        "podcast_link",
-        "published",
-        "view_count",
-        "play_count",
-    )
     fields = (
         ("podcast", "slug"),
         ("season", "number"),
@@ -347,26 +337,33 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "audio_content_type",
         "audio_file_length",
     )
-    readonly_fields = ("duration_seconds", "audio_content_type", "audio_file_length", "slug")
     inlines = [EpisodeSongInline]
+    list_display = (
+        "name",
+        "season",
+        "number",
+        "is_visible",
+        "is_draft",
+        "podcast_link",
+        "published",
+        "view_count",
+        "play_count",
+    )
     list_filter = ["is_draft", "published", "podcast"]
+    readonly_fields = ("duration_seconds", "audio_content_type", "audio_file_length", "slug")
     search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
 
-    @admin.display(description="podcast", ordering="podcast")
-    def podcast_link(self, obj: Episode):
-        return format_html(
-            "<a href=\"{url}\">{name}</a>",
-            url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
-            name=str(obj.podcast),
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            play_count=Coalesce(
+                Sum(
+                    Cast(F("audio_requests__response_body_size"), FloatField()) / F("audio_file_length"),
+                    distinct=True,
+                ),
+                V(0.0),
+                output_field=FloatField(),
+            )
         )
-
-    @admin.display(description="plays", ordering="play_count")
-    def play_count(self, obj):
-        return obj.play_count
-
-    @admin.display(description="views", ordering="view_count")
-    def view_count(self, obj):
-        return obj.view_count
 
     def handle_audio_file(self, instance: Episode, audio_file: UploadedFile):
         suffix = "." + audio_file.name.split(".")[-1]
@@ -385,6 +382,18 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             target=self.update_audio_file_dbfs_array,
             kwargs={"file": file, "format_name": info["format_name"], "instance": instance},
         ).start()
+
+    @admin.display(description="plays", ordering="play_count")
+    def play_count(self, obj):
+        return round(obj.play_count, 3)
+
+    @admin.display(description="podcast", ordering="podcast")
+    def podcast_link(self, obj: Episode):
+        return format_html(
+            "<a href=\"{url}\">{name}</a>",
+            url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
+            name=str(obj.podcast),
+        )
 
     def save_form(self, request, form, change):
         instance: Episode = super().save_form(request, form, change)
@@ -411,21 +420,25 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         file.close()
         print("update_audio_file_dbfs_array finished")
 
+    @admin.display(description="views", ordering="view_count")
+    def view_count(self, obj):
+        return obj.view_count
+
 
 @admin.register(Post)
 class PostAdmin(BasePodcastContentAdmin):
-    list_display = ("name", "is_visible", "is_draft", "podcast", "published")
     fields = (
         "podcast",
         "name",
         ("is_draft", "published"),
         "description",
     )
+    list_display = ("name", "is_visible", "is_draft", "podcast", "published")
 
 
 class ArtistSongCountFilter(admin.SimpleListFilter):
-    title = "song count"
     parameter_name = "song_count"
+    title = "song count"
 
     def lookups(self, request, model_admin):
         return [
@@ -448,18 +461,15 @@ class ArtistSongCountFilter(admin.SimpleListFilter):
 
 
 class ArtistSongInline(admin.TabularInline):
-    model = EpisodeSong.artists.through
     extra = 0
     fields = ["song", "episode"]
+    model = EpisodeSong.artists.through
     readonly_fields = ["song", "episode"]
     verbose_name = "song"
     verbose_name_plural = "songs"
 
     def episode(self, obj):
         return obj.episodesong.episode
-
-    def song(self, obj):
-        return obj.episodesong.name
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("episodesong__episode")
@@ -470,14 +480,17 @@ class ArtistSongInline(admin.TabularInline):
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
 
+    def song(self, obj):
+        return obj.episodesong.name
+
 
 @admin.register(Artist)
 class ArtistAdmin(admin.ModelAdmin):
-    search_fields = ["name"]
+    inlines = [ArtistSongInline]
     list_display = ["name", "song_count"]
     list_filter = [ArtistSongCountFilter]
-    inlines = [ArtistSongInline]
     save_on_top = True
+    search_fields = ["name"]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(song_count=models.Count("songs"))
@@ -502,12 +515,43 @@ class ArtistAdmin(admin.ModelAdmin):
 
 @admin.register(EpisodeSong)
 class EpisodeSongAdmin(admin.ModelAdmin):
-    list_display = ["name", "artists_str", "episode_str", "timestamp_str"]
-    ordering = ["-episode__number", "timestamp"]
-    search_fields = ["name", "artists__name", "comment"]
     filter_horizontal = ["artists"]
     form = EpisodeSongForm
+    list_display = ["name", "artists_str", "episode_str", "timestamp_str"]
+    ordering = ["-episode__number", "timestamp"]
     save_on_top = True
+    search_fields = ["name", "artists__name", "comment"]
+
+    @admin.display(description="artists")
+    def artists_str(self, obj: EpisodeSong):
+        return mark_safe(
+            "<br>".join(
+                format_html(
+                    "<a href=\"{url}\">{name}</a>",
+                    url=reverse("admin:podcasts_artist_change", args=(a.pk,)),
+                    name=a.name,
+                ) for a in obj.artists.all()
+            )
+        )
+
+    @admin.display(description="episode", ordering="episode__number")
+    def episode_str(self, obj: EpisodeSong):
+        return format_html(
+            "<a href=\"{url}\">{name}</a>",
+            url=reverse("admin:podcasts_episode_change", args=(obj.episode.pk,)),
+            name=str(obj.episode),
+        )
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        Form = super().get_form(request, obj, change, **kwargs)
+        field = Form.base_fields.get("episode")
+        if field:
+            field.queryset = (
+                field.queryset
+                .filter(Q(podcast__authors=request.user) | Q(podcast__owner=request.user))
+                .distinct()
+            )
+        return Form
 
     def get_queryset(self, request):
         return (
@@ -527,37 +571,6 @@ class EpisodeSongAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        Form = super().get_form(request, obj, change, **kwargs)
-        field = Form.base_fields.get("episode")
-        if field:
-            field.queryset = (
-                field.queryset
-                .filter(Q(podcast__authors=request.user) | Q(podcast__owner=request.user))
-                .distinct()
-            )
-        return Form
-
-    @admin.display(description="episode", ordering="episode__number")
-    def episode_str(self, obj: EpisodeSong):
-        return format_html(
-            "<a href=\"{url}\">{name}</a>",
-            url=reverse("admin:podcasts_episode_change", args=(obj.episode.pk,)),
-            name=str(obj.episode),
-        )
-
-    @admin.display(description="artists")
-    def artists_str(self, obj: EpisodeSong):
-        return mark_safe(
-            "<br>".join(
-                format_html(
-                    "<a href=\"{url}\">{name}</a>",
-                    url=reverse("admin:podcasts_artist_change", args=(a.pk,)),
-                    name=a.name,
-                ) for a in obj.artists.all()
-            )
-        )
-
     @admin.display(description="timestamp", ordering="timestamp")
     def timestamp_str(self, obj: EpisodeSong):
         return seconds_to_timestamp(obj.timestamp)
@@ -570,10 +583,10 @@ def approve_comments(modeladmin, request, queryset):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ["name", "truncated_text", "created", "is_approved", "content_link"]
-    readonly_fields = ["podcast_content", "name", "text"]
     actions = [approve_comments]
+    list_display = ["name", "truncated_text", "created", "is_approved", "content_link"]
     list_filter = ["is_approved", "podcast_content__podcast"]
+    readonly_fields = ["podcast_content", "name", "text"]
 
     @admin.display(description="content")
     def content_link(self, obj: Comment):
@@ -590,12 +603,6 @@ class CommentAdmin(admin.ModelAdmin):
             url=reverse(view, args=(obj.podcast_content.pk,)),
             name=str(obj.podcast_content),
         )
-
-    @admin.display(description="text")
-    def truncated_text(self, obj: Comment):
-        if len(obj.text) > 1000:
-            return obj.text[:1000] + "..."
-        return obj.text
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
@@ -625,3 +632,9 @@ class CommentAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
+
+    @admin.display(description="text")
+    def truncated_text(self, obj: Comment):
+        if len(obj.text) > 1000:
+            return obj.text[:1000] + "..."
+        return obj.text

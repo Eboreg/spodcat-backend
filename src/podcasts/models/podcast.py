@@ -58,30 +58,7 @@ class Podcast(models.Model):
     ]
     FONT_SIZES = ["small", "normal", "large"]
 
-    slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator], help_text="Will be used in URLs.")
-    name = models.CharField(max_length=100)
-    tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
-    description = MartorField(null=True, default=None, blank=True)
-    cover = models.ImageField(
-        null=True,
-        default=None,
-        blank=True,
-        validators=[podcast_cover_validator],
-        upload_to=podcast_image_path,
-        help_text="This is the round 'avatar' image.",
-    )
-    cover_height = models.PositiveIntegerField(null=True, default=None)
-    cover_width = models.PositiveIntegerField(null=True, default=None)
-    cover_mimetype = models.CharField(max_length=50, null=True, default=None)
-    cover_thumbnail = models.ImageField(
-        null=True,
-        default=None,
-        blank=True,
-        upload_to=podcast_image_path,
-    )
-    cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
-    cover_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
-    cover_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
+    authors: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts", blank=True)
     banner = models.ImageField(
         null=True,
         default=None,
@@ -92,12 +69,33 @@ class Podcast(models.Model):
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
+    categories: "RelatedManager[Category]" = models.ManyToManyField("podcasts.Category", blank=True)
+    cover = models.ImageField(
+        null=True,
+        default=None,
+        blank=True,
+        validators=[podcast_cover_validator],
+        upload_to=podcast_image_path,
+        help_text="This is the round 'avatar' image.",
+    )
+    cover_height = models.PositiveIntegerField(null=True, default=None)
+    cover_mimetype = models.CharField(max_length=50, null=True, default=None)
+    cover_thumbnail = models.ImageField(
+        null=True,
+        default=None,
+        blank=True,
+        upload_to=podcast_image_path,
+    )
+    cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
+    cover_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
+    cover_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
+    cover_width = models.PositiveIntegerField(null=True, default=None)
+    description = MartorField(null=True, default=None, blank=True)
+    enable_comments = models.BooleanField(default=False)
     favicon = models.ImageField(null=True, default=None, blank=True, upload_to=podcast_image_path)
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
-    authors: "RelatedManager[User]" = models.ManyToManyField("users.User", related_name="podcasts", blank=True)
-    owner: "User" = models.ForeignKey("users.User", related_name="owned_podcasts", on_delete=models.PROTECT)
     language = models.CharField(max_length=5, choices=get_language_choices, null=True, blank=True, default=None)
-    categories: "RelatedManager[Category]" = models.ManyToManyField("podcasts.Category", blank=True)
+    name = models.CharField(max_length=100)
     name_font_family = models.CharField(
         max_length=50,
         choices=[(c, c) for c in FONT_FAMILIES],
@@ -108,8 +106,10 @@ class Podcast(models.Model):
         choices=[(c, c) for c in FONT_SIZES],
         default="normal",
     )
-    enable_comments = models.BooleanField(default=False)
+    owner: "User" = models.ForeignKey("users.User", related_name="owned_podcasts", on_delete=models.PROTECT)
     require_comment_approval = models.BooleanField(default=True)
+    slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator], help_text="Will be used in URLs.")
+    tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
 
     contents: "PolymorphicManager"
     links: "RelatedManager[PodcastLink]"
@@ -134,6 +134,42 @@ class Podcast(models.Model):
 
     def __str__(self):
         return self.name
+
+    # pylint: disable=no-member
+    def handle_uploaded_banner(self, save: bool = False):
+        downscale_image(self.banner, max_width=960, max_height=320, save=save)
+        if self.banner:
+            self.banner_height = self.banner.height
+            self.banner_width = self.banner.width
+        else:
+            self.banner_height = None
+            self.banner_width = None
+        if save:
+            self.save()
+
+    # pylint: disable=no-member
+    def handle_uploaded_cover(self, save: bool = False):
+        delete_storage_file(self.cover_thumbnail)
+        if self.cover:
+            mimetype = generate_thumbnail(self.cover, self.cover_thumbnail, 150, save)
+            self.cover_mimetype = mimetype
+            self.cover_thumbnail_mimetype = mimetype
+            self.cover_height = self.cover.height
+            self.cover_width = self.cover.width
+            self.cover_thumbnail_height = self.cover_thumbnail.height
+            self.cover_thumbnail_width = self.cover_thumbnail.width
+        else:
+            self.cover_mimetype = None
+            self.cover_thumbnail_mimetype = None
+            self.cover_height = None
+            self.cover_width = None
+            self.cover_thumbnail_height = None
+            self.cover_thumbnail_width = None
+        if save:
+            self.save()
+
+    def handle_uploaded_favicon(self, save: bool = False):
+        downscale_image(self.favicon, max_width=100, max_height=100, save=save)
 
     def update_from_feed(self, feed: feedparser.FeedParserDict):
         from podcasts.models import Category
@@ -171,39 +207,3 @@ class Podcast(models.Model):
             self.categories.add(*list(Category.objects.filter(Q(cat__in=tags) | Q(sub__in=tags))))
         if "authors" in feed:
             self.authors.add(*list(User.objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a])))
-
-    # pylint: disable=no-member
-    def handle_uploaded_banner(self, save: bool = False):
-        downscale_image(self.banner, max_width=960, max_height=320, save=save)
-        if self.banner:
-            self.banner_height = self.banner.height
-            self.banner_width = self.banner.width
-        else:
-            self.banner_height = None
-            self.banner_width = None
-        if save:
-            self.save()
-
-    # pylint: disable=no-member
-    def handle_uploaded_cover(self, save: bool = False):
-        delete_storage_file(self.cover_thumbnail)
-        if self.cover:
-            mimetype = generate_thumbnail(self.cover, self.cover_thumbnail, 150, save)
-            self.cover_mimetype = mimetype
-            self.cover_thumbnail_mimetype = mimetype
-            self.cover_height = self.cover.height
-            self.cover_width = self.cover.width
-            self.cover_thumbnail_height = self.cover_thumbnail.height
-            self.cover_thumbnail_width = self.cover_thumbnail.width
-        else:
-            self.cover_mimetype = None
-            self.cover_thumbnail_mimetype = None
-            self.cover_height = None
-            self.cover_width = None
-            self.cover_thumbnail_height = None
-            self.cover_thumbnail_width = None
-        if save:
-            self.save()
-
-    def handle_uploaded_favicon(self, save: bool = False):
-        downscale_image(self.favicon, max_width=100, max_height=100, save=save)

@@ -139,10 +139,12 @@ STATIC_ROOT = BASE_DIR / "static"
 STATICFILES_DIRS = [("assets", SRC_DIR / "assets")]
 MEDIA_ROOT = BASE_DIR / "media"
 
-AZURE_ACCOUNT_NAME = "musikensmakt"
+AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", "musikensmakt")
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_FILES_KEY")
-AZURE_CONTAINER = "podcast-backend"
+AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", "podcast-backend")
 AZURE_LOCATION = ENVIRONMENT
+AZURE_SUBSCRIPTION_ID = os.environ.get("AZURE_SUBSCRIPTION_ID")
+AZURE_RESOURCE_GROUP = os.environ.get("AZURE_RESOURCE_GROUP")
 
 STORAGES = {
     "default": {"BACKEND": "storages.backends.azure_storage.AzureStorage"},

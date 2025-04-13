@@ -5,8 +5,8 @@ from users.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     included_serializers = {
-        "podcasts": "podcasts.serializers.PodcastSerializer",
         "owned_podcasts": "podcasts.serializers.PodcastSerializer",
+        "podcasts": "podcasts.serializers.PodcastSerializer",
     }
 
     class Meta:
