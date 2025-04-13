@@ -1,7 +1,14 @@
 from typing import TYPE_CHECKING
 
-from django.db.models import F, FloatField, IntegerField, QuerySet, Value as V
-from django.db.models.functions import Cast
+from django.db.models import (
+    F,
+    FloatField,
+    IntegerField,
+    QuerySet,
+    Sum,
+    Value as V,
+)
+from django.db.models.functions import Cast, Coalesce
 
 
 if TYPE_CHECKING:
@@ -9,6 +16,22 @@ if TYPE_CHECKING:
 
 
 class PodcastContentAudioRequestLogQuerySet(QuerySet["PodcastContentAudioRequestLog"]):
+    def get_play_count_query(self, **filters):
+        return (
+            self
+            .filter(**filters)
+            .order_by()
+            .values(*filters.keys())
+            .annotate(
+                play_count=Coalesce(
+                    Sum(Cast(F("response_body_size"), FloatField()) / F("episode__audio_file_length")),
+                    V(0.0),
+                    output_field=FloatField(),
+                ),
+            )
+            .values("play_count")
+        )
+
     def with_percent_fetched(self):
         return self.with_quota_fetched().annotate(percent_fetched=Cast(F("quota_fetched") * V(100), IntegerField()))
 

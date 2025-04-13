@@ -9,7 +9,7 @@ from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -19,8 +19,11 @@ from django.utils.safestring import mark_safe
 from martor.models import MartorField
 from pydub.utils import mediainfo
 
-from logs.models import PodcastRequestLog, PodcastRssRequestLog
-from logs.utils import get_play_count_expression
+from logs.models import (
+    PodcastContentAudioRequestLog,
+    PodcastRequestLog,
+    PodcastRssRequestLog,
+)
 from podcasts.fields import (
     AdminMartorWidget,
     ArtistAutocompleteWidget,
@@ -182,7 +185,9 @@ class PodcastAdmin(admin.ModelAdmin):
             .annotate(
                 view_count=Count("requests", distinct=True),
                 total_view_count=F("content_view_count") + F("view_count"),
-                play_count=get_play_count_expression("contents__episode"),
+                play_count=Subquery(
+                    PodcastContentAudioRequestLog.objects.get_play_count_query(episode__podcast=OuterRef("slug"))
+                ),
             )
         )
 
@@ -225,7 +230,7 @@ class PodcastAdmin(admin.ModelAdmin):
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
-        return round(obj.play_count, 3)
+        return round(obj.play_count, 3) if obj.play_count else None
 
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
@@ -354,7 +359,14 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
 
     def get_queryset(self, request):
-        return super().get_queryset(request).annotate(play_count=get_play_count_expression())
+        return (
+            super().get_queryset(request)
+            .annotate(
+                play_count=Subquery(
+                    PodcastContentAudioRequestLog.objects.get_play_count_query(episode=OuterRef("pk"))
+                ),
+            )
+        )
 
     def handle_audio_file(self, instance: Episode, audio_file: UploadedFile):
         suffix = "." + audio_file.name.split(".")[-1]
@@ -376,7 +388,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
-        return round(obj.play_count, 3)
+        return round(obj.play_count, 3) if obj.play_count else None
 
     @admin.display(description="podcast", ordering="podcast")
     def podcast_link(self, obj: Episode):
