@@ -2,9 +2,10 @@ import json
 import math
 import os
 import re
+from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-from typing import BinaryIO, Generator, TypedDict
+from typing import BinaryIO, Generator, Literal, TypedDict
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
@@ -12,18 +13,65 @@ from PIL import Image
 from pydub import AudioSegment
 
 
-class UserAgentDict(TypedDict):
+UserAgentType = Literal["bot", "app", "library", "browser"]
+
+
+@dataclass
+class UserAgentData:
+    user_agent: str
+    type: UserAgentType
+    name: str
+    is_bot: bool
+    device_name: str | None = None
+    device_category: Literal["smart_speaker", "mobile", "smart_tv", "watch", "computer", "auto"] | None = None
+    referrer_name: str | None = None
+    referrer_category: Literal["host", "app"] | None = None
+
+    @classmethod
+    # pylint: disable=redefined-builtin
+    def from_dicts(
+        cls,
+        user_agent: str,
+        type: UserAgentType,
+        ua_dict: "UserAgentDict",
+        device: "DeviceDict | None",
+        referrer: "ReferrerDict | None",
+    ):
+        return cls(
+            user_agent=user_agent,
+            type=type,
+            name=ua_dict["name"],
+            is_bot=type == "bot" or ua_dict.get("category") == "bot",
+            device_name=device["name"] if device else None,
+            device_category=device["category"] if device else None,
+            referrer_name=referrer["name"] if referrer else None,
+            referrer_category=referrer["category"] if referrer else None,
+        )
+
+
+class BaseUserAgentDict(TypedDict):
     name: str
     pattern: str
-    category: str | None
-    description: str | None
-    svg: str | None
     comments: str | None
-    urls: list[str] | None
+    description: str | None
     examples: list[str] | None
+    svg: str | None
+    urls: list[str] | None
 
 
-user_agent_dict_cache: dict[str, list[UserAgentDict]] = {}
+class UserAgentDict(BaseUserAgentDict):
+    category: Literal["bot"] | None
+
+
+class DeviceDict(BaseUserAgentDict):
+    category: Literal["smart_speaker", "mobile", "smart_tv", "watch", "computer", "auto"]
+
+
+class ReferrerDict(BaseUserAgentDict):
+    category: Literal["host", "app"]
+
+
+user_agent_dict_cache: dict[str, list] = {}
 
 
 def delete_storage_file(file: FieldFile):
@@ -68,16 +116,42 @@ def get_audio_file_dbfs_array(file: BinaryIO, format_name: str) -> list[float]:
     return [dbfs * multiplier for dbfs in dbfs_values]
 
 
-def get_useragent_dict(user_agent: str) -> tuple[str, UserAgentDict] | tuple[None, None]:
-    basenames = [("bot", "bots"), ("app", "apps"), ("library", "libraries"), ("browser", "browsers")]
+def get_useragent_data(user_agent: str) -> UserAgentData | None:
+    basenames: list[tuple[UserAgentType, str]] = [
+        ("bot", "bots"),
+        ("app", "apps"),
+        ("library", "libraries"),
+        ("browser", "browsers"),
+    ]
+
     for key, basename in basenames:
-        for data in get_useragent_dicts(basename):
-            if re.search(data["pattern"], user_agent):
-                return key, data
-    return None, None
+        ua_dict: UserAgentDict | None = get_useragent_dict_from_file(basename, user_agent)
+        if ua_dict:
+            device: DeviceDict | None = get_useragent_dict_from_file("devices", user_agent) if key != "bot" else None
+            referrer: ReferrerDict | None = (
+                get_useragent_dict_from_file("referrers", user_agent)
+                if key == "browser" else None
+            )
+
+            return UserAgentData.from_dicts(
+                user_agent=user_agent,
+                type=key,
+                ua_dict=ua_dict,
+                device=device,
+                referrer=referrer,
+            )
+
+    return None
 
 
-def get_useragent_dicts(basename: str) -> list[UserAgentDict]:
+def get_useragent_dict_from_file(basename: str, user_agent: str):
+    for ua_dict in get_useragent_dicts(basename):
+        if re.search(ua_dict["pattern"], user_agent):
+            return ua_dict
+    return None
+
+
+def get_useragent_dicts(basename: str):
     from podcasts import utils
 
     cached = utils.user_agent_dict_cache.get(basename, None)

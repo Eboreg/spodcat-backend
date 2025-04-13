@@ -8,7 +8,6 @@ from logs.models import (
     PodcastContentRequestLog,
     PodcastRequestLog,
     PodcastRssRequestLog,
-    UserAgentType,
 )
 from podcasts.models.episode import Episode
 from podcasts.models.post import Post
@@ -25,31 +24,14 @@ class LogAdmin(admin.ModelAdmin):
         return False
 
 
-class UserAgentTypeFilter(admin.SimpleListFilter):
-    parameter_name = "user_agent_type"
-    title = "user agent type"
-
-    def lookups(self, request, model_admin):
-        return [
-            ("except_bot", "All except Bot"),
-            *UserAgentType.choices,
-        ]
-
-    def queryset(self, request, queryset):
-        if not self.value():
-            return queryset
-        if self.value() == "except_bot":
-            return queryset.exclude(user_agent_type=UserAgentType.BOT)
-        return queryset.filter(user_agent_type=self.value())
-
-
 @admin.register(PodcastRequestLog, PodcastRssRequestLog)
 class PodcastRequestLogAdmin(LogAdmin):
-    list_display = ["created", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
+    list_display = ["created", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type", "is_bot"]
     list_filter = [
         "created",
+        "is_bot",
         ("podcast", admin.RelatedOnlyFieldListFilter),
-        UserAgentTypeFilter,
+        "user_agent_type",
     ]
 
     def get_queryset(self, request):
@@ -66,11 +48,20 @@ class PodcastRequestLogAdmin(LogAdmin):
 
 @admin.register(PodcastContentRequestLog)
 class PodcastContentRequestLogAdmin(LogAdmin):
-    list_display = ["created", "content_link", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
+    list_display = [
+        "created",
+        "content_link",
+        "podcast_link",
+        "remote_addr",
+        "user_agent_name",
+        "user_agent_type",
+        "is_bot",
+    ]
     list_filter = [
         "created",
+        "is_bot",
         ("content__podcast", admin.RelatedOnlyFieldListFilter),
-        UserAgentTypeFilter,
+        "user_agent_type",
         ("content", admin.RelatedOnlyFieldListFilter),
     ]
 
@@ -110,14 +101,15 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "podcast_link",
         "remote_addr",
         "percent_fetched",
-        "seconds_fetched",
         "user_agent_name",
         "user_agent_type",
+        "is_bot",
     ]
     list_filter = [
         "created",
         ("podcast", admin.RelatedOnlyFieldListFilter),
-        UserAgentTypeFilter,
+        "is_bot",
+        "user_agent_type",
         ("episode", admin.RelatedOnlyFieldListFilter),
     ]
 
@@ -150,7 +142,3 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
             url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
             name=str(obj.podcast),
         )
-
-    @admin.display(description="seconds fetched")
-    def seconds_fetched(self, obj):
-        return obj.seconds_fetched

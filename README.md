@@ -21,3 +21,15 @@ https://stackoverflow.com/questions/17408927/do-http-range-headers-work-with-azu
 
 See current latest version:
 https://learn.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-azure-storage-services
+
+
+## user-agents-v2
+
+1. bots.json
+2. apps.json
+   1. devices.json
+3. libraries.json
+   1. devices.json
+4. browsers.json
+   1. devices.json
+   2. referrers.json

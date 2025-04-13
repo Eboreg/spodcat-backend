@@ -12,7 +12,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from logs.models import PodcastRssRequestLog
-from podcasts.utils import get_useragent_dict
+from podcasts.utils import get_useragent_data
 
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 except IndexError:
                     episode = None
 
-                ua_type, ua_dict = get_useragent_dict(row["UserAgentHeader"])
+                ua_data = get_useragent_data(row["UserAgentHeader"])
                 qs = parse_qs(urlparse(row["Uri"]).query)
 
                 rss_log_id = qs["_rsslog"][0] if "_rsslog" in qs else None
@@ -97,20 +97,25 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
 
                 result.append(
                     PodcastContentAudioRequestLog(
-                        podcast=podcast,
-                        episode=episode,
                         created=row["TimeGenerated"],
+                        device_category=ua_data.device_category if ua_data else None,
+                        device_name=ua_data.device_name if ua_data else None,
+                        duration_ms=row["DurationMs"],
+                        episode=episode,
+                        is_bot=ua_data.is_bot if ua_data else None,
+                        path_info=row["ObjectKey"],
+                        podcast=podcast,
+                        referrer=row["ReferrerHeader"],
+                        referrer_category=ua_data.referrer_category if ua_data else None,
+                        referrer_name=ua_data.referrer_name if ua_data else None,
                         remote_addr=remote_addr,
                         remote_host="",
-                        user_agent=row["UserAgentHeader"],
-                        referer=row["ReferrerHeader"],
-                        path_info=row["ObjectKey"],
-                        status_code=row["StatusCode"],
-                        duration_ms=row["DurationMs"],
                         response_body_size=row["ResponseBodySize"] or 0,
-                        user_agent_type=ua_type,
-                        user_agent_name=ua_dict["name"] if ua_dict else None,
                         rss_request_log=rss_request_log,
+                        status_code=row["StatusCode"],
+                        user_agent_name=ua_data.name if ua_data else None,
+                        user_agent_type=ua_data.type if ua_data else None,
+                        user_agent=row["UserAgentHeader"],
                     )
                 )
 
