@@ -233,7 +233,17 @@ class PodcastAdmin(admin.ModelAdmin):
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
-        return round(obj.play_count, 3) if obj.play_count else 0.0
+        if obj.play_count is None:
+            return 0.0
+
+        return format_html(
+            '<a href="{url}">{count}</a>',
+            url=(
+                reverse("admin:logs_podcastcontentaudiorequestlog_changelist") +
+                f"?podcast__slug__exact={obj.pk}"
+            ),
+            count=round(obj.play_count, 3),
+        )
 
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
@@ -266,7 +276,17 @@ class PodcastAdmin(admin.ModelAdmin):
 
     @admin.display(description="views", ordering="view_count")
     def view_count(self, obj):
-        return obj.view_count
+        if not obj.view_count:
+            return 0
+
+        return format_html(
+            '<a href="{url}">{count}</a>',
+            url=(
+                reverse("admin:logs_podcastrequestlog_changelist") +
+                f"?podcast__slug__exact={obj.pk}"
+            ),
+            count=obj.view_count,
+        )
 
 
 class EpisodeSongInline(admin.TabularInline):
@@ -393,7 +413,17 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
-        return round(obj.play_count, 3) if obj.play_count else 0.0
+        if obj.play_count is None:
+            return 0.0
+
+        return format_html(
+            '<a href="{url}">{count}</a>',
+            url=(
+                reverse("admin:logs_podcastcontentaudiorequestlog_changelist") +
+                f"?episode__podcastcontent_ptr__exact={obj.pk}"
+            ),
+            count=round(obj.play_count, 3),
+        )
 
     @admin.display(description="podcast", ordering="podcast")
     def podcast_link(self, obj: Episode):
@@ -430,7 +460,17 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
     @admin.display(description="views", ordering="view_count")
     def view_count(self, obj):
-        return obj.view_count
+        if not obj.view_count:
+            return 0
+
+        return format_html(
+            '<a href="{url}">{count}</a>',
+            url=(
+                reverse("admin:logs_podcastcontentrequestlog_changelist") +
+                f"?content__id__exact={obj.pk}"
+            ),
+            count=obj.view_count,
+        )
 
 
 @admin.register(Post)

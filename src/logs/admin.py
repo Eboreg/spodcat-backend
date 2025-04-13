@@ -46,7 +46,11 @@ class UserAgentTypeFilter(admin.SimpleListFilter):
 @admin.register(PodcastRequestLog, PodcastRssRequestLog)
 class PodcastRequestLogAdmin(LogAdmin):
     list_display = ["created", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
-    list_filter = ["created", "podcast", UserAgentTypeFilter]
+    list_filter = [
+        "created",
+        ("podcast", admin.RelatedOnlyFieldListFilter),
+        UserAgentTypeFilter,
+    ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("podcast")
@@ -63,7 +67,12 @@ class PodcastRequestLogAdmin(LogAdmin):
 @admin.register(PodcastContentRequestLog)
 class PodcastContentRequestLogAdmin(LogAdmin):
     list_display = ["created", "content_link", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
-    list_filter = ["created", "content__podcast", UserAgentTypeFilter]
+    list_filter = [
+        "created",
+        ("content__podcast", admin.RelatedOnlyFieldListFilter),
+        UserAgentTypeFilter,
+        ("content", admin.RelatedOnlyFieldListFilter),
+    ]
 
     @admin.display(description="content", ordering="content__name")
     def content_link(self, obj: PodcastContentRequestLog):
@@ -105,7 +114,12 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "user_agent_name",
         "user_agent_type",
     ]
-    list_filter = ["created", "podcast", UserAgentTypeFilter]
+    list_filter = [
+        "created",
+        ("podcast", admin.RelatedOnlyFieldListFilter),
+        UserAgentTypeFilter,
+        ("episode", admin.RelatedOnlyFieldListFilter),
+    ]
 
     @admin.display(description="episode", ordering="episode__name")
     def episode_link(self, obj: PodcastContentAudioRequestLog):
