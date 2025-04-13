@@ -145,6 +145,9 @@ AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", "podcast-backend")
 AZURE_LOCATION = ENVIRONMENT
 AZURE_SUBSCRIPTION_ID = os.environ.get("AZURE_SUBSCRIPTION_ID")
 AZURE_RESOURCE_GROUP = os.environ.get("AZURE_RESOURCE_GROUP")
+AZURE_TENANT_ID = os.environ.get("AZURE_TENANT_ID")
+AZURE_CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
+AZURE_CLIENT_SECRET = os.environ.get("AZURE_CLIENT_SECRET")
 
 STORAGES = {
     "default": {"BACKEND": "storages.backends.azure_storage.AzureStorage"},
