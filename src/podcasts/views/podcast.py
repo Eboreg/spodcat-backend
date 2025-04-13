@@ -18,7 +18,6 @@ from logs.models import PodcastRequestLog, PodcastRssRequestLog
 from podcasts import serializers
 from podcasts.models import Podcast, PodcastContent
 from podcasts.models.episode import Episode
-from podcasts.utils import get_useragent_dict
 
 
 class PodcastFeedGenerator(FeedGenerator):
@@ -61,9 +60,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         episode_qs = Episode.objects.filter(podcast=podcast, published__lte=timezone.now(), is_draft=False)
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
-        ua_type, _ = get_useragent_dict(request.META.get("HTTP_USER_AGENT", ""))
 
-        PodcastRssRequestLog.create(request=request, podcast=podcast)
+        rss_request_log = PodcastRssRequestLog.create(request=request, podcast=podcast)
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
@@ -102,11 +100,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             if episode.image:
                 fe.podcast.itunes_image(episode.image.url)
             if episode.audio_file:
-                audio_url = episode.audio_file.url
-                if ua_type:
-                    audio_url += "?_from=" + ua_type
                 fe.enclosure(
-                    url=audio_url,
+                    url=f"{episode.audio_file.url}?_rsslog={rss_request_log.pk}",
                     type=episode.audio_content_type,
                     length=episode.audio_file_length,
                 )

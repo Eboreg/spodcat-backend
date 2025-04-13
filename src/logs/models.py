@@ -99,6 +99,11 @@ class PodcastContentAudioRequestLog(AbstractPodcastRequestLog):
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="audio_requests")
     response_body_size = models.IntegerField()
     status_code = models.CharField(max_length=10)
-    rss_user_agent_type = models.CharField(max_length=10, null=True, default=None, choices=UserAgentType.choices)
+    rss_request_log = models.ForeignKey(
+        "logs.PodcastRssRequestLog",
+        on_delete=models.SET_NULL,
+        null=True,
+        default=None,
+    )
 
     objects = PodcastContentAudioRequestLogQuerySet.as_manager()

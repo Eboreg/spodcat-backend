@@ -11,6 +11,7 @@ from azure.monitor.query import (
 from django.conf import settings
 from django.utils import timezone
 
+from logs.models import PodcastRssRequestLog
 from podcasts.utils import get_useragent_dict
 
 
@@ -88,7 +89,9 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
 
                 ua_type, ua_dict = get_useragent_dict(row["UserAgentHeader"])
                 qs = parse_qs(urlparse(row["Uri"]).query)
-                rss_user_agent_type = qs["_from"][0] if "_from" in qs else None
+
+                rss_log_id = qs["_rsslog"][0] if "_rsslog" in qs else None
+                rss_request_log = PodcastRssRequestLog.objects.filter(pk=rss_log_id).first() if rss_log_id else None
 
                 remote_addr = row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None
 
@@ -105,9 +108,9 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                         status_code=row["StatusCode"],
                         duration_ms=row["DurationMs"],
                         response_body_size=row["ResponseBodySize"] or 0,
-                        rss_user_agent_type=rss_user_agent_type,
                         user_agent_type=ua_type,
                         user_agent_name=ua_dict["name"] if ua_dict else None,
+                        rss_request_log=rss_request_log,
                     )
                 )
 
