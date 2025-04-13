@@ -11,7 +11,6 @@ from logs.models import (
 )
 from podcasts.models.episode import Episode
 from podcasts.models.post import Post
-from podcasts.utils import get_useragent_dict, get_useragent_dict_by_slug
 
 
 class LogAdmin(admin.ModelAdmin):
@@ -27,8 +26,8 @@ class LogAdmin(admin.ModelAdmin):
 
 @admin.register(PodcastRequestLog, PodcastRssRequestLog)
 class PodcastRequestLogAdmin(LogAdmin):
-    list_display = ["created", "podcast_link", "remote_addr", "remote_host"]
-    list_filter = ["created", "podcast"]
+    list_display = ["created", "podcast_link", "remote_addr", "user_agent_type"]
+    list_filter = ["created", "podcast", "user_agent_type"]
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("podcast")
@@ -44,8 +43,8 @@ class PodcastRequestLogAdmin(LogAdmin):
 
 @admin.register(PodcastContentRequestLog)
 class PodcastContentRequestLogAdmin(LogAdmin):
-    list_display = ["created", "content_link", "podcast_link", "remote_addr", "remote_host"]
-    list_filter = ["created", "content__podcast"]
+    list_display = ["created", "content_link", "podcast_link", "remote_addr", "user_agent_type"]
+    list_filter = ["created", "content__podcast", "user_agent_type"]
 
     @admin.display(description="content", ordering="content__name")
     def content_link(self, obj: PodcastContentRequestLog):
@@ -82,12 +81,12 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "episode_link",
         "podcast_link",
         "remote_addr",
-        "user_agent_name",
-        "rss_user_agent_name",
+        "user_agent_type",
+        "rss_user_agent_type",
         "percent_fetched",
         "seconds_fetched",
     ]
-    list_filter = ["created", "podcast"]
+    list_filter = ["created", "podcast", "user_agent_type"]
 
     @admin.display(description="episode", ordering="episode__name")
     def episode_link(self, obj: PodcastContentAudioRequestLog):
@@ -119,19 +118,6 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
             name=str(obj.podcast),
         )
 
-    @admin.display(description="RSS user agent")
-    def rss_user_agent_name(self, obj: PodcastContentAudioRequestLog):
-        if obj.rss_user_agent_slug:
-            data = get_useragent_dict_by_slug(obj.rss_user_agent_slug)
-            if data:
-                return data["name"]
-        return None
-
     @admin.display(description="seconds fetched")
     def seconds_fetched(self, obj):
         return obj.seconds_fetched
-
-    @admin.display(description="user agent")
-    def user_agent_name(self, obj: PodcastContentAudioRequestLog):
-        data = get_useragent_dict(obj.user_agent)
-        return data["name"] if data else None

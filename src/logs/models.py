@@ -5,6 +5,7 @@ from klaatu_django.db import TruncatedCharField
 from rest_framework.request import Request
 
 from logs.querysets import PodcastContentAudioRequestLogQuerySet
+from podcasts.utils import get_useragent_dict
 
 
 if TYPE_CHECKING:
@@ -12,12 +13,19 @@ if TYPE_CHECKING:
 
 
 class AbstractRequestLog(models.Model):
+    class UserAgentType(models.TextChoices):
+        BOT = "bot"
+        APP = "app"
+        LIBRARY = "library"
+        BROWSER = "browser"
+
     created = models.DateTimeField(auto_now_add=True)
     path_info = TruncatedCharField(max_length=200, blank=True)
     referer = TruncatedCharField(max_length=100, blank=True)
     remote_addr = models.GenericIPAddressField(blank=True, null=True, max_length=50)
     remote_host = TruncatedCharField(max_length=100, blank=True)
     user_agent = TruncatedCharField(max_length=200, blank=True)
+    user_agent_type = models.CharField(max_length=10, null=True, default=None, choices=UserAgentType.choices)
 
     class Meta:
         abstract = True
@@ -27,12 +35,15 @@ class AbstractRequestLog(models.Model):
 
     @classmethod
     def create(cls, request: Request, **kwargs):
+        ua_type, _ = get_useragent_dict(request.headers.get("User-Agent", ""))
+
         return cls.objects.create(
             remote_host=request.META.get("REMOTE_HOST", ""),
             remote_addr=request.META.get("REMOTE_ADDR", ""),
             user_agent=request.headers.get("User-Agent", ""),
             referer=request.headers.get("Referer", ""),
             path_info=request.path_info,
+            user_agent_type=ua_type,
             **kwargs,
         )
 
@@ -85,6 +96,6 @@ class PodcastContentAudioRequestLog(AbstractPodcastRequestLog):
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="audio_requests")
     response_body_size = models.IntegerField()
     status_code = models.CharField(max_length=10)
-    rss_user_agent_slug = models.CharField(max_length=50, null=True, default=None)
+    rss_user_agent_type = models.CharField(max_length=10, null=True, default=None)
 
     objects = PodcastContentAudioRequestLogQuerySet.as_manager()

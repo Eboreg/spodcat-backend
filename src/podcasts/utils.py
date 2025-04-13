@@ -1,15 +1,29 @@
 import json
 import math
 import os
+import re
 from io import BytesIO
 from pathlib import Path
-from typing import BinaryIO, Generator
+from typing import BinaryIO, Generator, TypedDict
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
-from klaatu_python.utils import getitem0_nullable
 from PIL import Image
 from pydub import AudioSegment
+
+
+class UserAgentDict(TypedDict):
+    name: str
+    pattern: str
+    category: str | None
+    description: str | None
+    svg: str | None
+    comments: str | None
+    urls: list[str] | None
+    examples: list[str] | None
+
+
+user_agent_dict_cache: dict[str, list[UserAgentDict]] = {}
 
 
 def delete_storage_file(file: FieldFile):
@@ -54,20 +68,32 @@ def get_audio_file_dbfs_array(file: BinaryIO, format_name: str) -> list[float]:
     return [dbfs * multiplier for dbfs in dbfs_values]
 
 
-def get_useragent_dicts() -> list[dict]:
-    json_path = (Path(__file__) / "../../../podcast-rss-useragents/src/rss-ua.json").resolve()
+def get_useragent_dict(user_agent: str) -> tuple[str, UserAgentDict] | tuple[None, None]:
+    basenames = [("bot", "bots"), ("app", "apps"), ("library", "libraries"), ("browser", "browsers")]
+    for key, basename in basenames:
+        for data in get_useragent_dicts(basename):
+            if re.search(data["pattern"], user_agent):
+                return key, data
+    return None, None
+
+
+def get_useragent_dicts(basename: str) -> list[UserAgentDict]:
+    from podcasts import utils
+
+    cached = utils.user_agent_dict_cache.get(basename, None)
+    if cached is not None:
+        return cached
+
+    dicts = []
+    json_path = (Path(__file__) / f"../../../user-agents-v2/src/{basename}.json").resolve()
+
     if json_path.is_file():
         with json_path.open("rt") as f:
-            return json.loads(f.read())
-    return []
+            dicts = json.loads(f.read()).get("entries", [])
 
+    utils.user_agent_dict_cache[basename] = dicts
 
-def get_useragent_dict(user_agent: str) -> dict | None:
-    return getitem0_nullable(get_useragent_dicts(), lambda d: d["pattern"] in user_agent)
-
-
-def get_useragent_dict_by_slug(slug: str) -> dict | None:
-    return getitem0_nullable(get_useragent_dicts(), lambda d: d["slug"] == slug)
+    return dicts
 
 
 def split_audio_file(file: BinaryIO, parts: int, format_name: str) -> Generator[AudioSegment, None, None]:

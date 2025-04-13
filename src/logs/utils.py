@@ -9,9 +9,9 @@ from azure.monitor.query import (
     LogsQueryStatus,
 )
 from django.conf import settings
-from django.db.models import F, FloatField, Sum, Value as V
-from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
+
+from podcasts.utils import get_useragent_dict
 
 
 if TYPE_CHECKING:
@@ -86,8 +86,9 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 except IndexError:
                     episode = None
 
+                ua_type, _ = get_useragent_dict(row["UserAgentHeader"])
                 qs = parse_qs(urlparse(row["Uri"]).query)
-                rss_user_agent_slug = qs["_from"][0] if "_from" in qs else None
+                rss_user_agent_type = qs["_from"][0] if "_from" in qs else None
 
                 remote_addr = row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None
 
@@ -104,7 +105,8 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                         status_code=row["StatusCode"],
                         duration_ms=row["DurationMs"],
                         response_body_size=row["ResponseBodySize"] or 0,
-                        rss_user_agent_slug=rss_user_agent_slug,
+                        rss_user_agent_type=rss_user_agent_type,
+                        user_agent_type=ua_type,
                     )
                 )
 
@@ -114,17 +116,3 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         return result
     except Exception as e:
         raise GetAudioRequestLogError(*e.args, podcast=podcast) from e
-
-
-def get_play_count_expression(prefix: str = ""):
-    if prefix:
-        prefix = prefix.strip("_") + "__"
-
-    return Coalesce(
-        Sum(
-            Cast(F(f"{prefix}audio_requests__response_body_size"), FloatField()) / F(f"{prefix}audio_file_length"),
-            distinct=True,
-        ),
-        V(0.0),
-        output_field=FloatField(),
-    )
