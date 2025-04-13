@@ -1,5 +1,6 @@
 import datetime
 from typing import TYPE_CHECKING
+from urllib.parse import parse_qs, urlparse
 
 from azure.identity import DefaultAzureCredential
 from azure.monitor.query import (
@@ -51,6 +52,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
             "ReferrerHeader",
             "ObjectKey",
             "ResponseBodySize",
+            "Uri",
         ])
         where = " and ".join([
             "OperationName == 'GetBlob'",
@@ -75,6 +77,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 # identical timestamps, so double check here:
                 if row["TimeGenerated"] <= from_date:
                     continue
+
                 try:
                     episode = [
                         ep for ep in episodes
@@ -82,6 +85,10 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                     ][0]
                 except IndexError:
                     episode = None
+
+                qs = parse_qs(urlparse(row["Uri"]).query)
+                rss_user_agent_slug = qs["_from"][0] if "_from" in qs else None
+
                 result.append(
                     PodcastContentAudioRequestLog(
                         podcast=podcast,
@@ -95,6 +102,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                         status_code=row["StatusCode"],
                         duration_ms=row["DurationMs"],
                         response_body_size=row["ResponseBodySize"] or 0,
+                        rss_user_agent_slug=rss_user_agent_slug,
                     )
                 )
 

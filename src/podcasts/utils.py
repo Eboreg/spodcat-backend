@@ -1,10 +1,13 @@
+import json
 import math
 import os
 from io import BytesIO
+from pathlib import Path
 from typing import BinaryIO, Generator
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
+from klaatu_python.utils import getitem0_nullable
 from PIL import Image
 from pydub import AudioSegment
 
@@ -49,6 +52,22 @@ def get_audio_file_dbfs_array(file: BinaryIO, format_name: str) -> list[float]:
     multiplier = 100 / max_dbfs
 
     return [dbfs * multiplier for dbfs in dbfs_values]
+
+
+def get_useragent_dicts() -> list[dict]:
+    json_path = (Path(__file__) / "../../../podcast-rss-useragents/src/rss-ua.json").resolve()
+    if json_path.is_file():
+        with json_path.open("rt") as f:
+            return json.loads(f.read())
+    return []
+
+
+def get_useragent_dict(user_agent: str) -> dict | None:
+    return getitem0_nullable(get_useragent_dicts(), lambda d: d["pattern"] in user_agent)
+
+
+def get_useragent_dict_by_slug(slug: str) -> dict | None:
+    return getitem0_nullable(get_useragent_dicts(), lambda d: d["slug"] == slug)
 
 
 def split_audio_file(file: BinaryIO, parts: int, format_name: str) -> Generator[AudioSegment, None, None]:

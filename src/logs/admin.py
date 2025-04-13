@@ -11,6 +11,7 @@ from logs.models import (
 )
 from podcasts.models.episode import Episode
 from podcasts.models.post import Post
+from podcasts.utils import get_useragent_dict, get_useragent_dict_by_slug
 
 
 class LogAdmin(admin.ModelAdmin):
@@ -76,7 +77,16 @@ class PodcastContentRequestLogAdmin(LogAdmin):
 
 @admin.register(PodcastContentAudioRequestLog)
 class PodcastContentAudioRequestLogAdmin(LogAdmin):
-    list_display = ["created", "episode_link", "podcast_link", "remote_addr", "percent_fetched", "seconds_fetched"]
+    list_display = [
+        "created",
+        "episode_link",
+        "podcast_link",
+        "remote_addr",
+        "user_agent_name",
+        "rss_user_agent_name",
+        "percent_fetched",
+        "seconds_fetched",
+    ]
     list_filter = ["created", "podcast"]
 
     @admin.display(description="episode", ordering="episode__name")
@@ -109,6 +119,19 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
             name=str(obj.podcast),
         )
 
+    @admin.display(description="RSS user agent")
+    def rss_user_agent_name(self, obj: PodcastContentAudioRequestLog):
+        if obj.rss_user_agent_slug:
+            data = get_useragent_dict_by_slug(obj.rss_user_agent_slug)
+            if data:
+                return data["name"]
+        return None
+
     @admin.display(description="seconds fetched")
     def seconds_fetched(self, obj):
         return obj.seconds_fetched
+
+    @admin.display(description="user agent")
+    def user_agent_name(self, obj: PodcastContentAudioRequestLog):
+        data = get_useragent_dict(obj.user_agent)
+        return data["name"] if data else None
