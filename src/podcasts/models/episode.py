@@ -5,15 +5,12 @@ import tempfile
 from io import BytesIO
 from time import struct_time
 from typing import IO, TYPE_CHECKING, Self
-from urllib.parse import urljoin
 
 import feedparser
 import requests
-from django.conf import settings
 from django.core.files import File
 from django.core.files.images import ImageFile
 from django.db import models
-from django.urls import reverse
 from klaatu_python.utils import getitem0_nullable
 from markdownify import markdownify
 from pydub.utils import mediainfo
@@ -63,10 +60,6 @@ class Episode(PodcastContent):
 
     objects: models.Manager[Self]
     songs: "RelatedManager[EpisodeSong]"
-
-    @property
-    def audio_url(self) -> str:
-        return urljoin(settings.ROOT_URL, reverse("episode-audio", args=(self.slug,)))
 
     def __str__(self):
         if self.number is not None:

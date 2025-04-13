@@ -62,7 +62,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
         model = Episode
 
     def get_audio_url(self, obj: Episode):
-        return obj.audio_url
+        return obj.audio_file.url if obj.audio_file else None
 
     def get_description_html(self, obj: Episode):
         return obj.description_html

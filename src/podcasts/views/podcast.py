@@ -30,12 +30,12 @@ class PodcastFeedEntry(FeedEntry):
 
 class PodcastViewSet(views.ReadOnlyModelViewSet):
     prefetch_for_includes = {
+        "authors": ["authors"],
         "categories": ["categories"],
         "contents": [
             Prefetch("contents", queryset=PodcastContent.objects.partial().visible().prefetch_related("songs")),
         ],
         "links": ["links"],
-        "authors": ["authors"],
     }
     queryset = Podcast.objects.all()
     serializer_class = serializers.PodcastSerializer
@@ -99,11 +99,12 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.podcast.itunes_duration(round(episode.duration_seconds))
             if episode.image:
                 fe.podcast.itunes_image(episode.image.url)
-            fe.enclosure(
-                url=episode.audio_url,
-                type=episode.audio_content_type,
-                length=episode.audio_file_length,
-            )
+            if episode.audio_file:
+                fe.enclosure(
+                    url=episode.audio_file.url,
+                    type=episode.audio_content_type,
+                    length=episode.audio_file_length,
+                )
             fe.guid(guid=str(episode.id), permalink=False)
             if authors:
                 fe.author(authors)
