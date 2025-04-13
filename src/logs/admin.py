@@ -26,7 +26,7 @@ class LogAdmin(admin.ModelAdmin):
 
 @admin.register(PodcastRequestLog, PodcastRssRequestLog)
 class PodcastRequestLogAdmin(LogAdmin):
-    list_display = ["created", "podcast_link", "remote_addr", "user_agent_type"]
+    list_display = ["created", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
     list_filter = ["created", "podcast", "user_agent_type"]
 
     def get_queryset(self, request):
@@ -43,7 +43,7 @@ class PodcastRequestLogAdmin(LogAdmin):
 
 @admin.register(PodcastContentRequestLog)
 class PodcastContentRequestLogAdmin(LogAdmin):
-    list_display = ["created", "content_link", "podcast_link", "remote_addr", "user_agent_type"]
+    list_display = ["created", "content_link", "podcast_link", "remote_addr", "user_agent_name", "user_agent_type"]
     list_filter = ["created", "content__podcast", "user_agent_type"]
 
     @admin.display(description="content", ordering="content__name")
@@ -83,6 +83,7 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "remote_addr",
         "percent_fetched",
         "seconds_fetched",
+        "user_agent_name",
         "user_agent_type",
     ]
     list_filter = ["created", "podcast", "user_agent_type"]

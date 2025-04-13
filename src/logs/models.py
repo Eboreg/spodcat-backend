@@ -26,6 +26,7 @@ class AbstractRequestLog(models.Model):
     remote_addr = models.GenericIPAddressField(blank=True, null=True, max_length=50)
     remote_host = TruncatedCharField(max_length=100, blank=True)
     user_agent = TruncatedCharField(max_length=200, blank=True)
+    user_agent_name = models.CharField(max_length=100, null=True, default=None)
     user_agent_type = models.CharField(max_length=10, null=True, default=None, choices=UserAgentType.choices)
 
     class Meta:
@@ -36,7 +37,7 @@ class AbstractRequestLog(models.Model):
 
     @classmethod
     def create(cls, request: Request, **kwargs):
-        ua_type, _ = get_useragent_dict(request.headers.get("User-Agent", ""))
+        ua_type, ua_dict = get_useragent_dict(request.headers.get("User-Agent", ""))
 
         return cls.objects.create(
             remote_host=request.META.get("REMOTE_HOST", ""),
@@ -45,6 +46,7 @@ class AbstractRequestLog(models.Model):
             referer=request.headers.get("Referer", ""),
             path_info=request.path_info,
             user_agent_type=ua_type,
+            user_agent_name=ua_dict["name"] if ua_dict else None,
             **kwargs,
         )
 

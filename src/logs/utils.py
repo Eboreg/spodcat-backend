@@ -86,7 +86,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 except IndexError:
                     episode = None
 
-                ua_type, _ = get_useragent_dict(row["UserAgentHeader"])
+                ua_type, ua_dict = get_useragent_dict(row["UserAgentHeader"])
                 qs = parse_qs(urlparse(row["Uri"]).query)
                 rss_user_agent_type = qs["_from"][0] if "_from" in qs else None
 
@@ -107,6 +107,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                         response_body_size=row["ResponseBodySize"] or 0,
                         rss_user_agent_type=rss_user_agent_type,
                         user_agent_type=ua_type,
+                        user_agent_name=ua_dict["name"] if ua_dict else None,
                     )
                 )
 
