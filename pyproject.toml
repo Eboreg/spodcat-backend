@@ -31,6 +31,7 @@ dependencies = [
     "feedparser",
     "markdownify",
     "azure-monitor-query",
+    "azure-identity",
 ]
 dynamic = ["version"]
 
