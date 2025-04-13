@@ -20,10 +20,10 @@ from martor.models import MartorField
 from pydub.utils import mediainfo
 
 from logs.models import (
-    AbstractRequestLog,
     PodcastContentAudioRequestLog,
     PodcastRequestLog,
     PodcastRssRequestLog,
+    UserAgentType,
 )
 from podcasts.fields import (
     AdminMartorWidget,
@@ -188,7 +188,7 @@ class PodcastAdmin(admin.ModelAdmin):
                 total_view_count=F("content_view_count") + F("view_count"),
                 play_count=Subquery(
                     PodcastContentAudioRequestLog.objects
-                    .exclude(user_agent_type=AbstractRequestLog.UserAgentType.BOT)
+                    .exclude(user_agent_type=UserAgentType.BOT)
                     .get_play_count_query(episode__podcast=OuterRef("slug"))
                 ),
             )
@@ -367,7 +367,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             .annotate(
                 play_count=Subquery(
                     PodcastContentAudioRequestLog.objects
-                    .exclude(user_agent_type=AbstractRequestLog.UserAgentType.BOT)
+                    .exclude(user_agent_type=UserAgentType.BOT)
                     .get_play_count_query(episode=OuterRef("pk"))
                 ),
             )

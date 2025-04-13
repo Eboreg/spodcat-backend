@@ -12,13 +12,14 @@ if TYPE_CHECKING:
     from podcasts.models import Episode, Podcast, PodcastContent
 
 
-class AbstractRequestLog(models.Model):
-    class UserAgentType(models.TextChoices):
-        BOT = "bot"
-        APP = "app"
-        LIBRARY = "library"
-        BROWSER = "browser"
+class UserAgentType(models.TextChoices):
+    BOT = "bot"
+    APP = "app"
+    LIBRARY = "library"
+    BROWSER = "browser"
 
+
+class AbstractRequestLog(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     path_info = TruncatedCharField(max_length=200, blank=True)
     referer = TruncatedCharField(max_length=100, blank=True)
@@ -96,6 +97,6 @@ class PodcastContentAudioRequestLog(AbstractPodcastRequestLog):
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="audio_requests")
     response_body_size = models.IntegerField()
     status_code = models.CharField(max_length=10)
-    rss_user_agent_type = models.CharField(max_length=10, null=True, default=None)
+    rss_user_agent_type = models.CharField(max_length=10, null=True, default=None, choices=UserAgentType.choices)
 
     objects = PodcastContentAudioRequestLogQuerySet.as_manager()

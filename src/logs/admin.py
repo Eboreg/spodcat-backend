@@ -81,7 +81,6 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "episode_link",
         "podcast_link",
         "remote_addr",
-        "rss_user_agent_type",
         "percent_fetched",
         "seconds_fetched",
         "user_agent_type",
