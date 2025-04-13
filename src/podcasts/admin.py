@@ -9,8 +9,7 @@ from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.db.models import Count, F, FloatField, Q, Sum, Value as V
-from django.db.models.functions import Cast, Coalesce
+from django.db.models import Count, F, Q
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -21,6 +20,7 @@ from martor.models import MartorField
 from pydub.utils import mediainfo
 
 from logs.models import PodcastRequestLog, PodcastRssRequestLog
+from logs.utils import get_play_count_expression
 from podcasts.fields import (
     AdminMartorWidget,
     ArtistAutocompleteWidget,
@@ -182,7 +182,7 @@ class PodcastAdmin(admin.ModelAdmin):
             .annotate(
                 view_count=Count("requests", distinct=True),
                 total_view_count=F("content_view_count") + F("view_count"),
-                play_count=Count("contents__audio_requests", distinct=True),
+                play_count=get_play_count_expression("contents__episode"),
             )
         )
 
@@ -225,7 +225,7 @@ class PodcastAdmin(admin.ModelAdmin):
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
-        return obj.play_count
+        return round(obj.play_count, 3)
 
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
@@ -354,16 +354,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
 
     def get_queryset(self, request):
-        return super().get_queryset(request).annotate(
-            play_count=Coalesce(
-                Sum(
-                    Cast(F("audio_requests__response_body_size"), FloatField()) / F("audio_file_length"),
-                    distinct=True,
-                ),
-                V(0.0),
-                output_field=FloatField(),
-            )
-        )
+        return super().get_queryset(request).annotate(play_count=get_play_count_expression())
 
     def handle_audio_file(self, instance: Episode, audio_file: UploadedFile):
         suffix = "." + audio_file.name.split(".")[-1]

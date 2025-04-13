@@ -8,6 +8,8 @@ from azure.monitor.query import (
     LogsQueryStatus,
 )
 from django.conf import settings
+from django.db.models import F, FloatField, Sum, Value as V
+from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
 
 
@@ -102,3 +104,17 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         return result
     except Exception as e:
         raise GetAudioRequestLogError(*e.args, podcast=podcast) from e
+
+
+def get_play_count_expression(prefix: str = ""):
+    if prefix:
+        prefix = prefix.strip("_") + "__"
+
+    return Coalesce(
+        Sum(
+            Cast(F(f"{prefix}audio_requests__response_body_size"), FloatField()) / F(f"{prefix}audio_file_length"),
+            distinct=True,
+        ),
+        V(0.0),
+        output_field=FloatField(),
+    )
