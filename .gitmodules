@@ -1,0 +1,3 @@
+[submodule "podcast-rss-useragents"]
+	path = podcast-rss-useragents
+	url = https://github.com/opawg/podcast-rss-useragents.git
