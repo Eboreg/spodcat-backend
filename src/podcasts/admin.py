@@ -20,6 +20,7 @@ from martor.models import MartorField
 from pydub.utils import mediainfo
 
 from logs.models import (
+    AbstractRequestLog,
     PodcastContentAudioRequestLog,
     PodcastRequestLog,
     PodcastRssRequestLog,
@@ -186,7 +187,9 @@ class PodcastAdmin(admin.ModelAdmin):
                 view_count=Count("requests", distinct=True),
                 total_view_count=F("content_view_count") + F("view_count"),
                 play_count=Subquery(
-                    PodcastContentAudioRequestLog.objects.get_play_count_query(episode__podcast=OuterRef("slug"))
+                    PodcastContentAudioRequestLog.objects
+                    .exclude(user_agent_type=AbstractRequestLog.UserAgentType.BOT)
+                    .get_play_count_query(episode__podcast=OuterRef("slug"))
                 ),
             )
         )
@@ -230,7 +233,7 @@ class PodcastAdmin(admin.ModelAdmin):
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
-        return round(obj.play_count, 3) if obj.play_count else None
+        return round(obj.play_count, 3) if obj.play_count else 0.0
 
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
@@ -363,7 +366,9 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             super().get_queryset(request)
             .annotate(
                 play_count=Subquery(
-                    PodcastContentAudioRequestLog.objects.get_play_count_query(episode=OuterRef("pk"))
+                    PodcastContentAudioRequestLog.objects
+                    .exclude(user_agent_type=AbstractRequestLog.UserAgentType.BOT)
+                    .get_play_count_query(episode=OuterRef("pk"))
                 ),
             )
         )
@@ -388,7 +393,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
-        return round(obj.play_count, 3) if obj.play_count else None
+        return round(obj.play_count, 3) if obj.play_count else 0.0
 
     @admin.display(description="podcast", ordering="podcast")
     def podcast_link(self, obj: Episode):
