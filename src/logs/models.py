@@ -67,7 +67,7 @@ class AbstractRequestLog(models.Model):
         return cls.objects.create(
             device_category=data.device_category if data else None,
             device_name=data.device_name if data else None,
-            is_bot=data.is_bot if data else False,
+            is_bot=data is not None and data.is_bot,
             path_info=request.path_info,
             referrer=request.headers.get("Referer", ""),
             referrer_category=data.referrer_category if data else None,
