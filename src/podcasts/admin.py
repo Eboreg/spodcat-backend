@@ -241,7 +241,7 @@ class PodcastAdmin(admin.ModelAdmin):
                 reverse("admin:logs_podcastcontentaudiorequestlog_changelist") +
                 f"?podcast__slug__exact={obj.pk}"
             ),
-            count=round(obj.play_count, 3),
+            count=round(obj.play_count, 2),
         )
 
     def save_form(self, request, form, change):
@@ -421,7 +421,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                 reverse("admin:logs_podcastcontentaudiorequestlog_changelist") +
                 f"?episode__podcastcontent_ptr__exact={obj.pk}"
             ),
-            count=round(obj.play_count, 3),
+            count=round(obj.play_count, 2),
         )
 
     @admin.display(description="podcast", ordering="podcast")
