@@ -16,8 +16,7 @@ from rest_framework_json_api import views
 
 from logs.models import PodcastRequestLog, PodcastRssRequestLog
 from podcasts import serializers
-from podcasts.models import Podcast, PodcastContent
-from podcasts.models.episode import Episode
+from podcasts.models import Episode, Podcast, PodcastContent
 
 
 class PodcastFeedGenerator(FeedGenerator):

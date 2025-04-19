@@ -1,8 +1,7 @@
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
-from podcasts.models.episode import Episode
-from podcasts.models.podcast import Podcast
+from podcasts.models import Episode, Podcast
 from podcasts.utils import delete_storage_file
 
 

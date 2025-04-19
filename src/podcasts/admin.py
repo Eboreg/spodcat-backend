@@ -1,79 +1,51 @@
+import logging
+import os
 import tempfile
 from functools import update_wrapper
 from threading import Thread
-from typing import BinaryIO
 
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.utils import unquote
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
+from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.db.models import Count, F, OuterRef, Q, Subquery
-from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from martor.models import MartorField
+from pydub import AudioSegment
 from pydub.utils import mediainfo
 
-from logs.models import (
-    PodcastContentAudioRequestLog,
-    PodcastRequestLog,
-    PodcastRssRequestLog,
+from logs.models import PodcastContentAudioRequestLog
+from podcasts.admin_filters import ArtistSongCountFilter
+from podcasts.admin_inlines import (
+    ArtistSongInline,
+    EpisodeSongInline,
+    PodcastLinkInline,
 )
-from podcasts.fields import (
-    AdminMartorWidget,
-    ArtistAutocompleteWidget,
-    ArtistMultipleChoiceField,
-    EpisodeSongForm,
-    seconds_to_timestamp,
-)
+from podcasts.forms import EpisodeSongForm, PodcastChangeSlugForm
 from podcasts.models import (
     Artist,
     Comment,
     Episode,
     EpisodeSong,
     Podcast,
-    PodcastLink,
     Post,
 )
-from podcasts.models.podcast_content import PodcastContent
-from podcasts.utils import delete_storage_file
+from podcasts.utils import (
+    delete_storage_file,
+    get_audio_segment_dbfs_array,
+    seconds_to_timestamp,
+)
+from podcasts.widgets import AdminMartorWidget
 
 
-class PodcastLinkInline(admin.TabularInline):
-    model = PodcastLink
-    extra = 0
-
-
-class PodcastChangeSlugForm(ModelForm):
-    class Meta:
-        fields = ["slug"]
-        model = Podcast
-
-    def clean_slug(self):
-        slug = self.cleaned_data["slug"]
-        if self.has_changed() and Podcast.objects.filter(slug=slug).exists():
-            raise ValidationError(f"Another podcast with slug={slug} exists.")
-        return slug
-
-    def save(self, commit=True):
-        if commit and self.has_changed():
-            assert isinstance(self.instance, Podcast)
-            old_instance = Podcast.objects.get(slug=self.initial["slug"])
-            self.instance.save()
-            self.instance.refresh_from_db()
-            self.instance.authors.set(old_instance.authors.all())
-            self.instance.categories.set(old_instance.categories.all())
-            self.instance.links.set(old_instance.links.all())
-            PodcastRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
-            PodcastRssRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
-            PodcastContent.objects.filter(podcast=old_instance).update(podcast=self.instance)
-            old_instance.delete()
-        return self.instance
+logger = logging.getLogger(__name__)
 
 
 @admin.register(Podcast)
@@ -288,34 +260,6 @@ class PodcastAdmin(admin.ModelAdmin):
         )
 
 
-class EpisodeSongInline(admin.TabularInline):
-    autocomplete_fields = ["artists"]
-    fields = ["episode", "timestamp", "name", "artists", "comment"]
-    form = EpisodeSongForm
-    model = EpisodeSong
-
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        if db_field.name == "artists":
-            kwargs["queryset"] = Artist.objects.all()
-            kwargs["widget"] = ArtistAutocompleteWidget(
-                field=db_field,
-                admin_site=self.admin_site,
-                using=kwargs.get("using"),
-            )
-            kwargs["required"] = False
-            return ArtistMultipleChoiceField(**kwargs)
-
-        return super().formfield_for_dbfield(db_field, request, **kwargs)
-
-    def get_extra(self, request, obj=None, **kwargs):
-        if obj is None:
-            return 10
-        return 3
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("artists")
-
-
 class BasePodcastContentAdmin(admin.ModelAdmin):
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
@@ -381,6 +325,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
 
     def get_queryset(self, request):
+        logger.info("get_queryset")
         return (
             super().get_queryset(request)
             .annotate(
@@ -392,23 +337,45 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             )
         )
 
-    def handle_audio_file(self, instance: Episode, audio_file: UploadedFile):
-        suffix = "." + audio_file.name.split(".")[-1]
+    def handle_audio_file_async(self, instance: Episode, audio_file: UploadedFile):
+        stem, extension = os.path.splitext(os.path.basename(audio_file.name))
+        suffix = extension.strip(".")
+        update_fields = ["dbfs_array", "duration_seconds"]
 
-        # pylint: disable=consider-using-with
-        file = tempfile.NamedTemporaryFile(suffix=suffix)
-        file.write(audio_file.read())
-        file.seek(0)
+        with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
+            temp_stem, _ = os.path.splitext(temp_file.name)
+            temp_file.write(audio_file.read())
+            temp_file.seek(0)
 
-        info = mediainfo(file.name)
-        instance.duration_seconds = float(info["duration"])
-        instance.audio_content_type = audio_file.content_type
-        instance.audio_file_length = audio_file.size
+            info = mediainfo(temp_file.name)
+            instance.duration_seconds = float(info["duration"])
+            audio: AudioSegment = AudioSegment.from_file(temp_file, info["format_name"])
+            max_dbfs = audio.max_dBFS
 
-        Thread(
-            target=self.update_audio_file_dbfs_array,
-            kwargs={"file": file, "format_name": info["format_name"], "instance": instance},
-        ).start()
+            if max_dbfs < 0:
+                dbfs = audio.dBFS
+                if dbfs < -14:
+                    gain = min(-max_dbfs, -dbfs - 14)
+                    logger.info("Applying %f dBFS gain to %s", gain, instance)
+                    audio = audio.apply_gain(gain)
+
+                    with audio.export(
+                        temp_stem + ".mp3",
+                        format="mp3",
+                        bitrate="192k",
+                        tags=info.get("TAG"),
+                    ) as new_file:
+                        delete_storage_file(instance.audio_file)
+                        instance.audio_file.save(name=stem + ".mp3", content=File(new_file), save=False)
+                        new_file.seek(0)
+                        instance.audio_content_type = "audio/mpeg"
+                        instance.audio_file_length = len(new_file.read())
+                        update_fields.extend(["audio_file", "audio_content_type", "audio_file_length"])
+
+        instance.dbfs_array = get_audio_segment_dbfs_array(audio)
+        instance.save(update_fields=update_fields)
+
+        logger.info("handle_audio_file_async finished for %s", instance)
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
@@ -443,19 +410,26 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             if "audio_file" in form.initial:
                 delete_storage_file(form.initial["audio_file"])
             if form.cleaned_data["audio_file"]:
-                self.handle_audio_file(instance, form.cleaned_data["audio_file"])
+                audio_file: UploadedFile = form.cleaned_data["audio_file"]
+                instance.audio_content_type = audio_file.content_type
+                instance.audio_file_length = audio_file.size
             else:
                 instance.duration_seconds = 0.0
                 instance.audio_content_type = ""
                 instance.audio_file_length = 0
                 instance.dbfs_array = []
 
+        logger.info("save_form finished for %s with audio_file=%s", instance, instance.audio_file)
         return instance
 
-    def update_audio_file_dbfs_array(self, instance: Episode, file: BinaryIO, format_name: str):
-        instance.update_audio_file_dbfs_array(file=file, format_name=format_name, save=True)
-        file.close()
-        print("update_audio_file_dbfs_array finished")
+    def save_model(self, request, obj: Episode, form, change):
+        super().save_model(request, obj, form, change)
+
+        if "audio_file" in form.changed_data and form.cleaned_data["audio_file"]:
+            Thread(
+                target=self.handle_audio_file_async,
+                kwargs={"audio_file": form.cleaned_data["audio_file"], "instance": obj},
+            ).start()
 
     @admin.display(description="views", ordering="view_count")
     def view_count(self, obj):
@@ -481,54 +455,6 @@ class PostAdmin(BasePodcastContentAdmin):
         "description",
     )
     list_display = ("name", "is_visible", "is_draft", "podcast", "published")
-
-
-class ArtistSongCountFilter(admin.SimpleListFilter):
-    parameter_name = "song_count"
-    title = "song count"
-
-    def lookups(self, request, model_admin):
-        return [
-            ("0", "0"),
-            ("1", "1"),
-            ("2-10", "2-10"),
-            ("10-", "10+"),
-        ]
-
-    def queryset(self, request, queryset):
-        if self.value() == "0":
-            return queryset.filter(song_count=0)
-        if self.value() == "1":
-            return queryset.filter(song_count=1)
-        if self.value() == "2-10":
-            return queryset.filter(song_count__gte=2, song_count__lte=10)
-        if self.value() == "10-":
-            return queryset.filter(song_count__gt=10)
-        return queryset
-
-
-class ArtistSongInline(admin.TabularInline):
-    extra = 0
-    fields = ["song", "episode"]
-    model = EpisodeSong.artists.through
-    readonly_fields = ["song", "episode"]
-    verbose_name = "song"
-    verbose_name_plural = "songs"
-
-    def episode(self, obj):
-        return obj.episodesong.episode
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("episodesong__episode")
-
-    def has_add_permission(self, request, obj):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return request.user.is_superuser
-
-    def song(self, obj):
-        return obj.episodesong.name
 
 
 @admin.register(Artist)

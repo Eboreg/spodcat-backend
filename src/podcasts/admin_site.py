@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Q
 
-from podcasts.models.comment import Comment
+from podcasts.models import Comment
 
 
 class AdminSite(admin.AdminSite):

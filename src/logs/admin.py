@@ -9,8 +9,7 @@ from logs.models import (
     PodcastRequestLog,
     PodcastRssRequestLog,
 )
-from podcasts.models.episode import Episode
-from podcasts.models.post import Post
+from podcasts.models import Episode, Post
 
 
 class LogAdmin(admin.ModelAdmin):
@@ -124,12 +123,7 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         return None
 
     def get_queryset(self, request):
-        return (
-            super().get_queryset(request)
-            .select_related("podcast", "episode")
-            .with_percent_fetched()
-            .with_seconds_fetched()
-        )
+        return super().get_queryset(request).select_related("podcast", "episode").with_percent_fetched()
 
     @admin.display(description="% fetched")
     def percent_fetched(self, obj):

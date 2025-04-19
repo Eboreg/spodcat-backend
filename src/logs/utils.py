@@ -12,11 +12,11 @@ from django.conf import settings
 from django.utils import timezone
 
 from logs.models import PodcastRssRequestLog
-from podcasts.utils import get_useragent_data
+from podcasts.user_agent import get_useragent_data
 
 
 if TYPE_CHECKING:
-    from podcasts.models.podcast import Podcast
+    from podcasts.models import Podcast
 
 
 class GetAudioRequestLogError(Exception):

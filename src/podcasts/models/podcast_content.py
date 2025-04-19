@@ -38,6 +38,7 @@ class PodcastContent(PolymorphicModel):
         constraints = [
             models.UniqueConstraint(fields=["slug", "podcast"], name="podcasts__podcastcontent__slug_podcast__uq"),
         ]
+        get_latest_by = "published"
 
     @property
     def description_html(self) -> str:

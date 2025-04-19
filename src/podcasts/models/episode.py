@@ -4,7 +4,7 @@ import mimetypes
 import tempfile
 from io import BytesIO
 from time import struct_time
-from typing import IO, TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self
 
 import feedparser
 import requests
@@ -44,9 +44,9 @@ def episode_image_path(instance: "Episode", filename: str):
 class Episode(PodcastContent):
     audio_content_type = models.CharField(max_length=100, blank=True)
     audio_file = models.FileField(upload_to=episode_audio_file_path, null=True, default=None, blank=True)
-    audio_file_length = models.PositiveIntegerField(blank=True, default=0)
+    audio_file_length = models.PositiveIntegerField(blank=True, default=0, db_index=True)
     dbfs_array = models.JSONField(blank=True, default=list)
-    duration_seconds = models.FloatField(blank=True, verbose_name="duration", default=0.0)
+    duration_seconds = models.FloatField(blank=True, verbose_name="duration", default=0.0, db_index=True)
     image = models.ImageField(null=True, default=None, blank=True, upload_to=episode_image_path)
     image_height = models.PositiveIntegerField(null=True, default=None)
     image_mimetype = models.CharField(max_length=50, null=True, default=None)
@@ -114,12 +114,6 @@ class Episode(PodcastContent):
             self.image_width = None
             self.image_thumbnail_height = None
             self.image_thumbnail_width = None
-        if save:
-            self.save()
-
-    def update_audio_file_dbfs_array(self, file: IO, format_name: str, save: bool = True):
-        self.dbfs_array = get_audio_file_dbfs_array(file, format_name)
-
         if save:
             self.save()
 
@@ -203,6 +197,6 @@ class Episode(PodcastContent):
                         self.audio_file_length = len(response.content)
                         file.seek(0)
                         logger.info("Updating dBFS array for audio file")
-                        self.update_audio_file_dbfs_array(file=file, format_name=info["format_name"], save=False)
+                        self.dbfs_array = get_audio_file_dbfs_array(file, info["format_name"])
 
         self.save()

@@ -6,7 +6,7 @@ from rest_framework.mixins import (
 from rest_framework.viewsets import GenericViewSet
 
 from podcasts import serializers
-from podcasts.models.challenge import Challenge
+from podcasts.models import Challenge
 
 
 class ChallengeViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):

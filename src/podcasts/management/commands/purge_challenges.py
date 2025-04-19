@@ -1,7 +1,7 @@
 from django.core.management import BaseCommand
 from django.utils import timezone
 
-from podcasts.models.challenge import Challenge
+from podcasts.models import Challenge
 
 
 class Command(BaseCommand):

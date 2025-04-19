@@ -219,9 +219,15 @@ LOGGING = {
             "class": "logging.StreamHandler",
         },
     },
-    "django": {
-        "handlers": ["console"],
-        "level": "WARNING",
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "WARNING",
+        },
+        "podcasts": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
     },
 }
 

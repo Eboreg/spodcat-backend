@@ -5,7 +5,7 @@ from klaatu_django.db import TruncatedCharField
 from rest_framework.request import Request
 
 from logs.querysets import PodcastContentAudioRequestLogQuerySet
-from podcasts.utils import get_useragent_data
+from podcasts.user_agent import get_useragent_data
 
 
 if TYPE_CHECKING:
@@ -127,7 +127,7 @@ class PodcastContentAudioRequestLog(AbstractPodcastRequestLog):
         default=None,
     )
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="audio_requests")
-    response_body_size = models.IntegerField()
+    response_body_size = models.IntegerField(db_index=True)
     rss_request_log = models.ForeignKey(
         "logs.PodcastRssRequestLog",
         on_delete=models.SET_NULL,
