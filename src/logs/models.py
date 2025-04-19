@@ -82,6 +82,9 @@ class AbstractRequestLog(ModelMixin, models.Model):
             **kwargs,
         )
 
+    def has_change_permission(self, request):
+        return False
+
 
 class AbstractPodcastRequestLog(AbstractRequestLog):
     podcast: "Podcast"

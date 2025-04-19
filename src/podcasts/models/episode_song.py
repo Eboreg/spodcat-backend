@@ -26,3 +26,11 @@ class EpisodeSong(ModelMixin, models.Model):
 
     def __str__(self):
         return self.name
+
+    # pylint: disable=no-member
+    def has_change_permission(self, request):
+        return (
+            request.user.is_superuser or
+            request.user == self.episode.podcast.owner or
+            request.user in self.episode.podcast.authors.all()
+        )

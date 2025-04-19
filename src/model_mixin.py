@@ -2,6 +2,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 from django.db.models.options import Options
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from polymorphic.models import PolymorphicModel
@@ -42,3 +43,9 @@ class ModelMixin:
         if params:
             url += "?" + urlencode(params)
         return url
+
+    def has_change_permission(self, request: HttpRequest):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request: HttpRequest):
+        return self.has_change_permission(request)

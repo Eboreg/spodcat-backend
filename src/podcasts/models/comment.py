@@ -28,3 +28,11 @@ class Comment(ModelMixin, models.Model):
     @property
     def text_html(self) -> str:
         return markdown(self.text, extensions=["nl2br", "smarty", MarkdownExtension()])
+
+    # pylint: disable=no-member
+    def has_change_permission(self, request):
+        return (
+            request.user.is_superuser or
+            request.user == self.podcast_content.podcast.owner or
+            request.user in self.podcast_content.podcast.authors.all()
+        )

@@ -21,6 +21,7 @@ from martor.models import MartorField
 from pydub import AudioSegment
 from pydub.utils import mediainfo
 
+from admin_mixin import AdminMixin
 from logs.models import (
     PodcastContentAudioRequestLog,
     PodcastContentRequestLog,
@@ -53,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 
 @admin.register(Podcast)
-class PodcastAdmin(admin.ModelAdmin):
+class PodcastAdmin(AdminMixin, admin.ModelAdmin):
     add_fields = (
         ("name", "slug"),
         "tagline",
@@ -185,17 +186,6 @@ class PodcastAdmin(admin.ModelAdmin):
             ),
         ] + super().get_urls()
 
-    def has_change_permission(self, request, obj=None):
-        return (
-            request.user.is_superuser or
-            obj is None or
-            request.user == obj.owner or
-            request.user in obj.authors.all()
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        return self.has_change_permission(request, obj)
-
     @admin.display(description="owner")
     def owner_link(self, obj: Podcast):
         return obj.owner.get_admin_link()
@@ -259,7 +249,7 @@ class PodcastAdmin(admin.ModelAdmin):
         return PodcastRequestLog.get_admin_list_link(text=obj.view_count, podcast__slug__exact=obj.pk)
 
 
-class BasePodcastContentAdmin(admin.ModelAdmin):
+class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
     formfield_overrides = {
         MartorField: {"widget": AdminMartorWidget},
     }
@@ -280,17 +270,6 @@ class BasePodcastContentAdmin(admin.ModelAdmin):
             .prefetch_related("podcast__authors")
             .annotate(view_count=Count("requests", distinct=True))
         )
-
-    def has_change_permission(self, request, obj=None):
-        return (
-            request.user.is_superuser or
-            obj is None or
-            request.user == obj.podcast.owner or
-            request.user in obj.podcast.authors.all()
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        return self.has_change_permission(request, obj)
 
 
 @admin.register(Episode)
@@ -463,7 +442,7 @@ class PostAdmin(BasePodcastContentAdmin):
 
 
 @admin.register(Artist)
-class ArtistAdmin(admin.ModelAdmin):
+class ArtistAdmin(AdminMixin, admin.ModelAdmin):
     inlines = [ArtistSongInline]
     list_display = ["name", "song_count"]
     list_filter = [ArtistSongCountFilter]
@@ -473,26 +452,13 @@ class ArtistAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(song_count=models.Count("songs"))
 
-    def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser or obj is None:
-            return True
-        return not (
-            Podcast.objects
-            .filter(contents__episode__songs__artists=obj)
-            .exclude(Q(authors=request.user) | Q(owner=request.user))
-            .exists()
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        return self.has_change_permission(request, obj)
-
     @admin.display(description="songs", ordering="song_count")
     def song_count(self, obj):
         return obj.song_count
 
 
 @admin.register(EpisodeSong)
-class EpisodeSongAdmin(admin.ModelAdmin):
+class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
     filter_horizontal = ["artists"]
     form = EpisodeSongForm
     list_display = ["name", "artists_str", "episode_str", "timestamp_str"]
@@ -526,17 +492,6 @@ class EpisodeSongAdmin(admin.ModelAdmin):
             .select_related("episode__podcast__owner")
         )
 
-    def has_change_permission(self, request, obj=None):
-        return (
-            request.user.is_superuser or
-            obj is None or
-            request.user == obj.episode.podcast.owner or
-            request.user in obj.episode.podcast.authors.all()
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        return self.has_change_permission(request, obj)
-
     @admin.display(description="timestamp", ordering="timestamp")
     def timestamp_str(self, obj: EpisodeSong):
         return seconds_to_timestamp(obj.timestamp)
@@ -548,7 +503,7 @@ def approve_comments(modeladmin, request, queryset):
 
 
 @admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
+class CommentAdmin(AdminMixin, admin.ModelAdmin):
     actions = [approve_comments]
     list_display = ["name", "truncated_text", "created", "is_approved", "content_link"]
     list_filter = ["is_approved", "podcast_content__podcast"]
@@ -575,17 +530,6 @@ class CommentAdmin(admin.ModelAdmin):
             .prefetch_related("podcast_content__podcast__authors")
             .select_related("podcast_content__podcast__owner")
         )
-
-    def has_change_permission(self, request, obj=None):
-        return (
-            request.user.is_superuser or
-            obj is None or
-            request.user == obj.podcast_content.podcast.owner or
-            request.user in obj.podcast_content.podcast.authors.all()
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        return self.has_change_permission(request, obj)
 
     @admin.display(description="text")
     def truncated_text(self, obj: Comment):

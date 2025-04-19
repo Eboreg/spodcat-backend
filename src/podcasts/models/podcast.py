@@ -172,6 +172,9 @@ class Podcast(ModelMixin, models.Model):
     def handle_uploaded_favicon(self, save: bool = False):
         downscale_image(self.favicon, max_width=100, max_height=100, save=save)
 
+    def has_change_permission(self, request):
+        return request.user.is_superuser or request.user == self.owner or request.user in self.authors.all()
+
     def update_from_feed(self, feed: feedparser.FeedParserDict):
         from podcasts.models import Category
         from users.models import User

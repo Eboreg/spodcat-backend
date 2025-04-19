@@ -72,6 +72,14 @@ class PodcastContent(ModelMixin, PolymorphicModel):
 
         return slug
 
+    # pylint: disable=no-member
+    def has_change_permission(self, request):
+        return (
+            request.user.is_superuser or
+            request.user == self.podcast.owner or
+            request.user in self.podcast.authors.all()
+        )
+
     @admin.display(
         boolean=True,
         description="visible",
