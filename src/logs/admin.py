@@ -99,7 +99,6 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "episode_link",
         "podcast_link",
         "remote_addr",
-        "percent_fetched",
         "user_agent_name",
         "user_agent_type",
         "is_bot",
@@ -123,11 +122,7 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         return None
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("podcast", "episode").with_percent_fetched()
-
-    @admin.display(description="% fetched")
-    def percent_fetched(self, obj):
-        return obj.percent_fetched
+        return super().get_queryset(request).select_related("podcast", "episode")
 
     @admin.display(description="podcast", ordering="podcast__name")
     def podcast_link(self, obj: PodcastContentAudioRequestLog):
