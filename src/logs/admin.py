@@ -13,6 +13,8 @@ from podcasts.models import Episode, Post
 
 
 class LogAdmin(admin.ModelAdmin):
+    ordering = ["-created"]
+
     def has_add_permission(self, request):
         return False
 
@@ -101,11 +103,12 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         "remote_addr",
         "user_agent_name",
         "user_agent_type",
+        "percent_fetched",
         "is_bot",
     ]
     list_filter = [
         "created",
-        ("podcast", admin.RelatedOnlyFieldListFilter),
+        ("episode__podcast", admin.RelatedOnlyFieldListFilter),
         "is_bot",
         "user_agent_type",
         ("episode", admin.RelatedOnlyFieldListFilter),
@@ -122,12 +125,18 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
         return None
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("podcast", "episode")
+        return super().get_queryset(request).select_related("episode__podcast").with_percent_fetched()
 
-    @admin.display(description="podcast", ordering="podcast__name")
+    @admin.display(description="% fetched", ordering="percent_fetched")
+    def percent_fetched(self, obj):
+        return obj.percent_fetched
+
+    @admin.display(description="podcast", ordering="episode__podcast__name")
     def podcast_link(self, obj: PodcastContentAudioRequestLog):
-        return format_html(
-            '<a class="nowrap" href="{url}">{name}</a>',
-            url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
-            name=str(obj.podcast),
-        )
+        if obj.episode:
+            return format_html(
+                '<a class="nowrap" href="{url}">{name}</a>',
+                url=reverse("admin:podcasts_podcast_change", args=(obj.episode.podcast.pk,)),
+                name=str(obj.episode.podcast),
+            )
+        return None

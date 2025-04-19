@@ -34,7 +34,7 @@ class ReferrerCategory(models.TextChoices):
 
 
 class AbstractRequestLog(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
     device_category = models.CharField(max_length=20, null=True, default=None, choices=DeviceCategory.choices)
     device_name = models.CharField(max_length=40, null=True, default=None)
     is_bot = models.BooleanField(default=False, db_index=True)
@@ -56,6 +56,7 @@ class AbstractRequestLog(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ["-created"]
 
     def __str__(self):
         return self.path_info
