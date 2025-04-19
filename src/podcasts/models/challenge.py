@@ -3,12 +3,14 @@ import uuid
 
 from django.db import models
 
+from model_mixin import ModelMixin
+
 
 def generate_term():
     return random.randint(1, 9)
 
 
-class Challenge(models.Model):
+class Challenge(ModelMixin, models.Model):
     NUMBER_STRINGS = ["noll", "ett", "två", "tre", "fyra", "fem", "sex", "sju", "åtta", "nio"]
 
     created = models.DateTimeField(auto_now_add=True)

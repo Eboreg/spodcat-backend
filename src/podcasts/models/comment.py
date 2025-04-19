@@ -1,14 +1,25 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 from markdown import markdown
 
+from model_mixin import ModelMixin
 from podcasts.markdown import MarkdownExtension
 
 
-class Comment(models.Model):
+if TYPE_CHECKING:
+    from podcasts.models import PodcastContent
+
+
+class Comment(ModelMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
     name = models.CharField(max_length=100)
-    podcast_content = models.ForeignKey("podcasts.PodcastContent", on_delete=models.CASCADE, related_name="comments")
+    podcast_content: "PodcastContent" = models.ForeignKey(
+        "podcasts.PodcastContent",
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
     text = models.TextField()
 
     class Meta:

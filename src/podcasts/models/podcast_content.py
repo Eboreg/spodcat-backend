@@ -12,6 +12,7 @@ from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
 from slugify import slugify
 
+from model_mixin import ModelMixin
 from podcasts.markdown import MarkdownExtension
 from podcasts.querysets import PodcastContentQuerySet
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from podcasts.models import Podcast
 
 
-class PodcastContent(PolymorphicModel):
+class PodcastContent(ModelMixin, PolymorphicModel):
     created = models.DateTimeField(auto_now_add=True)
     description = MartorField(null=True, default=None, blank=True)
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)

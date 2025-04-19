@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+from datetime import timedelta
 from functools import update_wrapper
 from threading import Thread
 
@@ -15,13 +16,16 @@ from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from martor.models import MartorField
 from pydub import AudioSegment
 from pydub.utils import mediainfo
 
-from logs.models import PodcastContentAudioRequestLog
+from logs.models import (
+    PodcastContentAudioRequestLog,
+    PodcastContentRequestLog,
+    PodcastRequestLog,
+)
 from podcasts.admin_filters import ArtistSongCountFilter
 from podcasts.admin_inlines import (
     ArtistSongInline,
@@ -85,6 +89,7 @@ class PodcastAdmin(admin.ModelAdmin):
         "view_count",
         "total_view_count",
         "play_count",
+        "play_time",
         "frontend_link",
     )
     readonly_fields = ("slug",)
@@ -92,15 +97,7 @@ class PodcastAdmin(admin.ModelAdmin):
 
     @admin.display(description="authors")
     def author_links(self, obj: Podcast):
-        return mark_safe(
-            "<br>".join(
-                format_html(
-                    '<a class="nowrap" href="{url}">{user}</a>',
-                    url=reverse("admin:users_user_change", args=(u.pk,)),
-                    user=str(u),
-                ) for u in obj.authors.all()
-            )
-        )
+        return mark_safe("<br>".join(u.get_admin_link() for u in obj.authors.all()))
 
     def change_slug_view(self, request: HttpRequest, object_id):
         obj = self.get_object(request, unquote(object_id))
@@ -162,6 +159,11 @@ class PodcastAdmin(admin.ModelAdmin):
                     .filter(is_bot=False)
                     .get_play_count_query(episode__podcast=OuterRef("slug"))
                 ),
+                play_time=Subquery(
+                    PodcastContentAudioRequestLog.objects
+                    .filter(is_bot=False)
+                    .get_play_time_query(episode__podcast=OuterRef("slug"))
+                ),
             )
         )
 
@@ -196,24 +198,28 @@ class PodcastAdmin(admin.ModelAdmin):
 
     @admin.display(description="owner")
     def owner_link(self, obj: Podcast):
-        return format_html(
-            '<a class="nowrap" href="{url}">{user}</a>',
-            url=reverse("admin:users_user_change", args=(obj.owner.pk,)),
-            user=str(obj.owner),
-        )
+        return obj.owner.get_admin_link()
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
         if obj.play_count is None:
             return 0.0
 
-        return format_html(
-            '<a href="{url}">{count}</a>',
-            url=(
-                reverse("admin:logs_podcastcontentaudiorequestlog_changelist") +
-                f"?podcast__slug__exact={obj.pk}"
-            ),
-            count=round(obj.play_count, 2),
+        return PodcastContentAudioRequestLog.get_admin_list_link(
+            text=round(obj.play_count, 2),
+            podcast__slug__exact=obj.pk,
+            is_bot__exact=0,
+        )
+
+    @admin.display(description="play time", ordering="play_time")
+    def play_time(self, obj):
+        if obj.play_time is None:
+            return timedelta()
+
+        return PodcastContentAudioRequestLog.get_admin_list_link(
+            text=obj.play_time,
+            podcast__slug__exact=obj.pk,
+            is_bot__exact=0,
         )
 
     def save_form(self, request, form, change):
@@ -250,14 +256,7 @@ class PodcastAdmin(admin.ModelAdmin):
         if not obj.view_count:
             return 0
 
-        return format_html(
-            '<a href="{url}">{count}</a>',
-            url=(
-                reverse("admin:logs_podcastrequestlog_changelist") +
-                f"?podcast__slug__exact={obj.pk}"
-            ),
-            count=obj.view_count,
-        )
+        return PodcastRequestLog.get_admin_list_link(text=obj.view_count, podcast__slug__exact=obj.pk)
 
 
 class BasePodcastContentAdmin(admin.ModelAdmin):
@@ -304,7 +303,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "audio_file",
         "image",
         "description",
-        "duration_seconds",
+        "duration",
         "audio_content_type",
         "audio_file_length",
     )
@@ -319,10 +318,14 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "published",
         "view_count",
         "play_count",
+        "play_time",
     )
     list_filter = ["is_draft", "published", "podcast"]
-    readonly_fields = ("duration_seconds", "audio_content_type", "audio_file_length", "slug")
+    readonly_fields = ("audio_content_type", "audio_file_length", "slug", "duration")
     search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
+
+    def duration(self, obj: Episode):
+        return timedelta(seconds=obj.duration_seconds)
 
     def get_queryset(self, request):
         logger.info("get_queryset")
@@ -334,6 +337,11 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                     .filter(is_bot=False)
                     .get_play_count_query(episode=OuterRef("pk"))
                 ),
+                play_time=Subquery(
+                    PodcastContentAudioRequestLog.objects
+                    .filter(is_bot=False)
+                    .get_play_time_query(episode=OuterRef("pk"))
+                )
             )
         )
 
@@ -382,22 +390,26 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         if obj.play_count is None:
             return 0.0
 
-        return format_html(
-            '<a href="{url}">{count}</a>',
-            url=(
-                reverse("admin:logs_podcastcontentaudiorequestlog_changelist") +
-                f"?episode__podcastcontent_ptr__exact={obj.pk}"
-            ),
-            count=round(obj.play_count, 2),
+        return PodcastContentAudioRequestLog.get_admin_list_link(
+            text=round(obj.play_count, 2),
+            episode__podcastcontent_ptr__exact=obj.pk,
+            is_bot__exact=0,
+        )
+
+    @admin.display(description="play time", ordering="play_time")
+    def play_time(self, obj):
+        if obj.play_time is None:
+            return timedelta()
+
+        return PodcastContentAudioRequestLog.get_admin_list_link(
+            text=obj.play_time,
+            episode__podcastcontent_ptr__exact=obj.pk,
+            is_bot__exact=0,
         )
 
     @admin.display(description="podcast", ordering="podcast")
     def podcast_link(self, obj: Episode):
-        return format_html(
-            '<a class="nowrap" href="{url}">{name}</a>',
-            url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
-            name=str(obj.podcast),
-        )
+        return obj.podcast.get_admin_link()
 
     def save_form(self, request, form, change):
         instance: Episode = super().save_form(request, form, change)
@@ -436,14 +448,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         if not obj.view_count:
             return 0
 
-        return format_html(
-            '<a href="{url}">{count}</a>',
-            url=(
-                reverse("admin:logs_podcastcontentrequestlog_changelist") +
-                f"?content__id__exact={obj.pk}"
-            ),
-            count=obj.view_count,
-        )
+        return PodcastContentRequestLog.get_admin_list_link(text=obj.view_count, content__id__exact=obj.pk)
 
 
 @admin.register(Post)
@@ -497,23 +502,11 @@ class EpisodeSongAdmin(admin.ModelAdmin):
 
     @admin.display(description="artists")
     def artists_str(self, obj: EpisodeSong):
-        return mark_safe(
-            "<br>".join(
-                format_html(
-                    '<a href="{url}">{name}</a>',
-                    url=reverse("admin:podcasts_artist_change", args=(a.pk,)),
-                    name=a.name,
-                ) for a in obj.artists.all()
-            )
-        )
+        return mark_safe("<br>".join(a.get_admin_link(text=a.name) for a in obj.artists.all()))
 
     @admin.display(description="episode", ordering="episode__number")
     def episode_str(self, obj: EpisodeSong):
-        return format_html(
-            '<a href="{url}">{name}</a>',
-            url=reverse("admin:podcasts_episode_change", args=(obj.episode.pk,)),
-            name=str(obj.episode),
-        )
+        return obj.episode.get_admin_link()
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
@@ -563,19 +556,7 @@ class CommentAdmin(admin.ModelAdmin):
 
     @admin.display(description="content")
     def content_link(self, obj: Comment):
-        content_class = obj.podcast_content.get_real_instance_class()
-        if content_class is Episode:
-            view = "admin:podcasts_episode_change"
-        elif content_class is Post:
-            view = "admin:podcasts_post_change"
-        else:
-            return ""
-
-        return format_html(
-            '<a href="{url}">{name}</a>',
-            url=reverse(view, args=(obj.podcast_content.pk,)),
-            name=str(obj.podcast_content),
-        )
+        return obj.podcast_content.get_real_instance().get_admin_link()
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)

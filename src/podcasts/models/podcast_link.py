@@ -1,11 +1,13 @@
 from django.db import models
 
+from model_mixin import ModelMixin
+
 
 def podcast_link_icon_path(instance: "PodcastLink", filename: str):
     return f"{instance.podcast.slug}/images/links/{filename}"
 
 
-class PodcastLink(models.Model):
+class PodcastLink(ModelMixin, models.Model):
     class Icon(models.TextChoices):
         FACEBOOK = "facebook", "Facebook"
         PATREON = "patreon", "Patreon"

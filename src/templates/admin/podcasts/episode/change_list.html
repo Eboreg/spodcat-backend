@@ -1,7 +1,8 @@
 {% extends "admin/change_list.html" %}
 
 {% block result_list %}
-<p><strong>Views</strong> = number of times the episode's details page has been requested.</p>
-<p><strong>Plays</strong> = number of times the episode's audio file has been downloaded <em>by a non-bot client</em> (as far as we're able to tell). May be a fraction because of partial downloads (common when streaming).</p>
+<p><code>VIEWS</code> = number of times the episode's details page has been requested.</p>
+<p><code>PLAYS</code> = number of times the episode's audio file has been downloaded <em>by a non-bot client</em> (as far as we're able to tell). May be a fraction because of partial downloads (common when streaming).</p>
+<p><code>PLAY TIME</code> = same as <code>PLAYS</code> but converted to a duration.</p>
 {{ block.super }}
 {% endblock result_list %}

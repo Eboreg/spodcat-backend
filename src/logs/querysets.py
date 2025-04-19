@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from django.db.models import (
+    DurationField,
     F,
     FloatField,
     IntegerField,
@@ -8,7 +9,7 @@ from django.db.models import (
     Sum,
     Value as V,
 )
-from django.db.models.functions import Cast, Coalesce
+from django.db.models.functions import Cast, Coalesce, Round
 
 
 if TYPE_CHECKING:
@@ -22,14 +23,32 @@ class PodcastContentAudioRequestLogQuerySet(QuerySet["PodcastContentAudioRequest
             .filter(**filters)
             .order_by()
             .values(*filters.keys())
-            .annotate(
-                play_count=Coalesce(
-                    Sum(Cast(F("response_body_size"), FloatField()) / F("episode__audio_file_length")),
-                    V(0.0),
-                    output_field=FloatField(),
-                ),
-            )
+            .with_quota_fetched_alias()
+            .annotate(play_count=Coalesce(Sum(F("quota_fetched")), V(0.0), output_field=FloatField()))
             .values("play_count")
+        )
+
+    def get_play_time_query(self, **filters):
+        return (
+            self
+            .filter(**filters)
+            .order_by()
+            .values(*filters.keys())
+            .with_play_time_alias()
+            .annotate(play_time=Sum(F("play_time")))
+            .values("play_time")
+        )
+
+    def with_play_time_alias(self):
+        return self.alias(
+            play_time=Cast(
+                Round(
+                    Cast(F("response_body_size"), FloatField()) /
+                    F("episode__audio_file_length") *
+                    F("episode__duration_seconds")
+                ) * V(1_000_000),
+                DurationField(),
+            )
         )
 
     def with_percent_fetched(self):
@@ -40,9 +59,4 @@ class PodcastContentAudioRequestLogQuerySet(QuerySet["PodcastContentAudioRequest
     def with_quota_fetched_alias(self):
         return self.alias(
             quota_fetched=Cast(F("response_body_size"), FloatField()) / F("episode__audio_file_length"),
-        )
-
-    def with_seconds_fetched(self):
-        return self.with_quota_fetched_alias().annotate(
-            seconds_fetched=Cast(F("quota_fetched") * F("episode__duration_seconds"), IntegerField()),
         )

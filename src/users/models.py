@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 
+from model_mixin import ModelMixin
 
-class User(AbstractUser):
+
+class User(ModelMixin, AbstractUser):
     ...

@@ -2,10 +2,11 @@ from html import escape
 
 from django.db import models
 
+from model_mixin import ModelMixin
 from podcasts.data import CATEGORIES
 
 
-class Category(models.Model):
+class Category(ModelMixin, models.Model):
     cat = models.CharField(max_length=50)
     sub = models.CharField(max_length=50, null=True, default=None)
 

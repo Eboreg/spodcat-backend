@@ -1,10 +1,22 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 
+from model_mixin import ModelMixin
 
-class EpisodeSong(models.Model):
-    artists = models.ManyToManyField("podcasts.Artist", related_name="songs", blank=True)
+
+if TYPE_CHECKING:
+    from podcasts.models import Artist, Episode
+
+
+class EpisodeSong(ModelMixin, models.Model):
+    artists: "models.ManyToManyField[Artist]" = models.ManyToManyField(
+        "podcasts.Artist",
+        related_name="songs",
+        blank=True,
+    )
     comment = models.CharField(max_length=100, null=True, default=None, blank=True)
-    episode = models.ForeignKey("podcasts.Episode", on_delete=models.CASCADE, related_name="songs")
+    episode: "Episode" = models.ForeignKey("podcasts.Episode", on_delete=models.CASCADE, related_name="songs")
     name = models.CharField(max_length=100)
     timestamp = models.PositiveIntegerField()
 

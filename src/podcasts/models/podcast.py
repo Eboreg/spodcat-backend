@@ -16,6 +16,7 @@ from markdown import markdown
 from markdownify import markdownify
 from martor.models import MartorField
 
+from model_mixin import ModelMixin
 from podcasts.markdown import MarkdownExtension
 from podcasts.utils import (
     delete_storage_file,
@@ -44,7 +45,7 @@ def podcast_image_path(instance: "Podcast", filename: str):
     return f"{instance.slug}/images/{filename}"
 
 
-class Podcast(models.Model):
+class Podcast(ModelMixin, models.Model):
     FONT_FAMILIES = [
         "Anton",
         "Deutsche Uncialis",

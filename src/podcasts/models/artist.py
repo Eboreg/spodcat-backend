@@ -1,8 +1,10 @@
 from django.db import models
 from django.db.models.functions import Lower
 
+from model_mixin import ModelMixin
 
-class Artist(models.Model):
+
+class Artist(ModelMixin, models.Model):
     name = models.CharField(max_length=100)
 
     class Meta:

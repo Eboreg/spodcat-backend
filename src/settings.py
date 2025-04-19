@@ -220,10 +220,6 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": "WARNING",
-        },
         "podcasts": {
             "handlers": ["console"],
             "level": "INFO",

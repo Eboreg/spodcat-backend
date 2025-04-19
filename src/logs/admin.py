@@ -1,6 +1,4 @@
 from django.contrib import admin
-from django.urls import reverse
-from django.utils.html import format_html
 
 from logs.models import (
     AbstractPodcastRequestLog,
@@ -9,7 +7,6 @@ from logs.models import (
     PodcastRequestLog,
     PodcastRssRequestLog,
 )
-from podcasts.models import Episode, Post
 
 
 class LogAdmin(admin.ModelAdmin):
@@ -40,11 +37,7 @@ class PodcastRequestLogAdmin(LogAdmin):
 
     @admin.display(description="podcast", ordering="podcast__name")
     def podcast_link(self, obj: AbstractPodcastRequestLog):
-        return format_html(
-            '<a class="nowrap" href="{url}">{name}</a>',
-            url=reverse("admin:podcasts_podcast_change", args=(obj.podcast.pk,)),
-            name=str(obj.podcast),
-        )
+        return obj.podcast.get_admin_link()
 
 
 @admin.register(PodcastContentRequestLog)
@@ -68,30 +61,14 @@ class PodcastContentRequestLogAdmin(LogAdmin):
 
     @admin.display(description="content", ordering="content__name")
     def content_link(self, obj: PodcastContentRequestLog):
-        content_class = obj.content.get_real_instance_class()
-        if content_class is Episode:
-            view = "admin:podcasts_episode_change"
-        elif content_class is Post:
-            view = "admin:podcasts_post_change"
-        else:
-            return ""
-
-        return format_html(
-            '<a href="{url}">{name}</a>',
-            url=reverse(view, args=(obj.content.pk,)),
-            name=str(obj.content),
-        )
+        return obj.content.get_admin_link()
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("content__podcast")
 
     @admin.display(description="podcast", ordering="content__podcast__name")
     def podcast_link(self, obj: PodcastContentRequestLog):
-        return format_html(
-            '<a class="nowrap" href="{url}">{name}</a>',
-            url=reverse("admin:podcasts_podcast_change", args=(obj.content.podcast.pk,)),
-            name=str(obj.content.podcast),
-        )
+        return obj.content.podcast.get_admin_link()
 
 
 @admin.register(PodcastContentAudioRequestLog)
@@ -117,11 +94,7 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
     @admin.display(description="episode", ordering="episode__name")
     def episode_link(self, obj: PodcastContentAudioRequestLog):
         if obj.episode:
-            return format_html(
-                '<a href="{url}">{name}</a>',
-                url=reverse("admin:podcasts_episode_change", args=(obj.episode.pk,)),
-                name=str(obj.episode),
-            )
+            return obj.episode.get_admin_link()
         return None
 
     def get_queryset(self, request):
@@ -134,9 +107,5 @@ class PodcastContentAudioRequestLogAdmin(LogAdmin):
     @admin.display(description="podcast", ordering="episode__podcast__name")
     def podcast_link(self, obj: PodcastContentAudioRequestLog):
         if obj.episode:
-            return format_html(
-                '<a class="nowrap" href="{url}">{name}</a>',
-                url=reverse("admin:podcasts_podcast_change", args=(obj.episode.podcast.pk,)),
-                name=str(obj.episode.podcast),
-            )
+            return obj.episode.podcast.get_admin_link()
         return None

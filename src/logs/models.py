@@ -5,6 +5,7 @@ from klaatu_django.db import TruncatedCharField
 from rest_framework.request import Request
 
 from logs.querysets import PodcastContentAudioRequestLogQuerySet
+from model_mixin import ModelMixin
 from podcasts.user_agent import get_useragent_data
 
 
@@ -33,7 +34,7 @@ class ReferrerCategory(models.TextChoices):
     HOST = "host"
 
 
-class AbstractRequestLog(models.Model):
+class AbstractRequestLog(ModelMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     device_category = models.CharField(max_length=20, null=True, default=None, choices=DeviceCategory.choices)
     device_name = models.CharField(max_length=40, null=True, default=None)
