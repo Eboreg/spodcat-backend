@@ -4,7 +4,6 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
-from django.utils import timezone
 from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
@@ -32,7 +31,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         "authors": ["authors"],
         "categories": ["categories"],
         "contents": [
-            Prefetch("contents", queryset=PodcastContent.objects.partial().visible().prefetch_related("songs")),
+            Prefetch("contents", queryset=PodcastContent.objects.partial().visible().with_has_songs()),
         ],
         "links": ["links"],
     }
@@ -56,7 +55,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         )
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
         categories = [c.to_dict() for c in podcast.categories.all()]
-        episode_qs = Episode.objects.filter(podcast=podcast, published__lte=timezone.now(), is_draft=False)
+        episode_qs = Episode.objects.filter(podcast=podcast).visible()
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 

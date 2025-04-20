@@ -1,5 +1,4 @@
 from django.db.models import Prefetch
-from django.utils import timezone
 
 from podcasts import serializers
 from podcasts.models import Comment, PodcastContent, Post
@@ -12,12 +11,10 @@ class PostViewSet(PodcastContentViewSet):
         "podcast.contents": [
             Prefetch(
                 "podcast__contents",
-                queryset=PodcastContent.objects.partial().visible().prefetch_related("songs"),
+                queryset=PodcastContent.objects.partial().visible().with_has_songs(),
             ),
         ],
         "__all__": [Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
     }
+    queryset = Post.objects.all()
     serializer_class = serializers.PostSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        return Post.objects.filter(published__lte=timezone.now(), is_draft=False)

@@ -16,22 +16,22 @@ dependencies = [
     "django-extensions",
     "djangorestframework",
     "djangorestframework-jsonapi[django-polymorphic,django-filter]",
-    "pillow",
-    "pydub",
-    "feedgen",
-    "iso639-lang",
-    "python-slugify",
+    "pillow",                   # thumbnail generation
+    "pydub",                    # generating dBFS arrays and normalising
+    "feedgen",                  # generating RSS feed
+    "iso639-lang",              # getting language choices for podcast
+    "python-slugify",           # generating slugs for podcast content
     "django-storages[azure]",
-    "whitenoise",
+    "whitenoise",               # serving static stuff
     "django-polymorphic",
     "mysqlclient",
-    "django-cors-headers",
+    "django-cors-headers",      # see settings.CORS_ALLOWED_ORIGINS
     "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
-    "martor",
-    "feedparser",
-    "markdownify",
-    "azure-monitor-query",
-    "azure-identity",
+    "martor",                   # Markdown editor for admin
+    "feedparser",               # importing RSS feed
+    "markdownify",              # convert HTML to Markdown when importing RSS feed
+    "azure-monitor-query",      # used by get_audio_request_logs
+    "azure-identity",           # used by get_audio_request_logs
 ]
 dynamic = ["version"]
 

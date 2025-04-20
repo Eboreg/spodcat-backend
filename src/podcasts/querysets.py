@@ -1,3 +1,4 @@
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from polymorphic.query import PolymorphicQuerySet
 
@@ -18,3 +19,8 @@ class PodcastContentQuerySet(PolymorphicQuerySet):
 
     def visible(self):
         return self.filter(published__lte=timezone.now(), is_draft=False)
+
+    def with_has_songs(self):
+        from podcasts.models import EpisodeSong
+
+        return self.annotate(has_songs=Exists(EpisodeSong.objects.filter(episode=OuterRef("pk"))))

@@ -1,4 +1,3 @@
-from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -17,7 +16,7 @@ class PodcastContentViewSet(views.ReadOnlyModelViewSet):
     serializer_class = serializers.PodcastContentSerializer
 
     def filter_queryset(self, queryset):
-        return super().filter_queryset(queryset).filter(published__lte=timezone.now(), is_draft=False)
+        return super().filter_queryset(queryset).visible()
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):

@@ -68,6 +68,8 @@ class EpisodeSerializer(serializers.ModelSerializer):
         return obj.description_html
 
     def get_has_songs(self, obj: Episode):
+        if hasattr(obj, "has_songs"):
+            return getattr(obj, "has_songs")
         return obj.songs.exists()
 
 
