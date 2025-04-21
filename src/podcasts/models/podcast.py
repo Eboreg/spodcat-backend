@@ -48,6 +48,7 @@ def podcast_image_path(instance: "Podcast", filename: str):
 class Podcast(ModelMixin, models.Model):
     FONT_FAMILIES = [
         "Anton",
+        "Bauhaus 93",
         "Deutsche Uncialis",
         "Fascinate Inline",
         "Futura Display BQ",

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class Comment(ModelMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=50)
     podcast_content: "PodcastContent" = models.ForeignKey(
         "podcasts.PodcastContent",
         on_delete=models.CASCADE,

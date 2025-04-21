@@ -159,7 +159,7 @@ class CommentSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_name(self, value: str):
-        return value[:100]
+        return value[:50]
 
     def validate_text(self, value: str):
         return strip_tags(value)
