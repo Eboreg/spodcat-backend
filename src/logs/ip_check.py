@@ -1,5 +1,8 @@
 import ipaddress
 from pathlib import Path
+from typing import TypedDict
+
+import geocoder
 from django.conf import settings
 from django.db import models
 
@@ -16,6 +19,28 @@ class IpAddressCategory(models.TextChoices):
     @property
     def is_bot(self):
         return self != IpAddressCategory.UNKNOWN
+
+
+class GeoProperties(TypedDict):
+    address: str
+    city: str
+    country: str
+    ip: str
+    lat: float
+    lng: float
+    ok: bool
+    org: str
+    postal: str
+    state: str
+    status: str
+
+
+def get_geo_properties(ip: str) -> GeoProperties | None:
+    geojson = geocoder.ip(ip).geojson
+    if geojson.get("features", []):
+        feature = geojson["features"][0]
+        return feature.get("properties", None)
+    return None
 
 
 ip_list_cache: dict[IpAddressCategory, list[ipaddress.IPv4Network | ipaddress.IPv6Network]] = {}

@@ -70,6 +70,10 @@ class ReferrerDict(BaseUserAgentDict):
 user_agent_dict_cache: dict[str, list] = {}
 
 
+def get_referrer_dict(referrer: str) -> ReferrerDict | None:
+    return get_dict_from_file("referrers", referrer)
+
+
 def get_useragent_data(user_agent: str, referrer: str | None = None) -> UserAgentData | None:
     basenames: list[tuple[UserAgentType, str]] = [
         ("bot", "bots"),
@@ -79,11 +83,12 @@ def get_useragent_data(user_agent: str, referrer: str | None = None) -> UserAgen
     ]
 
     for key, basename in basenames:
-        ua_dict: UserAgentDict | None = get_useragent_dict_from_file(basename, user_agent)
+        ua_dict: UserAgentDict | None = get_dict_from_file(basename, user_agent)
+
         if ua_dict:
-            device: DeviceDict | None = get_useragent_dict_from_file("devices", user_agent) if key != "bot" else None
+            device_dict: DeviceDict | None = get_dict_from_file("devices", user_agent) if key != "bot" else None
             ref_dict: ReferrerDict | None = (
-                get_useragent_dict_from_file("referrers", referrer)
+                get_dict_from_file("referrers", referrer)
                 if key == "browser" and referrer else None
             )
 
@@ -91,21 +96,21 @@ def get_useragent_data(user_agent: str, referrer: str | None = None) -> UserAgen
                 user_agent=user_agent,
                 type=key,
                 ua_dict=ua_dict,
-                device=device,
+                device=device_dict,
                 referrer=ref_dict,
             )
 
     return None
 
 
-def get_useragent_dict_from_file(basename: str, user_agent: str):
-    for ua_dict in get_useragent_dicts(basename):
-        if re.search(ua_dict["pattern"], user_agent):
+def get_dict_from_file(basename: str, value: str):
+    for ua_dict in get_dicts_from_file(basename):
+        if re.search(ua_dict["pattern"], value):
             return ua_dict
     return None
 
 
-def get_useragent_dicts(basename: str):
+def get_dicts_from_file(basename: str):
     from podcasts import user_agent
 
     cached = user_agent.user_agent_dict_cache.get(basename, None)
