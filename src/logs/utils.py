@@ -1,7 +1,4 @@
 import datetime
-import ipaddress
-import json
-from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urlparse
 
@@ -16,7 +13,6 @@ from django.utils import timezone
 
 
 if TYPE_CHECKING:
-    from logs.models import IpAddressCategory
     from podcasts.models import Podcast
 
 
@@ -115,52 +111,3 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         return result
     except Exception as e:
         raise GetAudioRequestLogError(*e.args, podcast=podcast) from e
-
-
-ip_prefix_cache: dict[str, list] = {}
-
-
-def get_ip_prefix_list(json_filename: str):
-    from logs import utils
-
-    cached = utils.ip_prefix_cache.get(json_filename, None)
-    if cached is not None:
-        return cached
-
-    json_path = Path(settings.BASE_DIR).resolve() / json_filename
-    with json_path.open("rt") as f:
-        prefixes = json.loads(f.read()).get("prefixes", [])
-    utils.ip_prefix_cache[json_filename] = prefixes
-    return prefixes
-
-
-def is_ip_in_prefix_list(ip: str, json_filename: str) -> bool:
-    ip_address = ipaddress.ip_address(ip)
-
-    for prefix in get_ip_prefix_list(json_filename):
-        if (
-            ip_address.version == 4 and
-            "ipv4Prefix" in prefix and
-            ip_address in ipaddress.ip_network(prefix["ipv4Prefix"])
-        ):
-            return True
-        if (
-            ip_address.version == 6 and
-            "ipv6Prefix" in prefix and
-            ip_address in ipaddress.ip_network(prefix["ipv6Prefix"])
-        ):
-            return True
-
-    return False
-
-
-def get_ip_address_category(ip: str | None) -> "IpAddressCategory":
-    from logs.models import IpAddressCategory
-
-    if not ip:
-        return IpAddressCategory.UNKNOWN
-    if is_ip_in_prefix_list(ip, "googlebot.json"):
-        return IpAddressCategory.GOOGLEBOT
-    if is_ip_in_prefix_list(ip, "special-crawlers.json"):
-        return IpAddressCategory.SPECIAL_CRAWLER
-    return IpAddressCategory.UNKNOWN

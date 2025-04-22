@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 from klaatu_django.db import TruncatedCharField
+from logs.ip_check import IpAddressCategory, get_ip_address_category
 from rest_framework.request import Request
 
 from logs.querysets import PodcastContentAudioRequestLogQuerySet
-from logs.utils import get_ip_address_category
 from model_mixin import ModelMixin
 from podcasts.user_agent import get_useragent_data
 
@@ -33,16 +33,6 @@ class DeviceCategory(models.TextChoices):
 class ReferrerCategory(models.TextChoices):
     APP = "app"
     HOST = "host"
-
-
-class IpAddressCategory(models.TextChoices):
-    GOOGLEBOT = "googlebot"
-    SPECIAL_CRAWLER = "special_crawler"
-    UNKNOWN = "unknown"
-
-    @property
-    def is_bot(self):
-        return self in [IpAddressCategory.GOOGLEBOT, IpAddressCategory.SPECIAL_CRAWLER]
 
 
 class AbstractRequestLog(ModelMixin, models.Model):
