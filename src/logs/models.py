@@ -5,6 +5,7 @@ from klaatu_django.db import TruncatedCharField
 from rest_framework.request import Request
 
 from logs.querysets import PodcastContentAudioRequestLogQuerySet
+from logs.utils import get_ip_address_category
 from model_mixin import ModelMixin
 from podcasts.user_agent import get_useragent_data
 
@@ -34,19 +35,33 @@ class ReferrerCategory(models.TextChoices):
     HOST = "host"
 
 
+class IpAddressCategory(models.TextChoices):
+    GOOGLEBOT = "googlebot"
+    SPECIAL_CRAWLER = "special_crawler"
+    UNKNOWN = "unknown"
+
+    @property
+    def is_bot(self):
+        return self in [IpAddressCategory.GOOGLEBOT, IpAddressCategory.SPECIAL_CRAWLER]
+
+
 class AbstractRequestLog(ModelMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     device_category = models.CharField(max_length=20, null=True, default=None, choices=DeviceCategory.choices)
-    device_name = models.CharField(max_length=40, null=True, default=None)
+    device_name = models.CharField(max_length=40, blank=True, default="")
     is_bot = models.BooleanField(default=False, db_index=True)
     path_info = TruncatedCharField(max_length=200, blank=True)
     referrer = TruncatedCharField(max_length=100, blank=True)
     referrer_category = models.CharField(max_length=10, null=True, default=None, choices=ReferrerCategory.choices)
-    referrer_name = models.CharField(max_length=50, null=True, default=None)
-    remote_addr = models.GenericIPAddressField(blank=True, null=True, max_length=50)
-    remote_host = TruncatedCharField(max_length=100, blank=True)
+    referrer_name = models.CharField(max_length=50, blank=True, default="")
+    remote_addr = models.GenericIPAddressField(blank=True, null=True, max_length=50, db_index=True)
+    remote_addr_category = models.CharField(
+        max_length=20,
+        choices=IpAddressCategory.choices,
+        default=IpAddressCategory.UNKNOWN,
+    )
     user_agent = TruncatedCharField(max_length=200, blank=True)
-    user_agent_name = models.CharField(max_length=100, null=True, default=None)
+    user_agent_name = models.CharField(max_length=100, blank=True, default="")
     user_agent_type = models.CharField(
         max_length=10,
         null=True,
@@ -63,22 +78,46 @@ class AbstractRequestLog(ModelMixin, models.Model):
         return self.path_info
 
     @classmethod
-    def create(cls, request: Request, **kwargs):
-        data = get_useragent_data(request.headers.get("User-Agent", ""))
+    def create(
+        cls,
+        user_agent: str | None = None,
+        remote_addr: str | None = None,
+        referrer: str | None = None,
+        save: bool = True,
+        **kwargs,
+    ):
+        user_agent = user_agent or ""
+        remote_addr = remote_addr or None
+        referrer = referrer or ""
+        ua_data = get_useragent_data(user_agent, referrer)
+        remote_addr_category = get_ip_address_category(remote_addr)
 
-        return cls.objects.create(
-            device_category=data.device_category if data else None,
-            device_name=data.device_name if data else None,
-            is_bot=data is not None and data.is_bot,
-            path_info=request.path_info,
-            referrer=request.headers.get("Referer", ""),
-            referrer_category=data.referrer_category if data else None,
-            referrer_name=data.referrer_name if data else None,
-            remote_addr=request.META.get("REMOTE_ADDR", ""),
-            remote_host=request.META.get("REMOTE_HOST", ""),
-            user_agent_name=data.name if data else None,
-            user_agent_type=data.type if data else None,
+        obj = cls(
+            device_category=ua_data.device_category if ua_data else None,
+            device_name=ua_data.device_name if ua_data else "",
+            is_bot=(ua_data and ua_data.is_bot) or remote_addr_category.is_bot,
+            referrer=referrer,
+            referrer_category=ua_data.referrer_category if ua_data else None,
+            referrer_name=ua_data.referrer_name if ua_data else "",
+            remote_addr=remote_addr,
+            remote_addr_category=remote_addr_category,
+            user_agent_name=ua_data.name if ua_data else "",
+            user_agent_type=ua_data.type if ua_data else None,
+            user_agent=user_agent,
+            **kwargs,
+        )
+
+        if save:
+            obj.save()
+        return obj
+
+    @classmethod
+    def create_from_request(cls, request: Request, **kwargs):
+        return cls.create(
             user_agent=request.headers.get("User-Agent", ""),
+            remote_addr=request.META.get("REMOTE_ADDR", None),
+            referrer=request.headers.get("Referer", ""),
+            path_info=request.path_info,
             **kwargs,
         )
 

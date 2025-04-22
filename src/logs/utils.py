@@ -1,4 +1,7 @@
 import datetime
+import ipaddress
+import json
+from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urlparse
 
@@ -11,11 +14,9 @@ from azure.monitor.query import (
 from django.conf import settings
 from django.utils import timezone
 
-from logs.models import PodcastRssRequestLog
-from podcasts.user_agent import get_useragent_data
-
 
 if TYPE_CHECKING:
+    from logs.models import IpAddressCategory
     from podcasts.models import Podcast
 
 
@@ -32,7 +33,7 @@ class GetAudioRequestLogError(Exception):
 
 
 def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
-    from logs.models import PodcastContentAudioRequestLog
+    from logs.models import PodcastContentAudioRequestLog, PodcastRssRequestLog
     from podcasts.models.episode import Episode
 
     try:
@@ -87,35 +88,24 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 except IndexError:
                     episode = None
 
-                ua_data = get_useragent_data(row["UserAgentHeader"])
                 qs = parse_qs(urlparse(row["Uri"]).query)
-
                 rss_log_id = qs["_rsslog"][0] if "_rsslog" in qs else None
                 rss_request_log = PodcastRssRequestLog.objects.filter(pk=rss_log_id).first() if rss_log_id else None
 
-                remote_addr = row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None
-
                 result.append(
-                    PodcastContentAudioRequestLog(
+                    PodcastContentAudioRequestLog.create(
+                        user_agent=row["UserAgentHeader"],
+                        remote_addr=row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None,
+                        referrer=row["ReferrerHeader"],
                         created=row["TimeGenerated"],
-                        device_category=ua_data.device_category if ua_data else None,
-                        device_name=ua_data.device_name if ua_data else None,
                         duration_ms=row["DurationMs"],
                         episode=episode,
-                        is_bot=ua_data is not None and ua_data.is_bot,
                         path_info=row["ObjectKey"],
                         podcast=podcast,
-                        referrer=row["ReferrerHeader"],
-                        referrer_category=ua_data.referrer_category if ua_data else None,
-                        referrer_name=ua_data.referrer_name if ua_data else None,
-                        remote_addr=remote_addr,
-                        remote_host="",
                         response_body_size=row["ResponseBodySize"] or 0,
                         rss_request_log=rss_request_log,
                         status_code=row["StatusCode"],
-                        user_agent_name=ua_data.name if ua_data else None,
-                        user_agent_type=ua_data.type if ua_data else None,
-                        user_agent=row["UserAgentHeader"],
+                        save=False,
                     )
                 )
 
@@ -125,3 +115,52 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         return result
     except Exception as e:
         raise GetAudioRequestLogError(*e.args, podcast=podcast) from e
+
+
+ip_prefix_cache: dict[str, list] = {}
+
+
+def get_ip_prefix_list(json_filename: str):
+    from logs import utils
+
+    cached = utils.ip_prefix_cache.get(json_filename, None)
+    if cached is not None:
+        return cached
+
+    json_path = Path(settings.BASE_DIR).resolve() / json_filename
+    with json_path.open("rt") as f:
+        prefixes = json.loads(f.read()).get("prefixes", [])
+    utils.ip_prefix_cache[json_filename] = prefixes
+    return prefixes
+
+
+def is_ip_in_prefix_list(ip: str, json_filename: str) -> bool:
+    ip_address = ipaddress.ip_address(ip)
+
+    for prefix in get_ip_prefix_list(json_filename):
+        if (
+            ip_address.version == 4 and
+            "ipv4Prefix" in prefix and
+            ip_address in ipaddress.ip_network(prefix["ipv4Prefix"])
+        ):
+            return True
+        if (
+            ip_address.version == 6 and
+            "ipv6Prefix" in prefix and
+            ip_address in ipaddress.ip_network(prefix["ipv6Prefix"])
+        ):
+            return True
+
+    return False
+
+
+def get_ip_address_category(ip: str | None) -> "IpAddressCategory":
+    from logs.models import IpAddressCategory
+
+    if not ip:
+        return IpAddressCategory.UNKNOWN
+    if is_ip_in_prefix_list(ip, "googlebot.json"):
+        return IpAddressCategory.GOOGLEBOT
+    if is_ip_in_prefix_list(ip, "special-crawlers.json"):
+        return IpAddressCategory.SPECIAL_CRAWLER
+    return IpAddressCategory.UNKNOWN

@@ -18,9 +18,9 @@ class UserAgentData:
     type: UserAgentType
     name: str
     is_bot: bool
-    device_name: str | None = None
+    device_name: str = ""
     device_category: DeviceCategory | None = None
-    referrer_name: str | None = None
+    referrer_name: str = ""
     referrer_category: ReferrerCategory | None = None
 
     @classmethod
@@ -38,9 +38,9 @@ class UserAgentData:
             type=type,
             name=ua_dict["name"],
             is_bot=type == "bot" or ua_dict.get("category") == "bot",
-            device_name=device["name"] if device else None,
+            device_name=device["name"] if device else "",
             device_category=device["category"] if device else None,
-            referrer_name=referrer["name"] if referrer else None,
+            referrer_name=referrer["name"] if referrer else "",
             referrer_category=referrer["category"] if referrer else None,
         )
 
@@ -70,7 +70,7 @@ class ReferrerDict(BaseUserAgentDict):
 user_agent_dict_cache: dict[str, list] = {}
 
 
-def get_useragent_data(user_agent: str) -> UserAgentData | None:
+def get_useragent_data(user_agent: str, referrer: str | None = None) -> UserAgentData | None:
     basenames: list[tuple[UserAgentType, str]] = [
         ("bot", "bots"),
         ("app", "apps"),
@@ -82,9 +82,9 @@ def get_useragent_data(user_agent: str) -> UserAgentData | None:
         ua_dict: UserAgentDict | None = get_useragent_dict_from_file(basename, user_agent)
         if ua_dict:
             device: DeviceDict | None = get_useragent_dict_from_file("devices", user_agent) if key != "bot" else None
-            referrer: ReferrerDict | None = (
-                get_useragent_dict_from_file("referrers", user_agent)
-                if key == "browser" else None
+            ref_dict: ReferrerDict | None = (
+                get_useragent_dict_from_file("referrers", referrer)
+                if key == "browser" and referrer else None
             )
 
             return UserAgentData.from_dicts(
@@ -92,7 +92,7 @@ def get_useragent_data(user_agent: str) -> UserAgentData | None:
                 type=key,
                 ua_dict=ua_dict,
                 device=device,
-                referrer=referrer,
+                referrer=ref_dict,
             )
 
     return None

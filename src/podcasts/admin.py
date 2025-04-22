@@ -304,7 +304,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
 
     def duration(self, obj: Episode):
-        return timedelta(seconds=obj.duration_seconds)
+        return timedelta(seconds=int(obj.duration_seconds))
 
     def get_queryset(self, request):
         logger.info("get_queryset")

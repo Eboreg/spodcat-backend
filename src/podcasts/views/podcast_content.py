@@ -21,5 +21,5 @@ class PodcastContentViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
         instance = self.get_object()
-        PodcastContentRequestLog.create(request=request, content=instance)
+        PodcastContentRequestLog.create_from_request(request=request, content=instance)
         return Response()

@@ -41,7 +41,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
         instance = self.get_object()
-        PodcastRequestLog.create(request=request, podcast=instance)
+        PodcastRequestLog.create_from_request(request=request, podcast=instance)
         return Response()
 
     @action(methods=["get"], detail=True)
@@ -59,7 +59,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 
-        rss_request_log = PodcastRssRequestLog.create(request=request, podcast=podcast)
+        rss_request_log = PodcastRssRequestLog.create_from_request(request=request, podcast=podcast)
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
