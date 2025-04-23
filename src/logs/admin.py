@@ -16,7 +16,6 @@ from logs.widgets import ReadOnlyInlineModelWidget
 class GeoIPWidget(ReadOnlyInlineModelWidget):
     def get_instance_dict(self, instance: GeoIP):
         return {
-            "Hostname": instance.hostname,
             "City": instance.city,
             "Region": instance.region,
             "Country": instance.country,

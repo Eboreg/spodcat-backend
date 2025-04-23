@@ -1,6 +1,7 @@
 import datetime
 import ipaddress
 import logging
+import socket
 from typing import TYPE_CHECKING
 
 from django.db import models
@@ -66,7 +67,6 @@ class GeoIP(ModelMixin, models.Model):
     region = models.CharField(max_length=100)
     country = models.CharField(max_length=10)
     org = models.CharField(max_length=100)
-    hostname = models.CharField(max_length=100)
 
     @classmethod
     def get_or_create(cls, ip: str):
@@ -84,11 +84,10 @@ class GeoIP(ModelMixin, models.Model):
             if properties:
                 return cls.objects.create(
                     ip=ip,
-                    city=properties["city"],
-                    region=properties["state"],
-                    country=properties["country"],
-                    org=properties["org"],
-                    hostname=properties.get("hostname", ""),
+                    city=properties.city or "",
+                    region=properties.region or "",
+                    country=properties.country_code or "",
+                    org=properties.organization or "",
                 )
 
         return None
@@ -112,6 +111,7 @@ class RequestLog(ModelMixin, models.Model):
         choices=IpAddressCategory.choices,
         default=IpAddressCategory.UNKNOWN,
     )
+    remote_host = models.CharField(max_length=100, blank=True, default="")
     geoip = models.ForeignKey(
         "logs.GeoIP",
         on_delete=models.SET_NULL,
@@ -147,6 +147,7 @@ class RequestLog(ModelMixin, models.Model):
         remote_addr_category = get_ip_address_category(remote_addr)
         user_agent_data = UserAgent.get_or_create(ua_data) if ua_data else None
         geoip = GeoIP.get_or_create(remote_addr) if remote_addr else None
+        remote_host = socket.getfqdn(remote_addr) if remote_addr else ""
 
         obj = cls(
             is_bot=(ua_data and ua_data.is_bot) or remote_addr_category.is_bot,
@@ -155,6 +156,7 @@ class RequestLog(ModelMixin, models.Model):
             referrer_name=ref_dict["name"] if ref_dict else "",
             remote_addr=remote_addr,
             remote_addr_category=remote_addr_category,
+            remote_host=remote_host if remote_host != remote_addr else "",
             user_agent_data=user_agent_data,
             user_agent=user_agent,
             geoip=geoip,
@@ -189,17 +191,9 @@ class RequestLog(ModelMixin, models.Model):
 
         for idx, ip in enumerate(ips):
             logger.info("(%d/%d) %s", idx + 1, len(ips), ip)
-            geo_properties = get_geo_properties(ip)
+            geoip = GeoIP.get_or_create(ip)
 
-            if geo_properties:
-                geoip = GeoIP.objects.create(
-                    ip=ip,
-                    city=geo_properties["city"],
-                    region=geo_properties["state"],
-                    country=geo_properties["country"],
-                    org=geo_properties["org"],
-                    hostname=geo_properties.get("hostname", ""),
-                )
+            if geoip:
                 cls.objects.filter(remote_addr=ip).update(geoip=geoip)
 
     def has_change_permission(self, request):
