@@ -1,3 +1,4 @@
+import datetime
 import math
 import os
 from io import BytesIO
@@ -5,8 +6,13 @@ from typing import BinaryIO, Generator
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
+from django.utils import timezone
 from PIL import Image
 from pydub import AudioSegment
+
+
+def date_to_datetime(date: datetime.date) -> datetime.datetime:
+    return timezone.make_aware(datetime.datetime(date.year, date.month, date.day))
 
 
 def delete_storage_file(file: FieldFile):

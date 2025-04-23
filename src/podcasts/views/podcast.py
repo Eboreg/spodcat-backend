@@ -17,6 +17,7 @@ from rest_framework_json_api import views
 from logs.models import PodcastRequestLog
 from podcasts import serializers
 from podcasts.models import Episode, Podcast, PodcastContent
+from podcasts.utils import date_to_datetime
 
 
 class PodcastFeedGenerator(FeedGenerator):
@@ -68,7 +69,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         fg.description(podcast.tagline or podcast.name)
         fg.podcast.itunes_type("episodic")
         if last_published:
-            fg.lastBuildDate(last_published)
+            fg.lastBuildDate(date_to_datetime(last_published))
         if podcast.cover:
             fg.image(podcast.cover.url)
         if podcast.owner.email and podcast.owner.get_full_name():
@@ -88,7 +89,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.content(episode.description_html, type="CDATA")
             fe.description(episode.description_text)
             fe.podcast.itunes_summary(episode.description_text)
-            fe.published(episode.published)
+            fe.published(date_to_datetime(episode.published))
             fe.podcast.itunes_season(episode.season)
             fe.podcast.itunes_episode(episode.number)
             fe.podcast.itunes_episode_type("full")
