@@ -198,27 +198,12 @@ class RequestLog(ModelMixin, models.Model):
         return False
 
 
-class AbstractPodcastRequestLog(RequestLog):
-    podcast: "Podcast"
-
-    class Meta:
-        abstract = True
-
-
-class PodcastRequestLog(AbstractPodcastRequestLog):
+class PodcastRequestLog(RequestLog):
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests")
 
     class Meta:
         verbose_name = "podcast page request log"
         verbose_name_plural = "podcast page request logs"
-
-
-class PodcastRssRequestLog(AbstractPodcastRequestLog):
-    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
-
-    class Meta:
-        verbose_name = "podcast RSS request log"
-        verbose_name_plural = "podcast RSS request logs"
 
 
 class PodcastContentRequestLog(RequestLog):
@@ -241,12 +226,6 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
         related_name="audio_requests",
     )
     response_body_size = models.IntegerField(db_index=True)
-    rss_request_log = models.ForeignKey(
-        "logs.PodcastRssRequestLog",
-        on_delete=models.SET_NULL,
-        null=True,
-        default=None,
-    )
     status_code = models.CharField(max_length=10)
 
     objects = PodcastEpisodeAudioRequestLogQuerySet.as_manager()

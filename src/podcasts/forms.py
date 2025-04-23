@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
-from logs.models import PodcastRequestLog, PodcastRssRequestLog
+from logs.models import PodcastRequestLog
 from podcasts.fields import TimestampField
 from podcasts.models import Podcast, PodcastContent
 
@@ -31,7 +31,6 @@ class PodcastChangeSlugForm(ModelForm):
             self.instance.categories.set(old_instance.categories.all())
             self.instance.links.set(old_instance.links.all())
             PodcastRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
-            PodcastRssRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
             PodcastContent.objects.filter(podcast=old_instance).update(podcast=self.instance)
             old_instance.delete()
         return self.instance

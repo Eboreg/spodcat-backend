@@ -34,6 +34,9 @@ dependencies = [
     "azure-identity",           # used by get_audio_request_logs
     "geocoder",                 # used to get geo data for remote IPs
     "geoip2",                   # used to get geo data for remote IPs
+    "redis",
+    "hiredis",
+    "django-cachalot",
 ]
 dynamic = ["version"]
 

@@ -21,6 +21,10 @@ if TYPE_CHECKING:
     from podcasts.models import Podcast
 
 
+def today():
+    return timezone.now().date()
+
+
 class PodcastContent(ModelMixin, PolymorphicModel):
     created = models.DateTimeField(auto_now_add=True)
     description = MartorField(null=True, default=None, blank=True)
@@ -28,7 +32,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     is_draft = models.BooleanField(verbose_name="Draft", default=False)
     name = models.CharField(max_length=100)
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.PROTECT, related_name="contents")
-    published = models.DateTimeField(default=timezone.now)
+    published = models.DateField(default=today)
     slug = models.SlugField(max_length=100)
 
     objects: models.Manager[Self] = PodcastContentQuerySet.as_manager()
@@ -86,7 +90,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         ordering=Case(When(Q(is_draft=False, published__lte=Now()), then=V(1)), default=V(0)),
     )
     def is_visible(self) -> bool:
-        return self.published <= timezone.now() and not self.is_draft
+        return self.published <= timezone.now().date() and not self.is_draft
 
     def save(self, *args, **kwargs):
         if not self.slug:

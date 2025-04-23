@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
+from django.template.response import TemplateResponse
 from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
@@ -13,7 +14,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
 
-from logs.models import PodcastRequestLog, PodcastRssRequestLog
+from logs.models import PodcastRequestLog
 from podcasts import serializers
 from podcasts.models import Episode, Podcast, PodcastContent
 
@@ -59,8 +60,6 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 
-        rss_request_log = PodcastRssRequestLog.create_from_request(request=request, podcast=podcast)
-
         fg = FeedGenerator()
         fg.load_extension("podcast")
         fg = cast(PodcastFeedGenerator, fg)
@@ -99,7 +98,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
                 fe.podcast.itunes_image(episode.image.url)
             if episode.audio_file:
                 fe.enclosure(
-                    url=f"{episode.audio_file.url}?_rsslog={rss_request_log.pk}",
+                    url=episode.audio_file.url,
                     type=episode.audio_content_type,
                     length=episode.audio_file_length,
                 )
@@ -109,4 +108,13 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             if author_string:
                 fe.podcast.itunes_author(author_string)
 
-        return HttpResponse(content=fg.rss_str(pretty=True), content_type="application/xml; charset=utf-8")
+        rss = fg.rss_str(pretty=True)
+
+        if request.query_params.get("html"):
+            return TemplateResponse(
+                request=request,
+                template="podcasts/rss.html",
+                context={"rss": rss.decode()},
+            )
+
+        return HttpResponse(content=rss, content_type="application/xml; charset=utf-8")

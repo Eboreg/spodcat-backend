@@ -2,12 +2,10 @@ from django.contrib import admin
 from django.forms import ModelChoiceField, ModelForm
 
 from logs.models import (
-    AbstractPodcastRequestLog,
     GeoIP,
     PodcastContentRequestLog,
     PodcastEpisodeAudioRequestLog,
     PodcastRequestLog,
-    PodcastRssRequestLog,
     UserAgent,
 )
 from logs.widgets import ReadOnlyInlineModelWidget
@@ -52,7 +50,7 @@ class LogAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(PodcastRequestLog, PodcastRssRequestLog)
+@admin.register(PodcastRequestLog)
 class PodcastRequestLogAdmin(LogAdmin):
     list_display = [
         "created",
@@ -73,7 +71,7 @@ class PodcastRequestLogAdmin(LogAdmin):
         return super().get_queryset(request).select_related("podcast", "user_agent_data")
 
     @admin.display(description="podcast", ordering="podcast__name")
-    def podcast_link(self, obj: AbstractPodcastRequestLog):
+    def podcast_link(self, obj: PodcastRequestLog):
         return obj.podcast.get_admin_link()
 
 

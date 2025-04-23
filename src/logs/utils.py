@@ -1,6 +1,5 @@
 import datetime
 from typing import TYPE_CHECKING
-from urllib.parse import parse_qs, urlparse
 
 from azure.identity import DefaultAzureCredential
 from azure.monitor.query import (
@@ -29,7 +28,7 @@ class GetAudioRequestLogError(Exception):
 
 
 def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
-    from logs.models import PodcastEpisodeAudioRequestLog, PodcastRssRequestLog
+    from logs.models import PodcastEpisodeAudioRequestLog
     from podcasts.models.episode import Episode
 
     try:
@@ -84,10 +83,6 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 except IndexError:
                     episode = None
 
-                qs = parse_qs(urlparse(row["Uri"]).query)
-                rss_log_id = qs["_rsslog"][0] if "_rsslog" in qs else None
-                rss_request_log = PodcastRssRequestLog.objects.filter(pk=rss_log_id).first() if rss_log_id else None
-
                 result.append(
                     PodcastEpisodeAudioRequestLog.create(
                         user_agent=row["UserAgentHeader"],
@@ -98,7 +93,6 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                         episode=episode,
                         path_info=row["ObjectKey"],
                         response_body_size=row["ResponseBodySize"] or 0,
-                        rss_request_log=rss_request_log,
                         status_code=row["StatusCode"],
                     )
                 )
