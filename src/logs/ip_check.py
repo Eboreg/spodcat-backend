@@ -1,10 +1,11 @@
 import ipaddress
 from pathlib import Path
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 import geocoder
 from django.conf import settings
 from django.db import models
+from geocoder.base import MultipleResultsQuery
 
 
 class IpAddressCategory(models.TextChoices):
@@ -25,6 +26,7 @@ class GeoProperties(TypedDict):
     address: str
     city: str
     country: str
+    hostname: NotRequired[str]
     ip: str
     lat: float
     lng: float
@@ -35,15 +37,39 @@ class GeoProperties(TypedDict):
     status: str
 
 
+ip_list_cache: dict[IpAddressCategory, list[ipaddress.IPv4Network | ipaddress.IPv6Network]] = {}
+
+
 def get_geo_properties(ip: str) -> GeoProperties | None:
-    geojson = geocoder.ip(ip).geojson
-    if geojson.get("features", []):
-        feature = geojson["features"][0]
-        return feature.get("properties", None)
+    try:
+        results: MultipleResultsQuery = geocoder.ip(ip)
+    except Exception as e:
+        raise ValueError(f"Exception getting geoip for {ip}", e) from e
+
+    if not results.ok or (isinstance(results.status_code, int) and results.status_code >= 400):
+        raise ValueError(f"Error getting geoip for {ip}", results)
+
+    features = results.geojson.get("features", [])
+
+    if isinstance(features, list) and features:
+        feature = features[0]
+        if isinstance(feature, dict) and "properties" in feature:
+            properties: GeoProperties = feature["properties"]
+            if properties["ok"]:
+                return properties
+
     return None
 
 
-ip_list_cache: dict[IpAddressCategory, list[ipaddress.IPv4Network | ipaddress.IPv6Network]] = {}
+def get_ip_address_category(ip: str | None) -> IpAddressCategory:
+    if not ip:
+        return IpAddressCategory.UNKNOWN
+
+    for category in IpAddressCategory:
+        if category != IpAddressCategory.UNKNOWN and is_ip_in_category(ip, category):
+            return category
+
+    return IpAddressCategory.UNKNOWN
 
 
 def get_ip_network_list(category: IpAddressCategory) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
@@ -72,14 +98,3 @@ def is_ip_in_category(ip: str, category: IpAddressCategory) -> bool:
             return True
 
     return False
-
-
-def get_ip_address_category(ip: str | None) -> IpAddressCategory:
-    if not ip:
-        return IpAddressCategory.UNKNOWN
-
-    for category in IpAddressCategory:
-        if category != IpAddressCategory.UNKNOWN and is_ip_in_category(ip, category):
-            return category
-
-    return IpAddressCategory.UNKNOWN

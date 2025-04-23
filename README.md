@@ -33,3 +33,12 @@ https://learn.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-az
 4. browsers.json
    1. devices.json
    2. referrers.json
+
+
+geocoder.ip(ip)
+get(ip, provider='ipinfo', **kwargs)
+provider = "ipinfo"
+method = "geocode"
+func = options[provider][method] = options["ipinfo"]["geocode"] = IpinfoQuery
+IpinfoQuery(ip, **kwargs)
+IpinfoQuery < MultipleResultsQuery < typing.MutableSequence

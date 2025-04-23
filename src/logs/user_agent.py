@@ -5,11 +5,23 @@ from pathlib import Path
 from typing import Literal, TypedDict
 
 from django.conf import settings
+from django.db import models
 
 
-DeviceCategory = Literal["auto", "computer", "mobile", "smart_speaker", "smart_tv", "watch"]
-ReferrerCategory = Literal["app", "host"]
-UserAgentType = Literal["app", "bot", "browser", "library"]
+class DeviceCategory(models.TextChoices):
+    AUTO = "auto"
+    COMPUTER = "computer"
+    MOBILE = "mobile"
+    SMART_SPEAKER = "smart_speaker"
+    SMART_TV = "smart_tv"
+    WATCH = "watch"
+
+
+class UserAgentType(models.TextChoices):
+    APP = "app", "App"
+    BOT = "bot", "Bot"
+    BROWSER = "browser", "Browser"
+    LIBRARY = "library", "Library"
 
 
 @dataclass
@@ -20,8 +32,6 @@ class UserAgentData:
     is_bot: bool
     device_name: str = ""
     device_category: DeviceCategory | None = None
-    referrer_name: str = ""
-    referrer_category: ReferrerCategory | None = None
 
     @classmethod
     # pylint: disable=redefined-builtin
@@ -31,7 +41,6 @@ class UserAgentData:
         type: UserAgentType,
         ua_dict: "UserAgentDict",
         device: "DeviceDict | None",
-        referrer: "ReferrerDict | None",
     ):
         return cls(
             user_agent=user_agent,
@@ -39,9 +48,7 @@ class UserAgentData:
             name=ua_dict["name"],
             is_bot=type == "bot" or ua_dict.get("category") == "bot",
             device_name=device["name"] if device else "",
-            device_category=device["category"] if device else None,
-            referrer_name=referrer["name"] if referrer else "",
-            referrer_category=referrer["category"] if referrer else None,
+            device_category=DeviceCategory(device["category"]) if device else None,
         )
 
 
@@ -60,11 +67,11 @@ class UserAgentDict(BaseUserAgentDict):
 
 
 class DeviceDict(BaseUserAgentDict):
-    category: DeviceCategory
+    category: Literal["auto", "computer", "mobile", "smart_speaker", "smart_tv", "watch"]
 
 
 class ReferrerDict(BaseUserAgentDict):
-    category: ReferrerCategory
+    category: Literal["app", "host"]
 
 
 user_agent_dict_cache: dict[str, list] = {}
@@ -74,12 +81,12 @@ def get_referrer_dict(referrer: str) -> ReferrerDict | None:
     return get_dict_from_file("referrers", referrer)
 
 
-def get_useragent_data(user_agent: str, referrer: str | None = None) -> UserAgentData | None:
+def get_useragent_data(user_agent: str) -> UserAgentData | None:
     basenames: list[tuple[UserAgentType, str]] = [
-        ("bot", "bots"),
-        ("app", "apps"),
-        ("library", "libraries"),
-        ("browser", "browsers"),
+        (UserAgentType.BOT, "bots"),
+        (UserAgentType.APP, "apps"),
+        (UserAgentType.LIBRARY, "libraries"),
+        (UserAgentType.BROWSER, "browsers"),
     ]
 
     for key, basename in basenames:
@@ -87,17 +94,12 @@ def get_useragent_data(user_agent: str, referrer: str | None = None) -> UserAgen
 
         if ua_dict:
             device_dict: DeviceDict | None = get_dict_from_file("devices", user_agent) if key != "bot" else None
-            ref_dict: ReferrerDict | None = (
-                get_dict_from_file("referrers", referrer)
-                if key == "browser" and referrer else None
-            )
 
             return UserAgentData.from_dicts(
                 user_agent=user_agent,
                 type=key,
                 ua_dict=ua_dict,
                 device=device_dict,
-                referrer=ref_dict,
             )
 
     return None
@@ -111,7 +113,7 @@ def get_dict_from_file(basename: str, value: str):
 
 
 def get_dicts_from_file(basename: str):
-    from podcasts import user_agent
+    from logs import user_agent
 
     cached = user_agent.user_agent_dict_cache.get(basename, None)
     if cached is not None:

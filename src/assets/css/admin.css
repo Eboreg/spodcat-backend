@@ -56,3 +56,21 @@
 .nowrap {
     white-space: nowrap;
 }
+
+.readonly-inline-model {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.readonly-inline-model .row {
+    display: flex;
+}
+
+.readonly-inline-model .row .key {
+    flex: 0 0 150px;
+}
+
+.readonly-inline-model .row .value {
+    flex: 1 0 auto;
+}

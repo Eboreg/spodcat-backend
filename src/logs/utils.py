@@ -29,14 +29,14 @@ class GetAudioRequestLogError(Exception):
 
 
 def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
-    from logs.models import PodcastContentAudioRequestLog, PodcastRssRequestLog
+    from logs.models import PodcastEpisodeAudioRequestLog, PodcastRssRequestLog
     from podcasts.models.episode import Episode
 
     try:
         environment = environment or settings.ENVIRONMENT
         credential = DefaultAzureCredential()
         client = LogsQueryClient(credential)
-        last_log = PodcastContentAudioRequestLog.objects.filter(podcast=podcast).order_by("-created").first()
+        last_log = PodcastEpisodeAudioRequestLog.objects.filter(podcast=podcast).order_by("-created").first()
         if last_log:
             from_date = last_log.created
         else:
@@ -64,7 +64,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         )
         episodes = list(Episode.objects.filter(podcast=podcast))
         response = client.query_resource(resource_id=resource_id, query=query, timespan=(from_date, timezone.now()))
-        result: list[PodcastContentAudioRequestLog] = []
+        result: list[PodcastEpisodeAudioRequestLog] = []
 
         if response.status != LogsQueryStatus.SUCCESS:
             raise GetAudioRequestLogError(podcast=podcast, query_error=response.partial_error)
@@ -89,7 +89,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 rss_request_log = PodcastRssRequestLog.objects.filter(pk=rss_log_id).first() if rss_log_id else None
 
                 result.append(
-                    PodcastContentAudioRequestLog.create(
+                    PodcastEpisodeAudioRequestLog.create(
                         user_agent=row["UserAgentHeader"],
                         remote_addr=row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None,
                         referrer=row["ReferrerHeader"],
@@ -101,12 +101,8 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                         response_body_size=row["ResponseBodySize"] or 0,
                         rss_request_log=rss_request_log,
                         status_code=row["StatusCode"],
-                        save=False,
                     )
                 )
-
-        if result:
-            PodcastContentAudioRequestLog.objects.bulk_create(result)
 
         return result
     except Exception as e:

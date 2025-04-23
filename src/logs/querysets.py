@@ -13,10 +13,10 @@ from django.db.models.functions import Cast, Coalesce, Round
 
 
 if TYPE_CHECKING:
-    from logs.models import PodcastContentAudioRequestLog
+    from logs.models import PodcastEpisodeAudioRequestLog
 
 
-class PodcastContentAudioRequestLogQuerySet(QuerySet["PodcastContentAudioRequestLog"]):
+class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequestLog"]):
     def get_play_count_query(self, **filters):
         return (
             self

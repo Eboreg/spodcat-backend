@@ -1,42 +1,34 @@
+import datetime
+import ipaddress
+import logging
 from typing import TYPE_CHECKING
 
 from django.db import models
+from django.utils import timezone
 from klaatu_django.db import TruncatedCharField
 from rest_framework.request import Request
 
 from logs.ip_check import (
-    GeoProperties,
     IpAddressCategory,
     get_geo_properties,
     get_ip_address_category,
 )
-from logs.querysets import PodcastContentAudioRequestLogQuerySet
-from model_mixin import ModelMixin
-from podcasts.user_agent import (
+from logs.querysets import PodcastEpisodeAudioRequestLogQuerySet
+from logs.user_agent import (
+    DeviceCategory,
     UserAgentData,
+    UserAgentType,
     get_referrer_dict,
     get_useragent_data,
 )
+from model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
     from podcasts.models import Episode, Podcast, PodcastContent
 
 
-class UserAgentType(models.TextChoices):
-    APP = "app"
-    BOT = "bot"
-    BROWSER = "browser"
-    LIBRARY = "library"
-
-
-class DeviceCategory(models.TextChoices):
-    AUTO = "auto"
-    COMPUTER = "computer"
-    MOBILE = "mobile"
-    SMART_SPEAKER = "smart_speaker"
-    SMART_TV = "smart_tv"
-    WATCH = "watch"
+logger = logging.getLogger(__name__)
 
 
 class ReferrerCategory(models.TextChoices):
@@ -45,14 +37,11 @@ class ReferrerCategory(models.TextChoices):
 
 
 class UserAgent(ModelMixin, models.Model):
-    user_agent = models.CharField(max_length=300, primary_key=True)
+    user_agent = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=10, choices=UserAgentType.choices, db_index=True)
     device_category = models.CharField(max_length=20, null=True, default=None, choices=DeviceCategory.choices)
     device_name = models.CharField(max_length=40, blank=True, default="")
-
-    class Meta:
-        abstract = True
 
     @classmethod
     def get_or_create(cls, data: UserAgentData, save: bool = True):
@@ -77,46 +66,64 @@ class GeoIP(ModelMixin, models.Model):
     region = models.CharField(max_length=100)
     country = models.CharField(max_length=10)
     org = models.CharField(max_length=100)
-
-    class Meta:
-        abstract = True
+    hostname = models.CharField(max_length=100)
 
     @classmethod
-    def get_or_create(cls, properties: GeoProperties, save: bool = True):
+    def get_or_create(cls, ip: str):
+        if ipaddress.ip_address(ip).is_private:
+            return None
+
         try:
-            return cls.objects.get(ip=properties["ip"])
+            return cls.objects.get(ip=ip)
         except cls.DoesNotExist:
-            obj = cls(
-                ip=properties["ip"],
-                city=properties["city"],
-                region=properties["state"],
-                country=properties["country"],
-                org=properties["org"],
-            )
-            if save:
-                obj.save()
-            return obj
+            try:
+                properties = get_geo_properties(ip)
+            except Exception as e:
+                logger.error("Exception getting geoip for %s", ip, exc_info=e)
+                return None
+            if properties:
+                return cls.objects.create(
+                    ip=ip,
+                    city=properties["city"],
+                    region=properties["state"],
+                    country=properties["country"],
+                    org=properties["org"],
+                    hostname=properties.get("hostname", ""),
+                )
+
+        return None
 
 
 class RequestLog(ModelMixin, models.Model):
-    created = models.DateTimeField(auto_now_add=True, db_index=True)
+    created = models.DateTimeField(db_index=True)
     is_bot = models.BooleanField(default=False, db_index=True)
     path_info = TruncatedCharField(max_length=200, blank=True, default="")
-    user_agent = models.CharField(max_length=300, blank=True, default="")
-    user_agent_data = models.ForeignKey("UserAgent", on_delete=models.SET_NULL, null=True, default=None)
+    user_agent = models.CharField(max_length=255, blank=True, default="")
+    user_agent_data = models.ForeignKey(
+        "logs.UserAgent",
+        on_delete=models.SET_NULL,
+        null=True,
+        default=None,
+        related_name="logs",
+    )
     remote_addr = models.GenericIPAddressField(null=True, db_index=True, default=None)
     remote_addr_category = models.CharField(
         max_length=20,
         choices=IpAddressCategory.choices,
         default=IpAddressCategory.UNKNOWN,
     )
-    geoip = models.ForeignKey("GeoIP", on_delete=models.SET_NULL, null=True, default=None)
+    geoip = models.ForeignKey(
+        "logs.GeoIP",
+        on_delete=models.SET_NULL,
+        null=True,
+        default=None,
+        related_name="logs",
+    )
     referrer = TruncatedCharField(max_length=100, blank=True, default="")
     referrer_category = models.CharField(max_length=10, null=True, default=None, choices=ReferrerCategory.choices)
     referrer_name = models.CharField(max_length=50, blank=True, default="")
 
     class Meta:
-        abstract = True
         ordering = ["-created"]
 
     @classmethod
@@ -126,30 +133,32 @@ class RequestLog(ModelMixin, models.Model):
         remote_addr: str | None = None,
         referrer: str | None = None,
         save: bool = True,
+        created: datetime.datetime | None = None,
         **kwargs,
     ):
         user_agent = user_agent or ""
         remote_addr = remote_addr or None
         referrer = referrer or ""
+        created = created or timezone.now()
 
         ua_data = get_useragent_data(user_agent)
         ref_dict = get_referrer_dict(referrer) if ua_data and ua_data.type == "browser" else None
-        remote_addr_category = get_ip_address_category(remote_addr)
-        geo_properties = get_geo_properties(remote_addr) if remote_addr else None
 
+        remote_addr_category = get_ip_address_category(remote_addr)
         user_agent_data = UserAgent.get_or_create(ua_data) if ua_data else None
-        geoip = GeoIP.get_or_create(geo_properties) if geo_properties else None
+        geoip = GeoIP.get_or_create(remote_addr) if remote_addr else None
 
         obj = cls(
             is_bot=(ua_data and ua_data.is_bot) or remote_addr_category.is_bot,
             referrer=referrer,
-            referrer_category=ref_dict["category"] if ref_dict else None,
+            referrer_category=ReferrerCategory(ref_dict["category"]) if ref_dict else None,
             referrer_name=ref_dict["name"] if ref_dict else "",
             remote_addr=remote_addr,
             remote_addr_category=remote_addr_category,
             user_agent_data=user_agent_data,
             user_agent=user_agent,
             geoip=geoip,
+            created=created,
             **kwargs,
         )
 
@@ -167,8 +176,88 @@ class RequestLog(ModelMixin, models.Model):
             **kwargs,
         )
 
+    @classmethod
+    def fill_geoips(cls):
+        ips = list(
+            cls.objects
+            .filter(geoip=None)
+            .exclude(remote_addr=None)
+            .order_by()
+            .values_list("remote_addr", flat=True)
+            .distinct()
+        )
+
+        for idx, ip in enumerate(ips):
+            logger.info("(%d/%d) %s", idx + 1, len(ips), ip)
+            geo_properties = get_geo_properties(ip)
+
+            if geo_properties:
+                geoip = GeoIP.objects.create(
+                    ip=ip,
+                    city=geo_properties["city"],
+                    region=geo_properties["state"],
+                    country=geo_properties["country"],
+                    org=geo_properties["org"],
+                    hostname=geo_properties.get("hostname", ""),
+                )
+                cls.objects.filter(remote_addr=ip).update(geoip=geoip)
+
     def has_change_permission(self, request):
         return False
+
+
+class AbstractPodcastRequestLog(RequestLog):
+    podcast: "Podcast"
+
+    class Meta:
+        abstract = True
+
+
+class PodcastRequestLog(AbstractPodcastRequestLog):
+    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests")
+
+    class Meta:
+        verbose_name = "podcast page request log"
+        verbose_name_plural = "podcast page request logs"
+
+
+class PodcastRssRequestLog(AbstractPodcastRequestLog):
+    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
+
+    class Meta:
+        verbose_name = "podcast RSS request log"
+        verbose_name_plural = "podcast RSS request logs"
+
+
+class PodcastContentRequestLog(RequestLog):
+    content: "PodcastContent" = models.ForeignKey(
+        "podcasts.PodcastContent",
+        on_delete=models.CASCADE,
+        related_name="requests",
+    )
+
+    class Meta:
+        verbose_name = "podcast content page request log"
+        verbose_name_plural = "podcast content page request logs"
+
+
+class PodcastEpisodeAudioRequestLog(RequestLog):
+    duration_ms = models.IntegerField()
+    episode: "Episode | None" = models.ForeignKey(
+        "podcasts.Episode",
+        on_delete=models.CASCADE,
+        related_name="audio_requests",
+    )
+    response_body_size = models.IntegerField(db_index=True)
+    rss_request_log = models.ForeignKey(
+        "logs.PodcastRssRequestLog",
+        on_delete=models.SET_NULL,
+        null=True,
+        default=None,
+    )
+    status_code = models.CharField(max_length=10)
+
+    objects = PodcastEpisodeAudioRequestLogQuerySet.as_manager()
 
 
 class AbstractRequestLog(ModelMixin, models.Model):
@@ -216,7 +305,8 @@ class AbstractRequestLog(ModelMixin, models.Model):
         user_agent = user_agent or ""
         remote_addr = remote_addr or None
         referrer = referrer or ""
-        ua_data = get_useragent_data(user_agent, referrer)
+        ua_data = get_useragent_data(user_agent)
+        ref_dict = get_referrer_dict(referrer) if ua_data and ua_data.type == "browser" else None
         remote_addr_category = get_ip_address_category(remote_addr)
 
         obj = cls(
@@ -224,8 +314,8 @@ class AbstractRequestLog(ModelMixin, models.Model):
             device_name=ua_data.device_name if ua_data else "",
             is_bot=(ua_data and ua_data.is_bot) or remote_addr_category.is_bot,
             referrer=referrer,
-            referrer_category=ua_data.referrer_category if ua_data else None,
-            referrer_name=ua_data.referrer_name if ua_data else "",
+            referrer_category=ReferrerCategory(ref_dict["category"]) if ref_dict else None,
+            referrer_name=ref_dict["name"] if ref_dict else "",
             remote_addr=remote_addr,
             remote_addr_category=remote_addr_category,
             user_agent_name=ua_data.name if ua_data else "",
@@ -252,15 +342,15 @@ class AbstractRequestLog(ModelMixin, models.Model):
         return False
 
 
-class AbstractPodcastRequestLog(AbstractRequestLog):
+class AbstractPodcastRequestLog2(AbstractRequestLog):
     podcast: "Podcast"
 
     class Meta:
         abstract = True
 
 
-class PodcastRequestLog(AbstractPodcastRequestLog):
-    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests")
+class PodcastRequestLog2(AbstractPodcastRequestLog2):
+    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests2")
 
     class Meta:
         verbose_name = "podcast page request log"
@@ -268,8 +358,8 @@ class PodcastRequestLog(AbstractPodcastRequestLog):
         db_table = "logs_podcastrequestlog_old"
 
 
-class PodcastRssRequestLog(AbstractPodcastRequestLog):
-    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
+class PodcastRssRequestLog2(AbstractPodcastRequestLog2):
+    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests2")
 
     class Meta:
         verbose_name = "podcast RSS request log"
@@ -277,11 +367,11 @@ class PodcastRssRequestLog(AbstractPodcastRequestLog):
         db_table = "logs_podcastrssrequestlog_old"
 
 
-class PodcastContentRequestLog(AbstractRequestLog):
+class PodcastContentRequestLog2(AbstractRequestLog):
     content: "PodcastContent" = models.ForeignKey(
         "podcasts.PodcastContent",
         on_delete=models.CASCADE,
-        related_name="requests",
+        related_name="requests2",
     )
 
     class Meta:
@@ -290,27 +380,31 @@ class PodcastContentRequestLog(AbstractRequestLog):
         db_table = "logs_podcastcontentrequestlog_old"
 
 
-class PodcastContentAudioRequestLog(AbstractPodcastRequestLog):
+class PodcastContentAudioRequestLog2(AbstractPodcastRequestLog2):
     created = models.DateTimeField(db_index=True)
     duration_ms = models.IntegerField()
     episode: "Episode | None" = models.ForeignKey(
         "podcasts.Episode",
         on_delete=models.SET_NULL,
-        related_name="audio_requests",
+        related_name="audio_requests2",
         null=True,
         default=None,
     )
-    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="audio_requests")
+    podcast: "Podcast" = models.ForeignKey(
+        "podcasts.Podcast",
+        on_delete=models.CASCADE,
+        related_name="audio_requests2",
+    )
     response_body_size = models.IntegerField(db_index=True)
     rss_request_log = models.ForeignKey(
-        "logs.PodcastRssRequestLog",
+        "logs.PodcastRssRequestLog2",
         on_delete=models.SET_NULL,
         null=True,
         default=None,
     )
     status_code = models.CharField(max_length=10)
 
-    objects = PodcastContentAudioRequestLogQuerySet.as_manager()
+    objects = PodcastEpisodeAudioRequestLogQuerySet.as_manager()
 
     class Meta:
         db_table = "logs_podcastcontentaudiorequestlog_old"

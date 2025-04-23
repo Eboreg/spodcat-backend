@@ -23,8 +23,8 @@ from pydub.utils import mediainfo
 
 from admin_mixin import AdminMixin
 from logs.models import (
-    PodcastContentAudioRequestLog,
     PodcastContentRequestLog,
+    PodcastEpisodeAudioRequestLog,
     PodcastRequestLog,
 )
 from podcasts.admin_filters import ArtistSongCountFilter
@@ -156,12 +156,12 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                 view_count=Count("requests", distinct=True),
                 total_view_count=F("content_view_count") + F("view_count"),
                 play_count=Subquery(
-                    PodcastContentAudioRequestLog.objects
+                    PodcastEpisodeAudioRequestLog.objects
                     .filter(is_bot=False)
                     .get_play_count_query(episode__podcast=OuterRef("slug"))
                 ),
                 play_time=Subquery(
-                    PodcastContentAudioRequestLog.objects
+                    PodcastEpisodeAudioRequestLog.objects
                     .filter(is_bot=False)
                     .get_play_time_query(episode__podcast=OuterRef("slug"))
                 ),
@@ -195,9 +195,9 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         if obj.play_count is None:
             return 0.0
 
-        return PodcastContentAudioRequestLog.get_admin_list_link(
+        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
             text=round(obj.play_count, 2),
-            podcast__slug__exact=obj.pk,
+            episode__podcast__slug__exact=obj.pk,
             is_bot__exact=0,
         )
 
@@ -206,9 +206,9 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         if obj.play_time is None:
             return timedelta()
 
-        return PodcastContentAudioRequestLog.get_admin_list_link(
+        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
             text=obj.play_time,
-            podcast__slug__exact=obj.pk,
+            episode__podcast__slug__exact=obj.pk,
             is_bot__exact=0,
         )
 
@@ -307,17 +307,16 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         return timedelta(seconds=int(obj.duration_seconds))
 
     def get_queryset(self, request):
-        logger.info("get_queryset")
         return (
             super().get_queryset(request)
             .annotate(
                 play_count=Subquery(
-                    PodcastContentAudioRequestLog.objects
+                    PodcastEpisodeAudioRequestLog.objects
                     .filter(is_bot=False)
                     .get_play_count_query(episode=OuterRef("pk"))
                 ),
                 play_time=Subquery(
-                    PodcastContentAudioRequestLog.objects
+                    PodcastEpisodeAudioRequestLog.objects
                     .filter(is_bot=False)
                     .get_play_time_query(episode=OuterRef("pk"))
                 )
@@ -369,7 +368,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         if obj.play_count is None:
             return 0.0
 
-        return PodcastContentAudioRequestLog.get_admin_list_link(
+        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
             text=round(obj.play_count, 2),
             episode__podcastcontent_ptr__exact=obj.pk,
             is_bot__exact=0,
@@ -380,7 +379,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         if obj.play_time is None:
             return timedelta()
 
-        return PodcastContentAudioRequestLog.get_admin_list_link(
+        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
             text=obj.play_time,
             episode__podcastcontent_ptr__exact=obj.pk,
             is_bot__exact=0,
