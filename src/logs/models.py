@@ -11,7 +11,8 @@ from rest_framework.request import Request
 
 from logs.ip_check import (
     IpAddressCategory,
-    get_geo_properties,
+    get_geoip2_asn,
+    get_geoip2_city,
     get_ip_address_category,
 )
 from logs.querysets import PodcastEpisodeAudioRequestLogQuerySet
@@ -76,18 +77,15 @@ class GeoIP(ModelMixin, models.Model):
         try:
             return cls.objects.get(ip=ip)
         except cls.DoesNotExist:
-            try:
-                properties = get_geo_properties(ip)
-            except Exception as e:
-                logger.error("Exception getting geoip for %s", ip, exc_info=e)
-                return None
-            if properties:
+            geoip2_city = get_geoip2_city(ip)
+            if geoip2_city:
+                geoip2_asn = get_geoip2_asn(ip)
                 return cls.objects.create(
                     ip=ip,
-                    city=properties.city or "",
-                    region=properties.region or "",
-                    country=properties.country_code or "",
-                    org=properties.organization or "",
+                    city=geoip2_city.city.name or "",
+                    region=(geoip2_city.subdivisions[0].name or "") if geoip2_city.subdivisions else "",
+                    country=geoip2_city.country.iso_code or "",
+                    org=(geoip2_asn.autonomous_system_organization or "") if geoip2_asn else "",
                 )
 
         return None

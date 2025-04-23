@@ -223,6 +223,10 @@ LOGGING = {
         },
     },
     "loggers": {
+        "logs": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
         "podcasts": {
             "handlers": ["console"],
             "level": "INFO",

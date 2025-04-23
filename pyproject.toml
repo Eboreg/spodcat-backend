@@ -33,6 +33,7 @@ dependencies = [
     "azure-monitor-query",      # used by get_audio_request_logs
     "azure-identity",           # used by get_audio_request_logs
     "geocoder",                 # used to get geo data for remote IPs
+    "geoip2",                   # used to get geo data for remote IPs
 ]
 dynamic = ["version"]
 
