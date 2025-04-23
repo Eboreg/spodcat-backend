@@ -36,7 +36,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         environment = environment or settings.ENVIRONMENT
         credential = DefaultAzureCredential()
         client = LogsQueryClient(credential)
-        last_log = PodcastEpisodeAudioRequestLog.objects.filter(podcast=podcast).order_by("-created").first()
+        last_log = PodcastEpisodeAudioRequestLog.objects.filter(episode__podcast=podcast).order_by("-created").first()
         if last_log:
             from_date = last_log.created
         else:
@@ -97,7 +97,6 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                         duration_ms=row["DurationMs"],
                         episode=episode,
                         path_info=row["ObjectKey"],
-                        podcast=podcast,
                         response_body_size=row["ResponseBodySize"] or 0,
                         rss_request_log=rss_request_log,
                         status_code=row["StatusCode"],
