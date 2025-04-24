@@ -92,7 +92,6 @@ class GeoIP(ModelMixin, models.Model):
 
 
 class RequestLog(ModelMixin, models.Model):
-    created = models.DateTimeField(db_index=True)
     is_bot = models.BooleanField(default=False, db_index=True)
     path_info = TruncatedCharField(max_length=200, blank=True, default="")
     user_agent = models.CharField(max_length=255, blank=True, default="")
@@ -120,9 +119,6 @@ class RequestLog(ModelMixin, models.Model):
     referrer = TruncatedCharField(max_length=100, blank=True, default="")
     referrer_category = models.CharField(max_length=10, null=True, default=None, choices=ReferrerCategory.choices)
     referrer_name = models.CharField(max_length=50, blank=True, default="")
-
-    class Meta:
-        ordering = ["-created"]
 
     @classmethod
     def create(
@@ -215,6 +211,7 @@ class RequestLog(ModelMixin, models.Model):
 
 
 class PodcastRequestLog(RequestLog):
+    created = models.DateTimeField(db_index=True)
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="requests")
 
     class Meta:
@@ -223,6 +220,7 @@ class PodcastRequestLog(RequestLog):
 
 
 class PodcastContentRequestLog(RequestLog):
+    created = models.DateTimeField(db_index=True)
     content: "PodcastContent" = models.ForeignKey(
         "podcasts.PodcastContent",
         on_delete=models.CASCADE,
@@ -235,6 +233,7 @@ class PodcastContentRequestLog(RequestLog):
 
 
 class PodcastEpisodeAudioRequestLog(RequestLog):
+    created = models.DateTimeField(db_index=True)
     duration_ms = models.IntegerField()
     episode: "Episode | None" = models.ForeignKey(
         "podcasts.Episode",
