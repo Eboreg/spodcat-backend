@@ -1,12 +1,24 @@
 from django.db.models import Prefetch
+from django_filters import rest_framework as filters
 
 from podcasts import serializers
 from podcasts.models import Comment, PodcastContent, Post
-from podcasts.views.podcast_content import PodcastContentViewSet
+from podcasts.views.podcast_content import (
+    PodcastContentFilter,
+    PodcastContentViewSet,
+)
+
+
+class PostFilter(PodcastContentFilter):
+    post = filters.CharFilter(method="filter_content")
+
+    class Meta:
+        model = Post
+        fields = []
 
 
 class PostViewSet(PodcastContentViewSet):
-    filterset_fields = ("slug", "podcast")
+    filterset_class = PostFilter
     prefetch_for_includes = {
         "podcast.contents": [
             Prefetch(

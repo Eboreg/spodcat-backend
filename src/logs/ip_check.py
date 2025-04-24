@@ -1,7 +1,5 @@
 import ipaddress
 import logging
-import os
-from base64 import b64encode
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
@@ -10,43 +8,9 @@ import geoip2.errors
 import geoip2.models
 from django.conf import settings
 from django.db import models
-from geocoder.maxmind import (
-    MaxmindQuery as BaseMaxmindQuery,
-    MaxmindResults as BaseMaxmindResults,
-)
 
 
 logger = logging.getLogger(__name__)
-
-
-class MaxmindResults(BaseMaxmindResults):
-    @property
-    def organization(self) -> str | None:
-        return self._traits.get("autonomous_system_organization")
-
-    @property
-    def region(self) -> str | None:
-        subdivisions = self.raw.get("subdivisions", [])
-
-        if isinstance(subdivisions, list) and subdivisions:
-            return subdivisions[0].get("names", {}).get("en")
-
-        return None
-
-
-class MaxmindQuery(BaseMaxmindQuery):
-    _RESULT_CLASS = MaxmindResults
-    _URL = "https://geolite.info/geoip/v2.1/city/{0}"
-
-    def _build_headers(self, provider_key, **kwargs):
-        account_id = os.environ.get("MAXMIND_ACCOUNT_ID", "")
-        license_key = os.environ.get("MAXMIND_LICENSE_KEY", "")
-        auth = b64encode(f"{account_id}:{license_key}".encode()).decode()
-
-        return {"Authorization": f"Basic {auth}"}
-
-    def _build_params(self, location, provider_key, **kwargs):
-        return {}
 
 
 class IpAddressCategory(models.TextChoices):
@@ -79,22 +43,6 @@ class GeoProperties(TypedDict):
 
 
 ip_list_cache: dict[IpAddressCategory, list[ipaddress.IPv4Network | ipaddress.IPv6Network]] = {}
-
-
-def get_geo_properties(ip: str) -> MaxmindResults | None:
-    try:
-        results = MaxmindQuery(ip)
-    except Exception as e:
-        raise ValueError(f"Exception getting geoip for {ip}", e) from e
-
-    if not results.ok or (isinstance(results.status_code, int) and results.status_code >= 400):
-        raise ValueError(f"Error getting geoip for {ip}", results)
-
-    for result in results:
-        if result.ok:
-            return result
-
-    return None
 
 
 def get_geoip2_asn(ip: str) -> geoip2.models.ASN | None:

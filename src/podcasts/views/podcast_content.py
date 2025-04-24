@@ -1,3 +1,7 @@
+from uuid import UUID
+
+from django.db.models import Q
+from django_filters import rest_framework as filters
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -6,6 +10,20 @@ from rest_framework_json_api import views
 from logs.models import PodcastContentRequestLog
 from podcasts import serializers
 from podcasts.models import PodcastContent
+
+
+class PodcastContentFilter(filters.FilterSet):
+    podcast = filters.CharFilter(method="filter_podcast")
+
+    def filter_content(self, queryset, name, value):
+        try:
+            uuid = UUID(hex=value)
+            return queryset.filter(Q(slug=value) | Q(pk=uuid))
+        except ValueError:
+            return queryset.filter(slug=value)
+
+    def filter_podcast(self, queryset, name, value):
+        return queryset.filter(podcast__slug=value)
 
 
 class PodcastContentViewSet(views.ReadOnlyModelViewSet):

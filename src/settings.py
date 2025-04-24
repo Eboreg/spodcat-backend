@@ -285,7 +285,7 @@ CACHES = {
         "LOCATION": f"redis://127.0.0.1:6379/{redis_db}",
     }
 }
-
+CACHALOT_DATABASES = ["default"]
 CACHALOT_UNCACHABLE_APPS = ["logs"]
 
 
