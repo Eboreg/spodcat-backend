@@ -9,7 +9,7 @@ from django.db.models import (
     Sum,
     Value as V,
 )
-from django.db.models.functions import Cast, Coalesce, Round, Concat
+from django.db.models.functions import Cast, Coalesce, Concat, Round
 
 
 if TYPE_CHECKING:

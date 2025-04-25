@@ -5,6 +5,7 @@ import socket
 from typing import TYPE_CHECKING
 
 from django.db import models
+from django.db.models import F, Q
 from django.utils import timezone
 from klaatu_django.db import TruncatedCharField
 from rest_framework.request import Request
@@ -150,7 +151,7 @@ class RequestLog(ModelMixin, models.Model):
             referrer_name=ref_dict["name"] if ref_dict else "",
             remote_addr=remote_addr,
             remote_addr_category=remote_addr_category,
-            remote_host=remote_host,
+            remote_host=remote_host if remote_host != remote_addr else "",
             user_agent_data=user_agent_data,
             user_agent=user_agent,
             geoip=geoip,
@@ -194,7 +195,7 @@ class RequestLog(ModelMixin, models.Model):
     def fill_remote_hosts(cls):
         ips = list(
             cls.objects
-            .filter(remote_host="")
+            .filter(Q(remote_host="") | Q(remote_addr__startswith=F("remote_host")))
             .exclude(remote_addr=None)
             .order_by()
             .values_list("remote_addr", flat=True)
@@ -203,8 +204,9 @@ class RequestLog(ModelMixin, models.Model):
 
         for idx, ip in enumerate(ips):
             remote_host = socket.getfqdn(ip)
-            logger.info("(%d/%d) %s: %s", idx + 1, len(ips), ip, remote_host)
-            cls.objects.filter(remote_addr=ip).update(remote_host=remote_host)
+            if remote_host != ip:
+                logger.info("(%d/%d) %s: %s", idx + 1, len(ips), ip, remote_host)
+                cls.objects.filter(remote_addr=ip).update(remote_host=remote_host)
 
     def has_change_permission(self, request):
         return False
