@@ -104,19 +104,12 @@ DATABASES: dict[str, dict] = {
         "NAME": BASE_DIR / "db.sqlite3",
     },
     "production": {
-        "ENGINE": os.environ.get("PROD_DB_ENGINE"),
+        "ENGINE": os.environ.get("PROD_SQL_ENGINE"),
         "NAME": os.environ.get("PROD_SQL_DB"),
         "PASSWORD": os.environ.get("PROD_SQL_PASSWORD"),
         "HOST": os.environ.get("PROD_SQL_HOST"),
         "USER": os.environ.get("PROD_SQL_USER"),
     },
-    "old_production": {
-        "ENGINE": os.environ.get("OLDPROD_DB_ENGINE"),
-        "NAME": os.environ.get("OLDPROD_SQL_DB"),
-        "PASSWORD": os.environ.get("OLDPROD_SQL_PASSWORD"),
-        "HOST": os.environ.get("OLDPROD_SQL_HOST"),
-        "USER": os.environ.get("OLDPROD_SQL_USER"),
-    }
 }
 DATABASES["default"] = DATABASES[DJANGO_DB].copy()
 
