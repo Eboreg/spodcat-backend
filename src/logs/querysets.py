@@ -9,7 +9,7 @@ from django.db.models import (
     Sum,
     Value as V,
 )
-from django.db.models.functions import Cast, Coalesce, Round
+from django.db.models.functions import Cast, Coalesce, Round, Concat
 
 
 if TYPE_CHECKING:
@@ -35,20 +35,17 @@ class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequest
             .order_by()
             .values(*filters.keys())
             .with_play_time_alias()
-            .annotate(play_time=Sum(F("play_time")))
+            .annotate(play_time=Cast(Concat(Sum(F("play_time")), V(" seconds")), DurationField()))
             .values("play_time")
         )
 
     def with_play_time_alias(self):
         return self.alias(
-            play_time=Cast(
-                Round(
-                    Cast(F("response_body_size"), FloatField()) /
-                    F("episode__audio_file_length") *
-                    F("episode__duration_seconds")
-                ) * V(1_000_000),
-                DurationField(),
-            )
+            play_time=Round(
+                Cast(F("response_body_size"), FloatField()) /
+                F("episode__audio_file_length") *
+                F("episode__duration_seconds")
+            ),
         )
 
     def with_percent_fetched(self):
