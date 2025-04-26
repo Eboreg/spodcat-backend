@@ -4,7 +4,7 @@ import mimetypes
 import tempfile
 from io import BytesIO
 from time import struct_time
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 import feedparser
 import requests
@@ -17,7 +17,7 @@ from pydub.utils import mediainfo
 from slugify import slugify
 
 from podcasts.models.podcast_content import PodcastContent
-from podcasts.utils import (
+from utils import (
     delete_storage_file,
     generate_thumbnail,
     get_audio_file_dbfs_array,
@@ -58,7 +58,6 @@ class Episode(PodcastContent):
     number = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
     season = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
 
-    objects: models.Manager[Self]
     songs: "RelatedManager[EpisodeSong]"
 
     def __str__(self):

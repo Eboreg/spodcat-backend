@@ -1,9 +1,26 @@
-from django.db.models import Exists, OuterRef
+from typing import TYPE_CHECKING, TypeVar
+
+from django.db.models import Exists, OuterRef, Q, QuerySet
 from django.utils import timezone
 from polymorphic.query import PolymorphicQuerySet
 
 
-class PodcastContentQuerySet(PolymorphicQuerySet):
+if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractUser, AnonymousUser
+
+    from podcasts.models import Podcast, PodcastContent
+
+    _T = TypeVar("_T", bound=PodcastContent)
+
+
+class PodcastQuerySet(QuerySet["Podcast"]):
+    def filter_by_user(self, user: "AnonymousUser | AbstractUser"):
+        if user.is_superuser:
+            return self
+        return self.filter(Q(owner=user) | Q(authors=user))
+
+
+class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
     def partial(self):
         return self.only(
             "Episode___audio_file",
@@ -24,3 +41,14 @@ class PodcastContentQuerySet(PolymorphicQuerySet):
         from podcasts.models import EpisodeSong
 
         return self.annotate(has_songs=Exists(EpisodeSong.objects.filter(episode=OuterRef("pk"))))
+
+
+if TYPE_CHECKING:
+    from django.db.models.manager import Manager
+    from polymorphic.managers import PolymorphicManager
+
+    class PodcastContentManager(PolymorphicManager[_T], PodcastContentQuerySet[_T]):
+        ...
+
+    class PodcastManager(Manager[Podcast], PodcastQuerySet):
+        ...

@@ -13,8 +13,8 @@ from podcasts.views import (
     PostViewSet,
 )
 from podcasts.views.admin import markdown_image_upload
-from serve_media import serve_media
 from users.views import UserViewSet
+from utils.serve_media import serve_media
 
 
 router = DefaultRouter()

@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 from django.db import models
 from markdown import markdown
 
-from model_mixin import ModelMixin
-from podcasts.markdown import MarkdownExtension
+from utils.markdown import MarkdownExtension
+from utils.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:

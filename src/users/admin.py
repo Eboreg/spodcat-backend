@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
-from admin_mixin import AdminMixin
 from users.models import User
+from utils.admin_mixin import AdminMixin
 
 
 @admin.register(User)

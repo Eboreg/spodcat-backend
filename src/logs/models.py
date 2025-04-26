@@ -24,10 +24,11 @@ from logs.user_agent import (
     get_referrer_dict,
     get_useragent_data,
 )
-from model_mixin import ModelMixin
+from utils.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
+    from logs.querysets import PodcastEpisodeAudioRequestLogManager
     from podcasts.models import Episode, Podcast, PodcastContent
 
 
@@ -245,4 +246,4 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
     response_body_size = models.IntegerField(db_index=True)
     status_code = models.CharField(max_length=10)
 
-    objects = PodcastEpisodeAudioRequestLogQuerySet.as_manager()
+    objects: "PodcastEpisodeAudioRequestLogManager" = PodcastEpisodeAudioRequestLogQuerySet.as_manager()

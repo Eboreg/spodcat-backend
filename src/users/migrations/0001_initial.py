@@ -5,7 +5,7 @@ import django.contrib.auth.validators
 import django.utils.timezone
 from django.db import migrations, models
 
-import model_mixin
+from utils import model_mixin
 
 
 class Migration(migrations.Migration):

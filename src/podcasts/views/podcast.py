@@ -1,6 +1,8 @@
+from datetime import date, timedelta
 from typing import cast
 from urllib.parse import urljoin
 
+import rest_framework.renderers
 from django.conf import settings
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
@@ -9,15 +11,17 @@ from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
 
-from logs.models import PodcastRequestLog
+from logs.models import PodcastEpisodeAudioRequestLog, PodcastRequestLog
 from podcasts import serializers
 from podcasts.models import Episode, Podcast, PodcastContent
-from podcasts.utils import date_to_datetime
+from utils import date_to_datetime
 
 
 class PodcastFeedGenerator(FeedGenerator):
@@ -39,6 +43,35 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     }
     queryset = Podcast.objects.all()
     serializer_class = serializers.PodcastSerializer
+
+    @action(
+        methods=["get"],
+        detail=False,
+        serializer_class=serializers.ChartSerializer,
+        renderer_classes=[rest_framework.renderers.JSONRenderer, rest_framework.renderers.BrowsableAPIRenderer],
+        authentication_classes=[SessionAuthentication],
+        permission_classes=[IsAuthenticated],
+    )
+    def chart(self, request: Request):
+        today = date.today()
+        start_date = (
+            date.fromisoformat(request.query_params.get("start"))
+            if "start" in request.query_params
+            else today - timedelta(days=30)
+        )
+        end_date = (
+            date.fromisoformat(request.query_params.get("end"))
+            if "end" in request.query_params
+            else today
+        )
+        chart_data = (
+            PodcastEpisodeAudioRequestLog.objects
+            .filter(is_bot=False)
+            .filter_by_user(request.user)
+            .get_podcast_chart_data(start_date, end_date)
+        )
+        serializer = self.get_serializer(chart_data)
+        return Response(serializer.data)
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):

@@ -2,7 +2,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from podcasts.models import Episode, Podcast
-from podcasts.utils import delete_storage_file
+from utils import delete_storage_file
 
 
 @receiver(pre_delete, sender=Episode, dispatch_uid="on_episode_pre_delete")

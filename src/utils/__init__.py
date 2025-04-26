@@ -2,7 +2,7 @@ import datetime
 import math
 import os
 from io import BytesIO
-from typing import BinaryIO, Generator
+from typing import Any, BinaryIO, Generator, Iterable
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
@@ -60,6 +60,43 @@ def get_audio_segment_dbfs_array(audio: AudioSegment) -> list[float]:
     multiplier = 100 / max_dbfs
 
     return [dbfs * multiplier for dbfs in dbfs_values]
+
+
+def group_dicts(dicts: Iterable[dict[str, Any]], keys: list[str], data_key: str = "data") -> list[dict[str, Any]]:
+    """
+    In:
+        dicts = [
+            {"slug": "musikensmakt", "name": "Musikens Makt", "date": "2025-04-01", "count": 60},
+            {"slug": "musikensmakt", "name": "Musikens Makt", "date": "2025-04-02", "count": 64},
+            {"slug": "apanap", "name": "Apan Ap", "date": "2025-04-01", "count": 2},
+        ]
+        keys = ["slug", "name"]
+        data_key = "dätä"
+    Out: [
+        {
+            "slug": "musikensmakt",
+            "name": "Musikens Makt",
+            "dätä": [{"date": "2025-04-01", "count": 60}, {"date": "2025-04-02", "count": 64}],
+        },
+        {
+            "slug": "apanap",
+            "name": "Apan Ap",
+            "dätä": [{"date": "2025-04-01", "count": 2}],
+        },
+    ]
+    """
+    result: dict[set[str], list] = {}
+
+    for d in dicts:
+        dd = d.copy()
+        d_key = tuple(d[key] for key in keys)
+        if d_key not in result:
+            result[d_key] = []
+        for key in keys:
+            del dd[key]
+        result[d_key].append(dd)
+
+    return [{data_key: v, **{keys[i]: k[i] for i in range(len(keys))}} for k, v in result.items()]
 
 
 def seconds_to_timestamp(value: int):

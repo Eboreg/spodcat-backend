@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+<script type="module" src={% static "assets/js/chart.js" %}></script>
+{% endblock extrahead %}
+
+{% block content %}
+<div style="height:300px">
+    <canvas id="podcast-play-time-chart"></canvas>
+</div>
+{% endblock content %}

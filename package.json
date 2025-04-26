@@ -1,0 +1,23 @@
+{
+  "devDependencies": {
+    "@types/jquery": "^3.5.32",
+    "@types/select2": "^4.0.63",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.9",
+    "parcel": "^2.14.4"
+  },
+  "scripts": {
+    "build": "parcel build",
+    "watch": "parcel watch"
+  },
+  "targets": {
+    "chart": {
+      "distDir": "src/assets/js",
+      "source": "src/assets/ts/chart.ts"
+    }
+  }
+}

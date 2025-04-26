@@ -2,8 +2,8 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from logs.models import PodcastRequestLog
-from podcasts.fields import TimestampField
 from podcasts.models import Podcast, PodcastContent
+from utils.fields import TimestampField
 
 
 class EpisodeSongForm(ModelForm):

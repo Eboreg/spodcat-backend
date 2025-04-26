@@ -21,7 +21,6 @@ from martor.models import MartorField
 from pydub import AudioSegment
 from pydub.utils import mediainfo
 
-from admin_mixin import AdminMixin
 from logs.models import (
     PodcastContentRequestLog,
     PodcastEpisodeAudioRequestLog,
@@ -42,12 +41,13 @@ from podcasts.models import (
     Podcast,
     Post,
 )
-from podcasts.utils import (
+from utils import (
     delete_storage_file,
     get_audio_segment_dbfs_array,
     seconds_to_timestamp,
 )
-from podcasts.widgets import AdminMartorWidget
+from utils.admin_mixin import AdminMixin
+from utils.widgets import AdminMartorWidget
 
 
 logger = logging.getLogger(__name__)

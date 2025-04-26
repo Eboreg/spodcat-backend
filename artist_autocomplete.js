@@ -1,11 +1,12 @@
 {
     function initArtistAutocomplete(selector) {
-        var $ = django.jQuery;
-        var select2 = $(selector).find(".field-artists .admin-autocomplete").not("[name*=__prefix__]");
-        select2.each(function (i, element) {
+        const $ = django.jQuery;
+        const select2 = $(selector).find(".field-artists .admin-autocomplete").not("[name*=__prefix__]");
+
+        select2.each(function(i, element) {
             $(element).select2({
                 ajax: {
-                    data: function (params) {
+                    data: (params) => {
                         return {
                             term: params.term,
                             page: params.page,
@@ -16,26 +17,26 @@
                     },
                 },
                 tags: true,
-                createTag: function (params) {
-                    if (typeof params.term != "string")
-                        return null;
-                    var term = params.term.trim();
-                    if (term == "")
-                        return null;
+                createTag: function(params) {
+                    if (typeof params.term != "string") return null;
+                    const term = params.term.trim();
+                    if (term == "") return null;
+
                     return {
-                        id: "NEW--".concat(term),
+                        id: `NEW--${term}`,
                         text: term,
                         newTag: true,
                     };
                 },
-            });
-        });
+            })
+        })
     }
-    $(function () {
+
+    $(function() {
         initArtistAutocomplete(document);
     });
-    document.addEventListener("formset:added", function (event) {
+
+    document.addEventListener("formset:added", (event) => {
         initArtistAutocomplete(event.target);
     });
 }
-//# sourceMappingURL=artist_autocomplete.js.map

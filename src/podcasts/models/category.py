@@ -2,8 +2,8 @@ from html import escape
 
 from django.db import models
 
-from model_mixin import ModelMixin
 from podcasts.data import CATEGORIES
+from utils.model_mixin import ModelMixin
 
 
 class Category(ModelMixin, models.Model):

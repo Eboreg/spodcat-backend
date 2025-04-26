@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "sourceMap": true,
+        "outDir": "src/assets/js",
+        "lib": ["ES2017", "DOM"]
+    },
+    "include": ["src/assets/ts/**/*"]
+}

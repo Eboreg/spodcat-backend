@@ -4,7 +4,7 @@ import django.db.models.deletion
 import klaatu_django.db
 from django.db import migrations, models
 
-import model_mixin
+from utils import model_mixin
 
 
 class Migration(migrations.Migration):

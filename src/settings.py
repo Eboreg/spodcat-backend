@@ -286,7 +286,7 @@ CACHES = {
     }
 }
 CACHALOT_DATABASES = ["default"]
-CACHALOT_UNCACHABLE_APPS = ["logs"]
+# CACHALOT_UNCACHABLE_APPS = ["logs"]
 
 
 # Own stuff

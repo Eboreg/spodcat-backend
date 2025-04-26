@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 
-from model_mixin import ModelMixin
+from utils.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:

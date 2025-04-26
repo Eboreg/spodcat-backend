@@ -8,7 +8,7 @@ from logs.models import (
     PodcastRequestLog,
     UserAgent,
 )
-from logs.widgets import ReadOnlyInlineModelWidget
+from utils.widgets import ReadOnlyInlineModelWidget
 
 
 class GeoIPWidget(ReadOnlyInlineModelWidget):
@@ -141,7 +141,7 @@ class PodcastEpisodeAudioRequestLogAdmin(LogAdmin):
 
     @admin.display(description="% fetched", ordering="percent_fetched")
     def percent_fetched(self, obj):
-        return obj.percent_fetched
+        return round(obj.percent_fetched, 2)
 
     @admin.display(description="podcast", ordering="episode__podcast__name")
     def podcast_link(self, obj: PodcastEpisodeAudioRequestLog):

@@ -3,7 +3,7 @@ import uuid
 
 from django.db import models
 
-from model_mixin import ModelMixin
+from utils.model_mixin import ModelMixin
 
 
 def generate_term():

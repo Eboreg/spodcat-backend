@@ -16,21 +16,18 @@ from markdown import markdown
 from markdownify import markdownify
 from martor.models import MartorField
 
-from model_mixin import ModelMixin
-from podcasts.markdown import MarkdownExtension
-from podcasts.utils import (
-    delete_storage_file,
-    downscale_image,
-    generate_thumbnail,
-)
+from podcasts.querysets import PodcastQuerySet
 from podcasts.validators import podcast_cover_validator, podcast_slug_validator
+from utils import delete_storage_file, downscale_image, generate_thumbnail
+from utils.markdown import MarkdownExtension
+from utils.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
-    from polymorphic.managers import PolymorphicManager
 
     from podcasts.models import Category, PodcastLink
+    from podcasts.querysets import PodcastContentManager, PodcastManager
     from users.models import User
 
 
@@ -113,8 +110,10 @@ class Podcast(ModelMixin, models.Model):
     slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator], help_text="Will be used in URLs.")
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
 
-    contents: "PolymorphicManager"
+    contents: "PodcastContentManager"
     links: "RelatedManager[PodcastLink]"
+
+    objects: "PodcastManager" = PodcastQuerySet.as_manager()
 
     class Meta:
         ordering = ["name"]

@@ -7,13 +7,13 @@ import django.db.models.functions.text
 import martor.models
 from django.db import migrations, models
 
-import model_mixin
 import podcasts.models.challenge
 import podcasts.models.episode
 import podcasts.models.podcast
 import podcasts.models.podcast_content
 import podcasts.models.podcast_link
 import podcasts.validators
+from utils import model_mixin
 
 
 class Migration(migrations.Migration):

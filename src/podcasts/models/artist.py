@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Lower
 
-from model_mixin import ModelMixin
+from utils.model_mixin import ModelMixin
 
 
 class Artist(ModelMixin, models.Model):

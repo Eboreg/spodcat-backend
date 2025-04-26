@@ -1,6 +1,6 @@
 from django.http import HttpRequest
 
-from model_mixin import ModelMixin
+from utils.model_mixin import ModelMixin
 
 
 class AdminMixin:

@@ -1,6 +1,6 @@
 from django.db import models
 
-from model_mixin import ModelMixin
+from utils.model_mixin import ModelMixin
 
 
 def podcast_link_icon_path(instance: "PodcastLink", filename: str):

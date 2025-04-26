@@ -12,13 +12,14 @@ from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
 from slugify import slugify
 
-from model_mixin import ModelMixin
-from podcasts.markdown import MarkdownExtension
 from podcasts.querysets import PodcastContentQuerySet
+from utils.markdown import MarkdownExtension
+from utils.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
     from podcasts.models import Podcast
+    from podcasts.querysets import PodcastContentManager
 
 
 def today():
@@ -35,7 +36,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     published = models.DateField(default=today)
     slug = models.SlugField(max_length=100)
 
-    objects: models.Manager[Self] = PodcastContentQuerySet.as_manager()
+    objects: "PodcastContentManager[Self]" = PodcastContentQuerySet.as_manager()
 
     class Meta:
         ordering = ["-published"]
