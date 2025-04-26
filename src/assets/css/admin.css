@@ -74,3 +74,15 @@
 .readonly-inline-model .row .value {
     flex: 1 0 auto;
 }
+
+.charts {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chart-container {
+    height: 300px;
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+}

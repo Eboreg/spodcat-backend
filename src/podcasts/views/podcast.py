@@ -53,25 +53,51 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def chart(self, request: Request):
-        today = date.today()
-        start_date = (
-            date.fromisoformat(request.query_params.get("start"))
-            if "start" in request.query_params
-            else today - timedelta(days=30)
-        )
-        end_date = (
-            date.fromisoformat(request.query_params.get("end"))
-            if "end" in request.query_params
-            else today
-        )
+        start_date = self.get_chart_start_date(request)
+        end_date = self.get_chart_end_date(request)
         chart_data = (
             PodcastEpisodeAudioRequestLog.objects
             .filter(is_bot=False)
             .filter_by_user(request.user)
             .get_podcast_chart_data(start_date, end_date)
         )
+        chart_data.fill_empty_points()
         serializer = self.get_serializer(chart_data)
         return Response(serializer.data)
+
+    @action(
+        methods=["get"],
+        detail=True,
+        serializer_class=serializers.ChartSerializer,
+        renderer_classes=[rest_framework.renderers.JSONRenderer, rest_framework.renderers.BrowsableAPIRenderer],
+        authentication_classes=[SessionAuthentication],
+        permission_classes=[IsAuthenticated],
+    )
+    def episode_chart(self, request: Request, pk: str):
+        start_date = self.get_chart_start_date(request)
+        end_date = self.get_chart_end_date(request)
+        chart_data = (
+            PodcastEpisodeAudioRequestLog.objects
+            .filter(is_bot=False, episode__podcast=pk)
+            .filter_by_user(request.user)
+            .get_episode_chart_data(start_date, end_date)
+        )
+        serializer = self.get_serializer(chart_data)
+        return Response(serializer.data)
+
+    def get_chart_end_date(self, request: Request):
+        return (
+            date.fromisoformat(request.query_params.get("end"))
+            if "end" in request.query_params
+            else date.today()
+        )
+
+    def get_chart_start_date(self, request: Request):
+        return (
+            date.fromisoformat(request.query_params.get("start"))
+            if "start" in request.query_params
+            else date.today() - timedelta(days=30)
+        )
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):

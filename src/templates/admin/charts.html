@@ -1,4 +1,4 @@
-{% extends "admin/base.html" %}
+{% extends "admin/base_site.html" %}
 {% load static %}
 
 {% block extrahead %}
@@ -6,7 +6,18 @@
 {% endblock extrahead %}
 
 {% block content %}
-<div style="height:300px">
-    <canvas id="podcast-play-time-chart"></canvas>
+<div class="charts">
+    <div class="chart-container">
+        <input type="date" name="start">
+        <input type="date" name="end">
+        <canvas id="podcast-play-time-chart"></canvas>
+    </div>
+    {% for podcast in podcasts %}
+        <div class="chart-container">
+            <input type="date" name="start">
+            <input type="date" name="end">
+            <canvas class="episode-play-time-chart" data-podcast-slug="{{podcast.slug}}" data-podcast-name="{{podcast.name}}"></canvas>
+        </div>
+    {% endfor %}
 </div>
 {% endblock content %}

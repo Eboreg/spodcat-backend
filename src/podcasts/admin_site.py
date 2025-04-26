@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.db.models import Q
+from django.http import HttpRequest
 from django.urls import path
 from django.views.generic import TemplateView
 
-from podcasts.models import Comment
+from podcasts.models import Comment, Podcast
 
 
 class AdminSite(admin.AdminSite):
@@ -24,8 +25,9 @@ class AdminSite(admin.AdminSite):
             path("charts/", self.charts, name="charts"),
         ]
 
-    def charts(self, request):
+    def charts(self, request: HttpRequest):
         context = {
+            "podcasts": Podcast.objects.filter_by_user(request.user),
             **self.each_context(request),
         }
         return TemplateView.as_view(template_name="admin/charts.html", extra_context=context)(request)

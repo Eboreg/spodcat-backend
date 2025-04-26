@@ -10,6 +10,9 @@ import {
     Decimation,
     Title,
     Legend,
+    Colors,
+    BarController,
+    BarElement,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 
@@ -23,11 +26,6 @@ interface ChartApiResponse {
     }[];
 }
 
-interface ColorConfig {
-    borderColor: string;
-    backgroundColor: string;
-}
-
 Chart.register(
     LineController,
     TimeScale,
@@ -38,7 +36,10 @@ Chart.register(
     Tooltip,
     Decimation,
     Title,
-    Legend
+    Legend,
+    Colors,
+    BarController,
+    BarElement
 );
 
 Chart.defaults.color = "#eeeeee";
@@ -46,29 +47,19 @@ Chart.defaults.borderColor = "#ff882244";
 Chart.defaults.datasets.line.fill = "start";
 Chart.defaults.animation = false;
 Chart.defaults.datasets.line.normalized = true;
-Chart.defaults.datasets.line.spanGaps = true;
+Chart.defaults.datasets.line.tension = 0.25;
+// Chart.defaults.datasets.line.spanGaps = true;
 Chart.defaults.scales.time.time.tooltipFormat = "yyyy-MM-dd";
+Chart.defaults.plugins.colors = {
+    enabled: true,
+    forceOverride: true,
+};
 Chart.defaults.interaction = {
     mode: "nearest",
     axis: "x",
     intersect: false,
     includeInvisible: false,
 };
-
-const colorConfigs: ColorConfig[] = [
-    {
-        borderColor: "rgb(75, 192, 192)",
-        backgroundColor: "rgba(75, 192, 192, 0.3)",
-    },
-    {
-        borderColor: "rgb(192, 75, 192)",
-        backgroundColor: "rgba(192, 75, 192, 0.3)",
-    },
-    {
-        borderColor: "rgb(192, 192, 75)",
-        backgroundColor: "rgba(192, 192, 75, 0.3)",
-    },
-];
 
 function formatDuration(totalSeconds: number) {
     const hours = Math.floor(totalSeconds / 60 / 60);
@@ -79,12 +70,13 @@ function formatDuration(totalSeconds: number) {
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function getColorConfig(idx: number): ColorConfig {
-    return colorConfigs[idx % colorConfigs.length];
-}
-
-export async function renderPodcastPlayTimeGraph(canvas: HTMLCanvasElement, startDate?: Date, endDate?: Date) {
-    let colorConfigIdx = 0;
+export async function renderEpisodePlayTimeGraph(
+    canvas: HTMLCanvasElement,
+    podcastSlug: string,
+    podcastName: string,
+    startDate?: Date,
+    endDate?: Date
+): Promise<Chart> {
     const now = new Date();
 
     startDate = startDate || new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
@@ -92,19 +84,89 @@ export async function renderPodcastPlayTimeGraph(canvas: HTMLCanvasElement, star
     startDate.setMinutes(-startDate.getTimezoneOffset());
     endDate.setMinutes(-endDate.getTimezoneOffset());
 
-    const url = `/podcasts/chart/?start=${startDate.toISOString().slice(0, 10)}&end=${endDate
-        .toISOString()
-        .slice(0, 10)}`;
+    const start = startDate.toISOString().slice(0, 10);
+    const end = endDate.toISOString().slice(0, 10);
+    const url = `/podcasts/${podcastSlug}/episode_chart/?start=${start}&end=${end}`;
     const response = await fetch(url);
     const json: ChartApiResponse = await response.json();
-    const datasets = json.datasets.map((d) => {
-        return { ...d, ...getColorConfig(colorConfigIdx++) };
-    });
 
-    new Chart(canvas, {
+    return new Chart(canvas, {
+        type: "bar",
+        data: {
+            datasets: json.datasets,
+        },
+        options: {
+            maintainAspectRatio: false,
+            parsing: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (item) => {
+                            return item.dataset.label + ": " + formatDuration(item.parsed.y);
+                        },
+                    },
+                },
+                title: {
+                    text: `${podcastName}: Daily play time per episode`,
+                    display: true,
+                },
+                legend: {
+                    display: false,
+                },
+            },
+            scales: {
+                x: {
+                    type: "time",
+                    min: startDate.getTime(),
+                    max: endDate.getTime(),
+                    ticks: {
+                        source: "auto",
+                    },
+                    stacked: true,
+                    time: {
+                        minUnit: "day",
+                    },
+                },
+                y: {
+                    min: 0,
+                    title: {
+                        text: "H:MM:SS",
+                        display: true,
+                    },
+                    ticks: {
+                        callback: (tickValue) => {
+                            if (typeof tickValue == "string") return formatDuration(parseInt(tickValue));
+                            return formatDuration(tickValue);
+                        },
+                    },
+                    beginAtZero: true,
+                    stacked: true,
+                },
+            },
+            datasets: {
+                bar: {
+                    barPercentage: 1.0,
+                    categoryPercentage: 1.0,
+                },
+            },
+        },
+    });
+}
+
+export async function renderPodcastPlayTimeGraph(
+    canvas: HTMLCanvasElement,
+    startDate: Date,
+    endDate: Date
+): Promise<Chart> {
+    const start = startDate.toISOString().slice(0, 10);
+    const end = endDate.toISOString().slice(0, 10);
+    const response = await fetch(`/podcasts/chart/?start=${start}&end=${end}`);
+    const json: ChartApiResponse = await response.json();
+
+    return new Chart(canvas, {
         type: "line",
         data: {
-            datasets: datasets,
+            datasets: json.datasets,
         },
         options: {
             maintainAspectRatio: false,
@@ -136,9 +198,9 @@ export async function renderPodcastPlayTimeGraph(canvas: HTMLCanvasElement, star
                     ticks: {
                         source: "auto",
                     },
+                    stacked: true,
                     time: {
-                        round: "day",
-                        unit: "day",
+                        minUnit: "day",
                     },
                 },
                 y: {
@@ -159,8 +221,55 @@ export async function renderPodcastPlayTimeGraph(canvas: HTMLCanvasElement, star
     });
 }
 
+async function initPlayTimeGraph(
+    canvas: HTMLCanvasElement,
+    render: (startDate: Date, endDate: Date) => Promise<Chart>
+) {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 0, -now.getTimezoneOffset());
+    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, -now.getTimezoneOffset());
+    const startElem = canvas.parentElement.querySelector("input[name=start]");
+    const endElem = canvas.parentElement.querySelector("input[name=end]");
+
+    let graph = await render(startDate, endDate);
+
+    if (startElem instanceof HTMLInputElement && endElem instanceof HTMLInputElement) {
+        startElem.valueAsDate = startDate;
+        endElem.valueAsDate = endDate;
+        endElem.min = startElem.value;
+        startElem.max = endElem.value;
+
+        startElem.addEventListener("change", async () => {
+            graph.destroy();
+            graph = await render(startElem.valueAsDate, endElem.valueAsDate);
+            endElem.min = startElem.value;
+        });
+        endElem.addEventListener("change", async () => {
+            graph.destroy();
+            graph = await render(startElem.valueAsDate, endElem.valueAsDate);
+            startElem.max = endElem.value;
+        });
+    }
+}
+
 const podcastPlayTimeCanvas = document.getElementById("podcast-play-time-chart");
 
 if (podcastPlayTimeCanvas instanceof HTMLCanvasElement) {
-    renderPodcastPlayTimeGraph(podcastPlayTimeCanvas);
+    initPlayTimeGraph(podcastPlayTimeCanvas, async (startDate, endDate) => {
+        return renderPodcastPlayTimeGraph(podcastPlayTimeCanvas, startDate, endDate);
+    });
 }
+
+document.querySelectorAll(".episode-play-time-chart").forEach((element) => {
+    if (element instanceof HTMLCanvasElement && element.dataset.podcastSlug) {
+        initPlayTimeGraph(element, async (startDate, endDate) => {
+            return renderEpisodePlayTimeGraph(
+                element,
+                element.dataset.podcastSlug,
+                element.dataset.podcastName,
+                startDate,
+                endDate,
+            );
+        });
+    }
+});

@@ -39,7 +39,6 @@ class ChartData:
     datasets: list[DataSet]
     start_date: date
     end_date: date
-    dates: list[int]
     _epoch: datetime
 
     def __init__(self, data: Iterable["ChartQuerySetValues"], start_date: date, end_date: date):
@@ -48,27 +47,24 @@ class ChartData:
         self.end_date = end_date
         self._epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
-        days = (end_date - start_date).days + 1
-        print(start_date, end_date, days)
-        self.dates = [self._date_to_ms(start_date + timedelta(days=d)) for d in range(days)]
-
         for key, values in itertools.groupby(data, key=lambda v: tuple([v["slug"], v["name"]])):
             self.datasets.append({
                 "label": key[1],
                 "data": [{"x": self._date_to_ms(v["date"]), "y": v["y"]} for v in values],
             })
 
-        self._fill_empty_points()
-
     def _date_to_ms(self, d: date):
         dt = datetime(d.year, d.month, d.day, tzinfo=get_current_timezone())
         return int((dt - self._epoch).total_seconds() * 1000)
 
-    def _fill_empty_points(self):
+    def fill_empty_points(self):
+        days = (self.end_date - self.start_date).days + 1
+        dates = [self._date_to_ms(self.start_date + timedelta(days=d)) for d in range(days)]
+
         for dataset in self.datasets:
             new_data: list[ChartData.DataSet.DataPoint] = []
             datadict = {d["x"]: d["y"] for d in dataset["data"]}
-            for d in self.dates:
+            for d in dates:
                 new_data.append({"x": d, "y": datadict.get(d, 0)})
             dataset["data"] = new_data
 
@@ -80,6 +76,18 @@ class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequest
         if not user.is_staff:
             return self.none()
         return self.filter(Q(episode__podcast__owner=user) | Q(episode__podcast__authors=user))
+
+    def get_episode_chart_data(self, start_date: date, end_date: date):
+        qs = (
+            self.order_by()
+            .values(name=F("episode__name"), slug=F("episode__slug"), date=F("created__date"))
+            .with_play_time_alias()
+            .annotate(y=Sum(F("play_time")))
+            .exclude(y=0.0)
+            .values("name", "slug", "date", "y")
+            .order_by("slug", "date")
+        )
+        return ChartData(qs, start_date, end_date)
 
     def get_podcast_chart_data(self, start_date: date, end_date: date):
         qs = (
