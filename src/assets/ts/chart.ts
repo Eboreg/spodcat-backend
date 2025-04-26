@@ -228,8 +228,8 @@ async function initPlayTimeGraph(
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 0, -now.getTimezoneOffset());
     const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, -now.getTimezoneOffset());
-    const startElem = canvas.parentElement.querySelector("input[name=start]");
-    const endElem = canvas.parentElement.querySelector("input[name=end]");
+    const startElem = canvas.closest(".chart-container")?.querySelector("input[name=start]");
+    const endElem = canvas.closest(".chart-container")?.querySelector("input[name=end]");
 
     let graph = await render(startDate, endDate);
 

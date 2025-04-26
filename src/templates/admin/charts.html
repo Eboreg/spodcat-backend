@@ -10,13 +10,17 @@
     <div class="chart-container">
         <input type="date" name="start">
         <input type="date" name="end">
-        <canvas id="podcast-play-time-chart"></canvas>
+        <div class="chart">
+            <canvas id="podcast-play-time-chart"></canvas>
+        </div>
     </div>
     {% for podcast in podcasts %}
         <div class="chart-container">
             <input type="date" name="start">
             <input type="date" name="end">
-            <canvas class="episode-play-time-chart" data-podcast-slug="{{podcast.slug}}" data-podcast-name="{{podcast.name}}"></canvas>
+            <div class="chart">
+                <canvas class="episode-play-time-chart" data-podcast-slug="{{podcast.slug}}" data-podcast-name="{{podcast.name}}"></canvas>
+            </div>
         </div>
     {% endfor %}
 </div>

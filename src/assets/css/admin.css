@@ -81,8 +81,11 @@
     gap: 1rem;
 }
 
-.chart-container {
+.chart {
     height: 300px;
+}
+
+.chart-container {
     border: 1px solid var(--border-color);
     padding: 1rem;
 }
