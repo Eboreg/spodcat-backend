@@ -15,16 +15,16 @@
 {% block content %}
 <div class="charts">
     <div class="chart-container">
-        <input type="date" name="start">
-        <input type="date" name="end">
+        Start: <input type="date" name="start">
+        End: <input type="date" name="end">
         <div class="chart">
             <canvas id="podcast-play-time-chart"></canvas>
         </div>
     </div>
     {% for podcast in podcasts %}
         <div class="chart-container">
-            <input type="date" name="start">
-            <input type="date" name="end">
+            Start: <input type="date" name="start">
+            End: <input type="date" name="end">
             <div class="chart">
                 <canvas class="episode-play-time-chart" data-podcast-slug="{{podcast.slug}}" data-podcast-name="{{podcast.name}}"></canvas>
             </div>
