@@ -3,7 +3,11 @@
 {% block sidebar %}
 <div id="sidebar">
     <div class="module">
-        <h3>Comments awaiting approval</h3>
+        <h2>Charts</h2>
+        <h3><a href="{% url "admin:charts" %}">Yes, here they are</a></h3>
+    </div>
+    <div class="module">
+        <h2>Comments awaiting approval</h2>
         <ul class="actionlist">
             {% for comment in comments_awaiting_approval %}
                 <li class="changelink">

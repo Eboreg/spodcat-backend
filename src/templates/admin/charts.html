@@ -5,6 +5,13 @@
 <script type="module" src={% static "assets/js/chart.js" %}></script>
 {% endblock extrahead %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; Charts
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="charts">
     <div class="chart-container">
