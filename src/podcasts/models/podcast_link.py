@@ -21,6 +21,7 @@ class PodcastLink(ModelMixin, models.Model):
         PRIMARY = "primary", "Primary"
         SECONDARY = "secondary", "Secondary"
         TERTIARY = "tertiary", "Tertiary"
+        BORING = "boring", "Boring"
 
     custom_icon = models.ImageField(upload_to=podcast_link_icon_path, null=True, default=None, blank=True)
     icon = models.CharField(max_length=10, choices=Icon, null=True, default=None)
