@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import feedparser
 import requests
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.images import ImageFile
 from django.db import models
@@ -70,6 +71,12 @@ class Episode(PodcastContent):
         if self.number is not None:
             base_slug = f"{self.number}-" + base_slug
         return base_slug
+
+    def clean(self):
+        if not self.audio_file and not self.is_draft:
+            raise ValidationError({
+                "audio_file": "A non-draft episode must have an audio file. Upload a file or mark this as draft."
+            })
 
     def generate_audio_filename(self) -> tuple[str, str]:
         suffix = mimetypes.guess_extension(self.audio_content_type)
