@@ -35,7 +35,7 @@ dependencies = [
     "redis",                    # used by cachalot
     "hiredis",                  # makes stuff better somehow
     "django-cachalot",
-    "psycopg",                  # postgresql
+    "psycopg[binary]",          # postgresql
 ]
 dynamic = ["version"]
 
