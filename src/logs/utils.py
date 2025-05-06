@@ -74,14 +74,13 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 # identical timestamps, so double check here:
                 if row["TimeGenerated"] <= from_date:
                     continue
-
                 try:
                     episode = [
                         ep for ep in episodes
                         if ep.audio_file and row["ObjectKey"].endswith(ep.audio_file.name)
                     ][0]
                 except IndexError:
-                    episode = None
+                    continue
 
                 result.append(
                     PodcastEpisodeAudioRequestLog.create(
