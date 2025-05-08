@@ -1,5 +1,7 @@
 import logging
 import mimetypes
+import re
+import uuid
 from io import BytesIO
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
@@ -109,6 +111,14 @@ class Podcast(ModelMixin, models.Model):
     require_comment_approval = models.BooleanField(default=True)
     slug = models.SlugField(primary_key=True, validators=[podcast_slug_validator], help_text="Will be used in URLs.")
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None)
+    custom_guid = models.UUIDField(
+        null=True,
+        default=None,
+        blank=True,
+        verbose_name="Custom GUID",
+        help_text="Don't set if you don't know what you're doing. " + \
+            "Ref: https://podcasting2.org/podcast-namespace/tags/guid",
+    )
 
     contents: "PodcastContentManager"
     links: "RelatedManager[PodcastLink]"
@@ -128,6 +138,13 @@ class Podcast(ModelMixin, models.Model):
     @property
     def frontend_url(self) -> str:
         return urljoin(settings.FRONTEND_ROOT_URL, self.slug)
+
+    @property
+    def guid(self):
+        if self.custom_guid:
+            return self.custom_guid
+        url = re.sub(r"^\w+://", "", self.rss_url).strip("/")
+        return uuid.uuid5(uuid.UUID("ead4c236-bf58-58c6-a2c6-a6b28d128cb6"), url)
 
     @property
     def rss_url(self) -> str:

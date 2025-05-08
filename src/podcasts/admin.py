@@ -61,6 +61,9 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         ("cover", "banner"),
         "favicon",
         "language",
+        ("name_font_family", "name_font_size"),
+        ("enable_comments", "require_comment_approval"),
+        "custom_guid",
         "description",
         "categories",
     )
@@ -72,6 +75,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         "language",
         ("name_font_family", "name_font_size"),
         ("enable_comments", "require_comment_approval"),
+        "custom_guid",
         "owner",
         "description",
         "categories",

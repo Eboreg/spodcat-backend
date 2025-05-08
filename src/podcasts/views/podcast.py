@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
+from django.urls import reverse
 from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
@@ -21,15 +22,18 @@ from rest_framework_json_api import views
 from logs.models import PodcastEpisodeAudioRequestLog, PodcastRequestLog
 from podcasts import serializers
 from podcasts.models import Episode, Podcast, PodcastContent
+from podcasts.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from utils import date_to_datetime
 
 
 class PodcastFeedGenerator(FeedGenerator):
     podcast: PodcastExtension
+    podcast2: Podcast2Extension
 
 
 class PodcastFeedEntry(FeedEntry):
     podcast: PodcastEntryExtension
+    podcast2: Podcast2EntryExtension
 
 
 class PodcastViewSet(views.ReadOnlyModelViewSet):
@@ -116,12 +120,13 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         )
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
         categories = [c.to_dict() for c in podcast.categories.all()]
-        episode_qs = Episode.objects.filter(podcast=podcast).visible()
+        episode_qs = Episode.objects.filter(podcast=podcast).visible().with_has_songs()
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
+        fg.register_extension("podcast2", Podcast2Extension, Podcast2EntryExtension)
         fg = cast(PodcastFeedGenerator, fg)
         fg.title(podcast.name)
         fg.link(href=urljoin(settings.FRONTEND_ROOT_URL, pk))
@@ -141,16 +146,23 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fg.language(podcast.language)
         if categories:
             fg.podcast.itunes_category(categories)
+        fg.podcast2.podcast_guid(str(podcast.guid))
 
         for episode in episode_qs:
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
+            if episode.has_songs:
+                fe.podcast2.podcast_chapters(
+                    urljoin(settings.ROOT_URL, reverse("episode-chapters", args=(episode.id,)))
+                )
             fe.title(episode.name)
             fe.content(episode.description_html, type="CDATA")
             fe.description(episode.description_text)
             fe.podcast.itunes_summary(episode.description_text)
             fe.published(date_to_datetime(episode.published))
             fe.podcast.itunes_season(episode.season)
+            fe.podcast2.podcast_season(episode.season)
             fe.podcast.itunes_episode(episode.number)
+            fe.podcast2.podcast_episode(episode.number)
             fe.podcast.itunes_episode_type("full")
             fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/episode/{episode.slug}"))
             fe.podcast.itunes_duration(round(episode.duration_seconds))
@@ -177,4 +189,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
                 context={"rss": rss.decode()},
             )
 
-        return HttpResponse(content=rss, content_type="application/xml; charset=utf-8")
+        return HttpResponse(
+            content=rss,
+            content_type="application/xml; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename=\"{podcast.slug}.rss.xml\""},
+        )

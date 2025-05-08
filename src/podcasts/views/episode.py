@@ -1,5 +1,8 @@
 from django.db.models import Prefetch
+from django.http.response import JsonResponse
 from django_filters import rest_framework as filters
+from rest_framework.decorators import action
+from rest_framework.request import Request
 
 from podcasts import serializers
 from podcasts.models import Comment, PodcastContent
@@ -33,3 +36,26 @@ class EpisodeViewSet(PodcastContentViewSet):
     }
     queryset = Episode.objects.with_has_songs()
     serializer_class = serializers.EpisodeSerializer
+
+    @action(methods=["get"], detail=True)
+    def chapters(self, request: Request, pk: str):
+        episode: Episode = self.get_queryset().prefetch_related("songs__artists").select_related("podcast").get(id=pk)
+        result = {
+            "version": "1.2.0",
+            "title": episode.name,
+            "podcastName": episode.podcast.name,
+            "fileName": episode.audio_file.url,
+            "chapters": [
+                {
+                    "title": song.chapter_string,
+                    "startTime": song.timestamp,
+                } for song in episode.songs.all()
+            ],
+        }
+
+        # pylint: disable=redundant-content-type-for-json-response
+        return JsonResponse(
+            data=result,
+            content_type="application/json+chapters",
+            headers={"Content-Disposition": f"attachment; filename=\"{episode.id}.chapters.json\""},
+        )

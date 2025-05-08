@@ -27,6 +27,16 @@ class EpisodeSong(ModelMixin, models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    # pylint: disable=no-member
+    def chapter_string(self):
+        artists = "/".join(a.name for a in self.artists.all())
+        result = f"{artists} - " if artists else ""
+        result += self.name
+        if self.comment:
+            result += f" ({self.comment})"
+        return result
+
     # pylint: disable=no-member
     def has_change_permission(self, request):
         return (
