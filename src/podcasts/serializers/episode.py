@@ -54,5 +54,6 @@ class PartialEpisodeSerializer(EpisodeSerializer):
             "published",
             "season",
             "slug",
+            "image_thumbnail",
         ]
         model = Episode
