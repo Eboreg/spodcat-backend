@@ -37,6 +37,14 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
     def visible(self):
         return self.filter(published__lte=timezone.now().date(), is_draft=False)
 
+    def with_has_chapters(self):
+        from podcasts.models import EpisodeChapter, EpisodeSong
+
+        return self.alias(
+            _has_songs=Exists(EpisodeSong.objects.filter(episode=OuterRef("pk"))),
+            _has_chapters=Exists(EpisodeChapter.objects.filter(episode=OuterRef("pk"))),
+        ).annotate(has_chapters=Q(_has_songs=True) | Q(_has_chapters=True))
+
     def with_has_songs(self):
         from podcasts.models import EpisodeSong
 

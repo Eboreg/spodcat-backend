@@ -29,10 +29,11 @@ from logs.models import (
 from podcasts.admin_filters import ArtistSongCountFilter
 from podcasts.admin_inlines import (
     ArtistSongInline,
+    EpisodeChapterInline,
     EpisodeSongInline,
     PodcastLinkInline,
 )
-from podcasts.forms import EpisodeSongForm, PodcastChangeSlugForm
+from podcasts.forms import PodcastChangeSlugForm
 from podcasts.models import (
     Artist,
     Comment,
@@ -290,11 +291,11 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "audio_content_type",
         "audio_file_length",
     )
-    inlines = [EpisodeSongInline]
+    inlines = [EpisodeSongInline, EpisodeChapterInline]
     list_display = (
         "name",
         "season",
-        "number",
+        "number_string",
         "is_visible",
         "is_draft",
         "podcast_link",
@@ -305,7 +306,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     )
     list_filter = ["is_draft", "published", "podcast"]
     readonly_fields = ("audio_content_type", "audio_file_length", "slug", "duration")
-    search_fields = ["name", "description", "slug", "songs__name", "songs__artists__name"]
+    search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
 
     def duration(self, obj: Episode):
         return timedelta(seconds=int(obj.duration_seconds))
@@ -366,6 +367,10 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         instance.save(update_fields=update_fields)
 
         logger.info("handle_audio_file_async finished for %s", instance)
+
+    @admin.display(description="number", ordering="number")
+    def number_string(self, obj: Episode):
+        return obj.number_string
 
     @admin.display(description="plays", ordering="play_count")
     def play_count(self, obj):
@@ -463,11 +468,10 @@ class ArtistAdmin(AdminMixin, admin.ModelAdmin):
 @admin.register(EpisodeSong)
 class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
     filter_horizontal = ["artists"]
-    form = EpisodeSongForm
-    list_display = ["name", "artists_str", "episode_str", "timestamp_str"]
-    ordering = ["-episode__number", "timestamp"]
+    list_display = ["title", "artists_str", "episode_str", "start_time_str"]
+    ordering = ["-episode__number", "start_time"]
     save_on_top = True
-    search_fields = ["name", "artists__name", "comment"]
+    search_fields = ["title", "artists__name", "comment"]
 
     @admin.display(description="artists")
     def artists_str(self, obj: EpisodeSong):
@@ -495,9 +499,9 @@ class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
             .select_related("episode__podcast__owner")
         )
 
-    @admin.display(description="timestamp", ordering="timestamp")
-    def timestamp_str(self, obj: EpisodeSong):
-        return seconds_to_timestamp(obj.timestamp)
+    @admin.display(description="start time", ordering="start_time")
+    def start_time_str(self, obj: EpisodeSong):
+        return seconds_to_timestamp(obj.start_time)
 
 
 @admin.action(description="Approve comments")

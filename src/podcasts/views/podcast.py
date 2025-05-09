@@ -120,7 +120,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         )
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
         categories = [c.to_dict() for c in podcast.categories.all()]
-        episode_qs = Episode.objects.filter(podcast=podcast).visible().with_has_songs()
+        episode_qs = Episode.objects.filter(podcast=podcast).visible().with_has_chapters()
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 
@@ -129,13 +129,24 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         fg.register_extension("podcast2", Podcast2Extension, Podcast2EntryExtension)
         fg = cast(PodcastFeedGenerator, fg)
         fg.title(podcast.name)
-        fg.link(href=urljoin(settings.FRONTEND_ROOT_URL, pk))
+        fg.link([
+            {"href": podcast.rss_url, "rel": "self", "type": "application/rss+xml"},
+            {"href": podcast.frontend_url, "rel": "alternate"},
+        ])
         fg.description(podcast.tagline or podcast.name)
         fg.podcast.itunes_type("episodic")
         if last_published:
             fg.lastBuildDate(date_to_datetime(last_published))
+        if podcast.banner and podcast.banner_width:
+            fg.podcast2.podcast_image(podcast.banner.url, podcast.banner_width)
         if podcast.cover:
-            fg.image(podcast.cover.url)
+            fg.podcast.itunes_image(podcast.cover.url)
+            if podcast.cover_height and podcast.cover_width:
+                fg.image(url=podcast.cover.url, width=str(podcast.cover_width), height=str(podcast.cover_height))
+            if podcast.cover_width:
+                fg.podcast2.podcast_image(podcast.cover.url, podcast.cover_width)
+        if podcast.cover_thumbnail and podcast.cover_thumbnail_width:
+            fg.podcast2.podcast_image(podcast.cover_thumbnail.url, podcast.cover_thumbnail_width)
         if podcast.owner.email and podcast.owner.get_full_name():
             fg.podcast.itunes_owner(name=podcast.owner.get_full_name(), email=podcast.owner.email)
         if authors:
@@ -150,7 +161,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
 
         for episode in episode_qs:
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
-            if episode.has_songs:
+            if episode.has_chapters:
                 fe.podcast2.podcast_chapters(
                     urljoin(settings.ROOT_URL, reverse("episode-chapters", args=(episode.id,)))
                 )
@@ -161,13 +172,15 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.published(date_to_datetime(episode.published))
             fe.podcast.itunes_season(episode.season)
             fe.podcast2.podcast_season(episode.season)
-            fe.podcast.itunes_episode(episode.number)
+            if episode.number is not None and episode.number % 1 == 0:
+                fe.podcast.itunes_episode(episode.number)
             fe.podcast2.podcast_episode(episode.number)
             fe.podcast.itunes_episode_type("full")
             fe.link(href=urljoin(settings.FRONTEND_ROOT_URL, f"{podcast.slug}/episode/{episode.slug}"))
             fe.podcast.itunes_duration(round(episode.duration_seconds))
             if episode.image:
                 fe.podcast.itunes_image(episode.image.url)
+                fe.podcast2.podcast_image(episode.image.url, episode.image_width)
             if episode.audio_file:
                 fe.enclosure(
                     url=episode.audio_file.url,

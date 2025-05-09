@@ -32,6 +32,10 @@ def downscale_image(image: ImageFieldFile, max_width: int, max_height: int, save
         image.save(name=image.name, content=ImageFile(file=buf), save=save)
 
 
+def filter_values_not_null(d: dict) -> dict:
+    return {k: v for k, v in d.items() if v is not None}
+
+
 def generate_thumbnail(from_field: ImageFieldFile, to_field: ImageFieldFile, size: int, save: bool = False):
     stem, suffix = os.path.splitext(os.path.basename(from_field.name))
     thumbnail_filename = f"{stem}-thumbnail{suffix}"

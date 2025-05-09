@@ -8,6 +8,7 @@ NAMESPACE = "https://podcastindex.org/namespace/1.0"
 class Podcast2Extension(BaseExtension):
     def __init__(self):
         self.__podcast_guid = None
+        self.__podcast_images: list[tuple[str, int]] = []
 
     def extend_ns(self):
         return {"podcast": NAMESPACE}
@@ -19,6 +20,11 @@ class Podcast2Extension(BaseExtension):
             guid = xml_elem("{%s}guid" % NAMESPACE, channel)
             guid.text = self.__podcast_guid
 
+        if self.__podcast_images:
+            srcset = ", ".join(f"{url} {width}w" for url, width in self.__podcast_images)
+            images = xml_elem("{%s}images" % NAMESPACE, channel)
+            images.attrib["srcset"] = srcset
+
         return feed
 
     def podcast_guid(self, guid: str | None = None):
@@ -26,20 +32,26 @@ class Podcast2Extension(BaseExtension):
             self.__podcast_guid = guid
         return self.__podcast_guid
 
+    def podcast_image(self, url: str, width: int):
+        self.__podcast_images.append((url, width))
+
 
 class Podcast2EntryExtension(BaseEntryExtension):
     def __init__(self):
-        self.__podcast_chapters = None
+        self.__podcast_chapters_url = None
+        self.__podcast_chapters_type = None
         self.__podcast_season = None
         self.__podcast_season_name = None
         self.__podcast_episode = None
         self.__podcast_episode_display = None
+        self.__podcast_images: list[tuple[str, int]] = []
 
     def extend_rss(self, feed):
-        if self.__podcast_chapters:
+        if self.__podcast_chapters_url:
             chapters = xml_elem("{%s}chapters" % NAMESPACE, feed)
-            chapters.attrib["url"] = self.__podcast_chapters
-            chapters.attrib["type"] = "application/json+chapters"
+            chapters.attrib["url"] = self.__podcast_chapters_url
+            if self.__podcast_chapters_type:
+                chapters.attrib["type"] = self.__podcast_chapters_type
 
         if self.__podcast_season is not None:
             season = xml_elem("{%s}season" % NAMESPACE, feed)
@@ -49,16 +61,22 @@ class Podcast2EntryExtension(BaseEntryExtension):
 
         if self.__podcast_episode is not None:
             episode = xml_elem("{%s}episode" % NAMESPACE, feed)
-            episode.text = str(self.__podcast_episode)
+            episode.text = f"{self.__podcast_episode:n}"
             if self.__podcast_episode_display:
                 episode.attrib["display"] = self.__podcast_episode_display
 
+        if self.__podcast_images:
+            srcset = ", ".join(f"{url} {width}w" for url, width in self.__podcast_images)
+            images = xml_elem("{%s}images" % NAMESPACE, feed)
+            images.attrib["srcset"] = srcset
+
         return feed
 
-    def podcast_chapters(self, url: str | None = None):
+    def podcast_chapters(self, url: str | None = None, type_: str | None = None):
         if url is not None:
-            self.__podcast_chapters = url
-        return self.__podcast_chapters
+            self.__podcast_chapters_url = url
+            self.__podcast_chapters_type = type_ or "application/json+chapters"
+        return self.__podcast_chapters_url, self.__podcast_chapters_type
 
     def podcast_season(self, season: int | None = None, name: str | None = None):
         if season is not None:
@@ -71,3 +89,6 @@ class Podcast2EntryExtension(BaseEntryExtension):
             self.__podcast_episode = episode
             self.__podcast_episode_display = display
         return self.__podcast_episode, self.__podcast_episode_display
+
+    def podcast_image(self, url: str, width: int):
+        self.__podcast_images.append((url, width))

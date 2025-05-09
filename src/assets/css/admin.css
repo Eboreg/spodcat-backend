@@ -89,3 +89,12 @@
     border: 1px solid var(--border-color);
     padding: 1rem;
 }
+
+.timestamp-field {
+    width: 80px;
+}
+
+#songs-group .vURLField,
+#songs-group .vTextField {
+    width: auto;
+}

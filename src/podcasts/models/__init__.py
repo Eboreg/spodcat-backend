@@ -3,6 +3,7 @@ from .category import Category
 from .challenge import Challenge
 from .comment import Comment
 from .episode import Episode, episode_audio_file_path
+from .episode_chapter import EpisodeChapter
 from .episode_song import EpisodeSong
 from .podcast import Podcast, get_language_choices, podcast_image_path
 from .podcast_content import PodcastContent
@@ -17,6 +18,7 @@ __all__ = [
     "Comment",
     "episode_audio_file_path",
     "Episode",
+    "EpisodeChapter",
     "EpisodeSong",
     "get_language_choices",
     "podcast_image_path",

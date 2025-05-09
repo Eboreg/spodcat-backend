@@ -20,3 +20,6 @@ class TimestampField(forms.Field):
             hours = int(parts[-3]) if len(parts) > 2 else 0
             return seconds + (minutes * 60) + (hours * 60 * 60)
         return super().to_python(value)
+
+    def widget_attrs(self, widget):
+        return {"class": "timestamp-field"}

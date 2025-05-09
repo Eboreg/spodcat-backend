@@ -1,12 +1,13 @@
 from django.contrib import admin
 
 from podcasts.fields import ArtistMultipleChoiceField
-from podcasts.forms import EpisodeSongForm
 from podcasts.models import Artist, EpisodeSong, PodcastLink
+from podcasts.models.episode_chapter import EpisodeChapter
 from podcasts.widgets import ArtistAutocompleteWidget
+from utils.admin_mixin import AdminMixin
 
 
-class ArtistSongInline(admin.TabularInline):
+class ArtistSongInline(AdminMixin, admin.TabularInline):
     extra = 0
     fields = ["song", "episode"]
     model = EpisodeSong.artists.through
@@ -27,13 +28,12 @@ class ArtistSongInline(admin.TabularInline):
         return request.user.is_superuser
 
     def song(self, obj):
-        return obj.episodesong.name
+        return obj.episodesong.title
 
 
-class EpisodeSongInline(admin.TabularInline):
+class EpisodeSongInline(AdminMixin, admin.TabularInline):
     autocomplete_fields = ["artists"]
-    fields = ["episode", "timestamp", "name", "artists", "comment"]
-    form = EpisodeSongForm
+    fields = ["episode", "start_time", "end_time", "title", "artists", "comment", "url", "image"]
     model = EpisodeSong
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
@@ -58,6 +58,12 @@ class EpisodeSongInline(admin.TabularInline):
         return super().get_queryset(request).prefetch_related("artists")
 
 
-class PodcastLinkInline(admin.TabularInline):
+class EpisodeChapterInline(AdminMixin, admin.TabularInline):
+    model = EpisodeChapter
+    extra = 3
+    fields = ["episode", "start_time", "end_time", "title", "url", "image"]
+
+
+class PodcastLinkInline(AdminMixin, admin.TabularInline):
     model = PodcastLink
     extra = 0

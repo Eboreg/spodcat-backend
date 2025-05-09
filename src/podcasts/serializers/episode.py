@@ -43,5 +43,16 @@ class EpisodeSerializer(serializers.ModelSerializer):
 
 class PartialEpisodeSerializer(EpisodeSerializer):
     class Meta:
-        fields = ["name", "podcast", "number", "published", "duration_seconds", "slug", "id", "audio_url", "has_songs"]
+        fields = [
+            "audio_url",
+            "duration_seconds",
+            "has_songs",
+            "id",
+            "name",
+            "number",
+            "podcast",
+            "published",
+            "season",
+            "slug",
+        ]
         model = Episode

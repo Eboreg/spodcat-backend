@@ -1,5 +1,3 @@
-
-
 {
     function initArtistAutocomplete(selector: any) {
         const $ = django.jQuery;
@@ -14,7 +12,7 @@
                             page: params.page,
                             app_label: element.dataset.appLabel,
                             model_name: element.dataset.modelName,
-                            field_name: element.dataset.fieldName
+                            field_name: element.dataset.fieldName,
                         };
                     },
                 },

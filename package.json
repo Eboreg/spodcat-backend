@@ -18,6 +18,10 @@
     "chart": {
       "distDir": "src/assets/js",
       "source": "src/assets/ts/chart.ts"
+    },
+    "artist_autocomplete": {
+      "distDir": "src/assets/js",
+      "source": "src/assets/ts/artist_autocomplete.ts"
     }
   }
 }

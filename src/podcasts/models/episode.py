@@ -1,4 +1,5 @@
 import datetime
+import locale
 import logging
 import mimetypes
 import tempfile
@@ -28,7 +29,7 @@ from utils import (
 if TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
 
-    from podcasts.models import EpisodeSong
+    from podcasts.models import EpisodeChapter, EpisodeSong
 
 
 logger = logging.getLogger(__name__)
@@ -56,14 +57,26 @@ class Episode(PodcastContent):
     image_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
     image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     image_width = models.PositiveIntegerField(null=True, default=None)
-    number = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
+    number = models.FloatField(null=True, default=None, blank=True)
     season = models.PositiveSmallIntegerField(null=True, default=None, blank=True)
 
     songs: "RelatedManager[EpisodeSong]"
+    chapters: "RelatedManager[EpisodeChapter]"
+
+    @property
+    def number_string(self) -> str | None:
+        if self.number is not None:
+            try:
+                locale.setlocale(locale.LC_NUMERIC, ("sv_SE", "UTF-8"))
+            except Exception as e:
+                logger.error("Could not set locale", exc_info=e)
+            return f"{self.number:n}"
+        return None
 
     def __str__(self):
-        if self.number is not None:
-            return f"{self.number}. {self.name}"
+        number_string = self.number_string
+        if number_string is not None:
+            return f"{number_string}. {self.name}"
         return self.name
 
     def _get_base_slug(self) -> str:
