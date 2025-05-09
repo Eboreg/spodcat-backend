@@ -137,8 +137,6 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         fg.podcast.itunes_type("episodic")
         if last_published:
             fg.lastBuildDate(date_to_datetime(last_published))
-        if podcast.banner and podcast.banner_width:
-            fg.podcast2.podcast_image(podcast.banner.url, podcast.banner_width)
         if podcast.cover:
             fg.podcast.itunes_image(podcast.cover.url)
             if podcast.cover_height and podcast.cover_width:
