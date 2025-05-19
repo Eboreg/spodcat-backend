@@ -329,6 +329,8 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         )
 
     def handle_audio_file_async(self, instance: Episode, temp_file: tempfile._TemporaryFileWrapper, stem: str):
+        logger.info("handle_audio_file_async starting for %s, temp_file=%s", instance, temp_file)
+
         try:
             temp_stem, _ = os.path.splitext(temp_file.name)
             update_fields = ["dbfs_array", "duration_seconds"]
