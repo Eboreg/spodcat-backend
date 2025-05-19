@@ -82,7 +82,8 @@ class Episode(PodcastContent):
     def _get_base_slug(self) -> str:
         base_slug = slugify(self.name)
         if self.number is not None:
-            base_slug = f"{self.number}-" + base_slug
+            number = int(self.number) if self.number % 1 == 0 else self.number
+            base_slug = f"{number}-" + base_slug
         return base_slug
 
     def clean(self):
