@@ -220,6 +220,11 @@ CORS_ALLOWED_ORIGINS = [
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
@@ -228,9 +233,14 @@ LOGGING = {
             "level": "ERROR",
             "class": "utils.logging.AdminEmailHandler",
             "include_html": True,
+            "filters": ["require_debug_false"],
         },
     },
     "loggers": {
+        "django": {
+            "handlers": ["console", "mail_admins"],
+            "level": "INFO",
+        },
         "logs": {
             "handlers": ["console"],
             "level": "INFO",
