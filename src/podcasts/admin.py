@@ -329,38 +329,41 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         )
 
     def handle_audio_file_async(self, instance: Episode, temp_file: tempfile._TemporaryFileWrapper, stem: str):
-        temp_stem, _ = os.path.splitext(temp_file.name)
-        update_fields = ["dbfs_array", "duration_seconds"]
-        info = mediainfo(temp_file.name)
-        instance.duration_seconds = float(info["duration"])
-        audio: AudioSegment = AudioSegment.from_file(temp_file, info["format_name"])
-        max_dbfs = audio.max_dBFS
-        temp_file.close()
+        try:
+            temp_stem, _ = os.path.splitext(temp_file.name)
+            update_fields = ["dbfs_array", "duration_seconds"]
+            info = mediainfo(temp_file.name)
+            instance.duration_seconds = float(info["duration"])
+            audio: AudioSegment = AudioSegment.from_file(temp_file, info["format_name"])
+            max_dbfs = audio.max_dBFS
+            temp_file.close()
 
-        if max_dbfs < 0:
-            dbfs = audio.dBFS
-            if dbfs < -14:
-                gain = min(-max_dbfs, -dbfs - 14)
-                logger.info("Applying %f dBFS gain to %s", gain, instance)
-                audio = audio.apply_gain(gain)
+            if max_dbfs < 0:
+                dbfs = audio.dBFS
+                if dbfs < -14:
+                    gain = min(-max_dbfs, -dbfs - 14)
+                    logger.info("Applying %f dBFS gain to %s", gain, instance)
+                    audio = audio.apply_gain(gain)
 
-                with audio.export(
-                    temp_stem + ".mp3",
-                    format="mp3",
-                    bitrate="192k",
-                    tags=info.get("TAG"),
-                ) as new_file:
-                    delete_storage_file(instance.audio_file)
-                    instance.audio_file.save(name=stem + ".mp3", content=File(new_file), save=False)
-                    new_file.seek(0)
-                    instance.audio_content_type = "audio/mpeg"
-                    instance.audio_file_length = len(new_file.read())
-                    update_fields.extend(["audio_file", "audio_content_type", "audio_file_length"])
+                    with audio.export(
+                        temp_stem + ".mp3",
+                        format="mp3",
+                        bitrate="192k",
+                        tags=info.get("TAG"),
+                    ) as new_file:
+                        delete_storage_file(instance.audio_file)
+                        instance.audio_file.save(name=stem + ".mp3", content=File(new_file), save=False)
+                        new_file.seek(0)
+                        instance.audio_content_type = "audio/mpeg"
+                        instance.audio_file_length = len(new_file.read())
+                        update_fields.extend(["audio_file", "audio_content_type", "audio_file_length"])
 
-        instance.dbfs_array = get_audio_segment_dbfs_array(audio)
-        instance.save(update_fields=update_fields)
+            instance.dbfs_array = get_audio_segment_dbfs_array(audio)
+            instance.save(update_fields=update_fields)
 
-        logger.info("handle_audio_file_async finished for %s", instance)
+            logger.info("handle_audio_file_async finished for %s", instance)
+        except Exception as e:
+            logger.error("handle_audio_file_async error", exc_info=e)
 
     @admin.display(description="number", ordering="number")
     def number_string(self, obj: Episode):
@@ -430,9 +433,11 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             temp_file.write(audio_file.read())
             temp_file.seek(0)
 
+            logger.info("save_model start thread for %s with audio_file=%s, temp_file=%s", obj, audio_file, temp_file)
+
             Thread(
                 target=self.handle_audio_file_async,
-                kwargs={"temp_file": temp_file, "instance": obj, "stem": stem},
+                kwargs={"instance": obj, "temp_file": temp_file, "stem": stem},
             ).start()
 
     @admin.display(description="views", ordering="view_count")
