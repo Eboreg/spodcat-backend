@@ -4,6 +4,7 @@ import tempfile
 from datetime import timedelta
 from functools import update_wrapper
 from threading import Thread
+from typing import Any
 
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
@@ -308,6 +309,30 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     readonly_fields = ("audio_content_type", "audio_file_length", "slug", "duration")
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
 
+    def apply_gain(self, instance: Episode, audio: AudioSegment, stem: str, tags: Any, save: bool = True) -> bool:
+        max_dbfs = audio.max_dBFS
+
+        if max_dbfs < 0:
+            dbfs = audio.dBFS
+            if dbfs < -14:
+                gain = min(-max_dbfs, -dbfs - 14)
+                logger.info("Applying %f dBFS gain to %s", gain, instance)
+                audio = audio.apply_gain(gain)
+
+                with audio.export(stem + ".mp3", format="mp3", bitrate="192k", tags=tags) as new_file:
+                    delete_storage_file(instance.audio_file)
+                    instance.audio_file.save(name=stem + ".mp3", content=File(new_file), save=False)
+                    new_file.seek(0)
+                    instance.audio_content_type = "audio/mpeg"
+                    instance.audio_file_length = len(new_file.read())
+
+                if save:
+                    instance.save(update_fields=["audio_file", "audio_content_type", "audio_file_length"])
+
+                return True
+
+        return False
+
     def duration(self, obj: Episode):
         return timedelta(seconds=int(obj.duration_seconds))
 
@@ -332,33 +357,16 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         logger.info("handle_audio_file_async starting for %s, temp_file=%s", instance, temp_file)
 
         try:
-            temp_stem, _ = os.path.splitext(temp_file.name)
             update_fields = ["dbfs_array", "duration_seconds"]
             info = mediainfo(temp_file.name)
             instance.duration_seconds = float(info["duration"])
             audio: AudioSegment = AudioSegment.from_file(temp_file, info["format_name"])
-            max_dbfs = audio.max_dBFS
             temp_file.close()
 
-            if max_dbfs < 0:
-                dbfs = audio.dBFS
-                if dbfs < -14:
-                    gain = min(-max_dbfs, -dbfs - 14)
-                    logger.info("Applying %f dBFS gain to %s", gain, instance)
-                    audio = audio.apply_gain(gain)
-
-                    with audio.export(
-                        temp_stem + ".mp3",
-                        format="mp3",
-                        bitrate="192k",
-                        tags=info.get("TAG"),
-                    ) as new_file:
-                        delete_storage_file(instance.audio_file)
-                        instance.audio_file.save(name=stem + ".mp3", content=File(new_file), save=False)
-                        new_file.seek(0)
-                        instance.audio_content_type = "audio/mpeg"
-                        instance.audio_file_length = len(new_file.read())
-                        update_fields.extend(["audio_file", "audio_content_type", "audio_file_length"])
+            # Skipping the applying of gain, but here is how to use it:
+            # temp_stem, _ = os.path.splitext(temp_file.name)
+            # if self.apply_gain(instance=instance, audio=audio, stem=temp_stem, tags=info.get("TAG"), save=False):
+            #     update_fields.extend(["audio_file", "audio_content_type", "audio_file_length"])
 
             instance.dbfs_array = get_audio_segment_dbfs_array(audio)
             instance.save(update_fields=update_fields)
