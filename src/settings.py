@@ -26,6 +26,8 @@ INTERNAL_IPS = os.environ.get("INTERNAL_IPS", "127.0.0.1").split(",")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
 DJANGO_DB = os.environ.get("DJANGO_DB", ENVIRONMENT)
 
+ADMINS = [("Robert", "robert@huseli.us")]
+
 
 # Application definition
 
