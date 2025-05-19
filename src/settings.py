@@ -224,6 +224,11 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
         },
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "utils.logging.AdminEmailHandler",
+            "include_html": True,
+        },
     },
     "loggers": {
         "logs": {
