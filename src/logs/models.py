@@ -41,7 +41,7 @@ class ReferrerCategory(models.TextChoices):
 
 
 class UserAgent(ModelMixin, models.Model):
-    user_agent = models.CharField(max_length=255, primary_key=True)
+    user_agent = models.CharField(max_length=400, primary_key=True)
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=10, choices=UserAgentType.choices, db_index=True)
     device_category = models.CharField(max_length=20, null=True, default=None, choices=DeviceCategory.choices)
