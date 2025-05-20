@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 from django.db import models
 
 from podcasts.models.episode_chapter import AbstractEpisodeChapter
-from podcasts.types import ChapterDict
 
 
 if TYPE_CHECKING:
@@ -29,7 +28,7 @@ class EpisodeSong(AbstractEpisodeChapter):
 
     @property
     # pylint: disable=no-member
-    def chapter_string(self):
+    def formatted_title(self):
         artists = "/".join(a.name for a in self.artists.all())
         result = f"{artists} - " if artists else ""
         result += self.title
@@ -44,6 +43,3 @@ class EpisodeSong(AbstractEpisodeChapter):
             request.user == self.episode.podcast.owner or
             request.user in self.episode.podcast.authors.all()
         )
-
-    def to_dict(self) -> ChapterDict:
-        return {"title": self.chapter_string, "startTime": self.start_time}

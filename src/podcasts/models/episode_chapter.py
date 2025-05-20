@@ -29,14 +29,18 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
         ordering = ["start_time"]
         abstract = True
 
+    @property
+    def formatted_title(self):
+        return self.title
+
     # pylint: disable=no-member
     def to_dict(self) -> ChapterDict:
         return filter_values_not_null({
-            "startTime": self.start_time,
-            "title": self.title,
             "endTime": self.end_time,
-            "url": self.url,
             "img": self.image.url if self.image else None,
+            "startTime": self.start_time,
+            "title": self.formatted_title,
+            "url": self.url,
         })
 
 
