@@ -8,6 +8,7 @@ from logs.models import (
     PodcastRequestLog,
     UserAgent,
 )
+from utils.admin_mixin import AdminMixin
 from utils.widgets import ReadOnlyInlineModelWidget
 
 
@@ -36,7 +37,7 @@ class LogAdminForm(ModelForm):
     user_agent_data = ModelChoiceField(queryset=UserAgent.objects.all(), widget=UserAgentWidget())
 
 
-class LogAdmin(admin.ModelAdmin):
+class LogAdmin(AdminMixin, admin.ModelAdmin):
     form = LogAdminForm
     ordering = ["-created"]
 
