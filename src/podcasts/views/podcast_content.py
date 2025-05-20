@@ -34,7 +34,10 @@ class PodcastContentViewSet(views.ReadOnlyModelViewSet):
     serializer_class = serializers.PodcastContentSerializer
 
     def filter_queryset(self, queryset):
-        return super().filter_queryset(queryset).visible()
+        queryset = super().filter_queryset(queryset)
+        if self.action == "list":
+            return queryset.listed()
+        return queryset.published()
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):

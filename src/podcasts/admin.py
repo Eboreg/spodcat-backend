@@ -281,9 +281,9 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
 @admin.register(Episode)
 class EpisodeAdmin(BasePodcastContentAdmin):
     fields = (
-        ("podcast", "slug"),
+        ("id", "slug"),
+        ("podcast", "name"),
         ("season", "number"),
-        "name",
         ("is_draft", "published"),
         "audio_file",
         "image",
@@ -304,9 +304,10 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "view_count",
         "play_count",
         "play_time",
+        "frontend_link",
     )
     list_filter = ["is_draft", "published", "podcast"]
-    readonly_fields = ("audio_content_type", "audio_file_length", "slug", "duration")
+    readonly_fields = ("audio_content_type", "audio_file_length", "slug", "duration", "id")
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
 
     def apply_gain(self, instance: Episode, audio: AudioSegment, stem: str, tags: Any, save: bool = True) -> bool:
@@ -335,6 +336,9 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
     def duration(self, obj: Episode):
         return timedelta(seconds=int(obj.duration_seconds))
+
+    def frontend_link(self, obj: Episode):
+        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">Link</a>')
 
     def get_queryset(self, request):
         return (
@@ -395,8 +399,13 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         if obj.play_time is None:
             return timedelta()
 
+        play_time = timedelta(seconds=round(obj.play_time.total_seconds()))
+
+        if not play_time:
+            return play_time
+
         return PodcastEpisodeAudioRequestLog.get_admin_list_link(
-            text=obj.play_time,
+            text=play_time,
             episode__podcastcontent_ptr__exact=obj.pk,
             is_bot__exact=0,
         )

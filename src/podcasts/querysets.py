@@ -34,8 +34,11 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
             "slug",
         )
 
-    def visible(self):
-        return self.filter(published__lte=timezone.now().date(), is_draft=False)
+    def published(self):
+        return self.filter(published__lte=timezone.now().date())
+
+    def listed(self):
+        return self.published().filter(is_draft=False)
 
     def with_has_chapters(self):
         from podcasts.models import EpisodeChapter, EpisodeSong

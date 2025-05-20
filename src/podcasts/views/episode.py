@@ -27,7 +27,7 @@ class EpisodeViewSet(PodcastContentViewSet):
         "podcast.contents": [
             Prefetch(
                 "podcast__contents",
-                queryset=PodcastContent.objects.partial().visible().with_has_songs(),
+                queryset=PodcastContent.objects.partial().listed().with_has_songs(),
             ),
         ],
         "songs": ["songs__artists"],

@@ -66,12 +66,13 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         return slugify(self.name)
 
     def generate_slug(self) -> str:
-        slugs = [e.slug for e in self._meta.model.objects.filter(podcast=self.podcast)]
+        existing = [e.slug for e in self._meta.model.objects.filter(podcast=self.podcast)]
+        existing += ["draft"]
         base_slug = self._get_base_slug()
         slug = base_slug
         i = 1
 
-        while slug in slugs:
+        while slug in existing:
             slug = f"{base_slug}-{i}"
             i += 1
 

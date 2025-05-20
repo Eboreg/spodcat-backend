@@ -23,7 +23,7 @@ class PostViewSet(PodcastContentViewSet):
         "podcast.contents": [
             Prefetch(
                 "podcast__contents",
-                queryset=PodcastContent.objects.partial().visible().with_has_songs(),
+                queryset=PodcastContent.objects.partial().listed().with_has_songs(),
             ),
         ],
         "__all__": [Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],

@@ -41,7 +41,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         "authors": ["authors"],
         "categories": ["categories"],
         "contents": [
-            Prefetch("contents", queryset=PodcastContent.objects.partial().visible().with_has_songs()),
+            Prefetch("contents", queryset=PodcastContent.objects.partial().listed().with_has_songs()),
         ],
         "links": ["links"],
     }
@@ -120,7 +120,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         )
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
         categories = [c.to_dict() for c in podcast.categories.all()]
-        episode_qs = Episode.objects.filter(podcast=podcast).visible().with_has_chapters()
+        episode_qs = Episode.objects.filter(podcast=podcast).listed().with_has_chapters()
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 
