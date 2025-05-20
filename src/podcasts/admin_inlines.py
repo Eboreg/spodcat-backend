@@ -35,6 +35,7 @@ class EpisodeSongInline(AdminMixin, admin.TabularInline):
     autocomplete_fields = ["artists"]
     fields = ["episode", "start_time", "end_time", "title", "artists", "comment", "url", "image"]
     model = EpisodeSong
+    extra = 1
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name == "artists":
@@ -49,18 +50,13 @@ class EpisodeSongInline(AdminMixin, admin.TabularInline):
 
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
-    def get_extra(self, request, obj=None, **kwargs):
-        if obj is None:
-            return 10
-        return 3
-
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("artists")
 
 
 class EpisodeChapterInline(AdminMixin, admin.TabularInline):
     model = EpisodeChapter
-    extra = 3
+    extra = 1
     fields = ["episode", "start_time", "end_time", "title", "url", "image"]
 
 
