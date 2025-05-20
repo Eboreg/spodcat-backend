@@ -1,3 +1,10 @@
+function formatTimestamp(value: string) {
+    const parts = value.trim().split(":");
+    for (const idx in parts.slice(1)) {
+
+    }
+}
+
 function clickInlineAddButton(child: Element) {
     child.closest(".inline-related")?.querySelector(".add-row a")?.dispatchEvent(new Event("click"));
 }

@@ -1,4 +1,7 @@
 {% extends "admin/index.html" %}
+{% load static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "assets/css/admin.css" %}">{% endblock %}
 
 {% block sidebar %}
 <div id="sidebar">
