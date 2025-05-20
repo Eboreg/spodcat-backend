@@ -8,6 +8,10 @@ from utils.model_mixin import ModelMixin
 class AdminMixin:
     formfield_overrides = {TimestampField: {"widget": TimeInput}}
 
+    class Media:
+        css = {"all": ["assets/css/admin.css"]}
+        js = ["assets/js/admin.js"]
+
     def has_change_permission(self, request: HttpRequest, obj: ModelMixin | None = None):
         return obj is None or obj.has_change_permission(request)
 

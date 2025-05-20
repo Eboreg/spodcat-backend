@@ -22,6 +22,10 @@
     "artist_autocomplete": {
       "distDir": "src/assets/js",
       "source": "src/assets/ts/artist_autocomplete.ts"
+    },
+    "admin": {
+        "distDir": "src/assets/js",
+        "source": "src/assets/ts/admin.ts"
     }
   }
 }
