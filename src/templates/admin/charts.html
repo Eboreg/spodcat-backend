@@ -2,8 +2,14 @@
 {% load static %}
 
 {% block extrahead %}
+{{ block.super }}
 <script type="module" src={% static "assets/js/chart.js" %}></script>
 {% endblock extrahead %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "assets/css/admin.css" %}">
+{% endblock %}
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
