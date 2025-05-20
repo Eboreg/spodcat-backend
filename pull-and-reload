@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -e
+. .venv/bin/activate
+git pull
+m migrate
+m collectstatic --noinput
+sudo systemctl restart emperor.uwsgi.service
