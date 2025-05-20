@@ -235,8 +235,15 @@ LOGGING = {
             "include_html": True,
             "filters": ["require_debug_false"],
         },
+        "null": {
+            "class": "logging.NullHandler",
+        },
     },
     "loggers": {
+        "django.security.DisallowedHost": {
+            "handlers": ["null"],
+            "propagate": False,
+        },
         "django": {
             "handlers": ["console", "mail_admins"],
             "level": "INFO",
