@@ -1,7 +1,9 @@
 import re
+from urllib.parse import urljoin
 import uuid
 from typing import TYPE_CHECKING, Self
 
+from django.conf import settings
 from django.contrib import admin
 from django.db import models
 from django.db.models import Case, Q, Value as V, When
@@ -58,6 +60,21 @@ class PodcastContent(ModelMixin, PolymorphicModel):
             # Basic stripping of Markdown image tags:
             return re.sub(r"[\r\n]*!\[.*?\]\(.*?\)", "", self.description).strip()
         return ""
+
+    @property
+    def frontend_url(self) -> str:
+        instance_class = self.get_real_instance_class()
+
+        if self.is_draft:
+            return urljoin(
+                settings.FRONTEND_ROOT_URL,
+                f"{self.podcast.slug}/{instance_class._meta.model_name}/draft/{self.id}",
+            )
+
+        return urljoin(
+            settings.FRONTEND_ROOT_URL,
+            f"{self.podcast.slug}/{instance_class._meta.model_name}/{self.slug}",
+        )
 
     def __str__(self):
         return self.name

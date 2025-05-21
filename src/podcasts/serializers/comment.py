@@ -41,6 +41,15 @@ class CommentSerializer(serializers.ModelSerializer):
 
         if not podcast_content.podcast.require_comment_approval:
             attrs["is_approved"] = True
+            if podcast_content.podcast.owner.email:
+                email_text = f"A new comment for {podcast_content.podcast.name} was just posted by " + \
+                    f"{attrs.get('name')}. Check it out here: {podcast_content.frontend_url}"
+                send_mail(
+                    from_email=None,
+                    subject=f"Comment for {podcast_content.podcast.name} posted",
+                    message=email_text,
+                    recipient_list=[podcast_content.podcast.owner.email],
+                )
         elif podcast_content.podcast.owner.email:
             admin_url = urljoin(settings.ROOT_URL, reverse("admin:podcasts_comment_changelist")) + \
                 f"?is_approved__exact=0&podcast_content__podcast__slug__exact={podcast_content.podcast.slug}"
