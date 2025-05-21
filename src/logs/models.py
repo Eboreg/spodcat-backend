@@ -96,7 +96,7 @@ class GeoIP(ModelMixin, models.Model):
 class RequestLog(ModelMixin, models.Model):
     is_bot = models.BooleanField(default=False, db_index=True)
     path_info = TruncatedCharField(max_length=200, blank=True, default="")
-    user_agent = models.CharField(max_length=255, blank=True, default="")
+    user_agent = models.CharField(max_length=400, blank=True, default="")
     user_agent_data = models.ForeignKey(
         "logs.UserAgent",
         on_delete=models.SET_NULL,
