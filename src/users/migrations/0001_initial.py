@@ -3,8 +3,9 @@
 import django.contrib.auth.models
 import django.contrib.auth.validators
 import django.utils.timezone
-import utils.model_mixin
 from django.db import migrations, models
+
+import utils.model_mixin
 
 
 class Migration(migrations.Migration):

@@ -1,7 +1,7 @@
 import re
-from urllib.parse import urljoin
 import uuid
 from typing import TYPE_CHECKING, Self
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib import admin
@@ -62,6 +62,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         return ""
 
     @property
+    # pylint: disable=no-member
     def frontend_url(self) -> str:
         instance_class = self.get_real_instance_class()
 

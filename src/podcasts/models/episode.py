@@ -6,11 +6,9 @@ import tempfile
 from io import BytesIO
 from time import struct_time
 from typing import TYPE_CHECKING
-from urllib.parse import urljoin
 
 import feedparser
 import requests
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.images import ImageFile
@@ -64,13 +62,6 @@ class Episode(PodcastContent):
 
     songs: "RelatedManager[EpisodeSong]"
     chapters: "RelatedManager[EpisodeChapter]"
-
-    @property
-    # pylint: disable=no-member
-    def frontend_url(self) -> str:
-        if self.is_draft:
-            return urljoin(settings.FRONTEND_ROOT_URL, f"{self.podcast.slug}/episode/draft/{self.id}")
-        return urljoin(settings.FRONTEND_ROOT_URL, f"{self.podcast.slug}/episode/{self.slug}")
 
     @property
     def number_string(self) -> str | None:

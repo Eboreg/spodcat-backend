@@ -475,7 +475,10 @@ class PostAdmin(BasePodcastContentAdmin):
         ("is_draft", "published"),
         "description",
     )
-    list_display = ("name", "is_visible", "is_draft", "podcast", "published")
+    list_display = ("name", "is_visible", "is_draft", "podcast", "published", "frontend_link")
+
+    def frontend_link(self, obj: Post):
+        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">Link</a>')
 
 
 @admin.register(Artist)
@@ -541,13 +544,16 @@ def approve_comments(modeladmin, request, queryset):
 @admin.register(Comment)
 class CommentAdmin(AdminMixin, admin.ModelAdmin):
     actions = [approve_comments]
-    list_display = ["name", "truncated_text", "created", "is_approved", "content_link"]
+    list_display = ["name", "truncated_text", "created", "is_approved", "content_link", "frontend_link"]
     list_filter = ["is_approved", "podcast_content__podcast"]
     readonly_fields = ["podcast_content", "name", "text"]
 
     @admin.display(description="content")
     def content_link(self, obj: Comment):
         return obj.podcast_content.get_real_instance().get_admin_link()
+
+    def frontend_link(self, obj: Comment):
+        return mark_safe(f'<a href="{obj.podcast_content.frontend_url}" target="_blank">Link</a>')
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
