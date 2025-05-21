@@ -18,16 +18,26 @@ if TYPE_CHECKING:
 class GetAudioRequestLogError(Exception):
     def __init__(
         self,
-        *args,
+        message,
         podcast: "Podcast",
         query_error: LogsQueryError | None = None,
     ):
-        super().__init__(*args)
+        super().__init__(message, podcast, query_error)
         self.podcast = podcast
         self.query_error = query_error
 
+        if isinstance(message, list):
+            self.error_list = []
+            for m in message:
+                if not isinstance(m, GetAudioRequestLogError):
+                    m = GetAudioRequestLogError(m, podcast)
+                self.error_list.extend(m.error_list)
+        else:
+            self.message = message
+            self.error_list = [self]
 
-def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
+
+def get_audio_request_logs(podcast: "Podcast", environment: str | None = None, complete: bool = False):
     from logs.models import PodcastEpisodeAudioRequestLog
     from podcasts.models.episode import Episode
 
@@ -35,11 +45,16 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         environment = environment or settings.ENVIRONMENT
         credential = DefaultAzureCredential()
         client = LogsQueryClient(credential)
-        last_log = PodcastEpisodeAudioRequestLog.objects.filter(episode__podcast=podcast).order_by("-created").first()
-        if last_log:
-            from_date = last_log.created
-        else:
-            from_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+        from_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+        if not complete:
+            last_log = (
+                PodcastEpisodeAudioRequestLog.objects
+                .filter(episode__podcast=podcast)
+                .order_by("-created")
+                .first()
+            )
+            if last_log:
+                from_date = last_log.created
         columns = ", ".join([
             "TimeGenerated",
             "StatusCode",
@@ -63,10 +78,14 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
         )
         episodes = list(Episode.objects.filter(podcast=podcast))
         response = client.query_resource(resource_id=resource_id, query=query, timespan=(from_date, timezone.now()))
-        result: list[PodcastEpisodeAudioRequestLog] = []
+        errors: list[GetAudioRequestLogError] = []
 
         if response.status != LogsQueryStatus.SUCCESS:
-            raise GetAudioRequestLogError(podcast=podcast, query_error=response.partial_error)
+            raise GetAudioRequestLogError(
+                "response.status != SUCCESS",
+                podcast=podcast,
+                query_error=response.partial_error,
+            )
 
         for table in response.tables:
             for row in table.rows:
@@ -74,6 +93,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 # identical timestamps, so double check here:
                 if row["TimeGenerated"] <= from_date:
                     continue
+
                 try:
                     episode = [
                         ep for ep in episodes
@@ -82,20 +102,25 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None):
                 except IndexError:
                     continue
 
-                result.append(
-                    PodcastEpisodeAudioRequestLog.create(
+                try:
+                    log, created = PodcastEpisodeAudioRequestLog.update_or_create(
                         user_agent=row["UserAgentHeader"],
                         remote_addr=row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None,
                         referrer=row["ReferrerHeader"],
                         created=row["TimeGenerated"],
-                        duration_ms=row["DurationMs"],
-                        episode=episode,
-                        path_info=row["ObjectKey"],
-                        response_body_size=row["ResponseBodySize"] or 0,
-                        status_code=row["StatusCode"],
+                        defaults={
+                            "duration_ms": row["DurationMs"],
+                            "episode": episode,
+                            "path_info": row["ObjectKey"],
+                            "response_body_size": row["ResponseBodySize"] or 0,
+                            "status_code": row["StatusCode"],
+                        },
                     )
-                )
-
-        return result
+                    if created:
+                        yield log
+                except Exception as e:
+                    errors.append(GetAudioRequestLogError(e.args, podcast=podcast))
+        if errors:
+            raise GetAudioRequestLogError(errors, podcast=podcast)
     except Exception as e:
-        raise GetAudioRequestLogError(*e.args, podcast=podcast) from e
+        raise GetAudioRequestLogError(e.args, podcast=podcast) from e

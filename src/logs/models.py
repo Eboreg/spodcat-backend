@@ -141,7 +141,7 @@ class RequestLog(ModelMixin, models.Model):
         ref_dict = get_referrer_dict(referrer) if ua_data and ua_data.type == "browser" else None
 
         remote_addr_category = get_ip_address_category(remote_addr)
-        user_agent_data = UserAgent.get_or_create(ua_data) if ua_data else None
+        user_agent_obj = UserAgent.get_or_create(ua_data) if ua_data else None
         geoip = GeoIP.get_or_create(remote_addr) if remote_addr else None
         remote_host = socket.getfqdn(remote_addr) if remote_addr else ""
 
@@ -153,7 +153,7 @@ class RequestLog(ModelMixin, models.Model):
             remote_addr=remote_addr,
             remote_addr_category=remote_addr_category,
             remote_host=remote_host if remote_host != remote_addr else "",
-            user_agent_data=user_agent_data,
+            user_agent_data=user_agent_obj,
             user_agent=user_agent,
             geoip=geoip,
             created=created,
@@ -247,3 +247,40 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
     status_code = models.CharField(max_length=10)
 
     objects: "PodcastEpisodeAudioRequestLogManager" = PodcastEpisodeAudioRequestLogQuerySet.as_manager()
+
+    @classmethod
+    def update_or_create(
+        cls,
+        user_agent: str | None = None,
+        remote_addr: str | None = None,
+        referrer: str | None = None,
+        created: datetime.datetime | None = None,
+        defaults: dict | None = None,
+    ):
+        defaults = defaults or {}
+        obj = cls.create(
+            user_agent=user_agent,
+            remote_addr=remote_addr,
+            referrer=referrer,
+            created=created,
+            save=False,
+            **defaults,
+        )
+        defaults_keys = [
+            "is_bot",
+            "referrer",
+            "referrer_category",
+            "referrer_name",
+            "remote_addr_category",
+            "remote_host",
+            "user_agent_data",
+            "user_agent",
+            "geoip",
+            *defaults,
+        ]
+
+        return cls.objects.update_or_create(
+            remote_addr=obj.remote_addr,
+            created=obj.created,
+            defaults={key: getattr(obj, key) for key in defaults_keys},
+        )
