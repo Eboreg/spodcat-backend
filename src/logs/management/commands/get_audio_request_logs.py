@@ -9,9 +9,14 @@ class Command(BaseCommand):
         parser.add_argument("--environment", "-e", type=str)
         parser.add_argument("--complete", action="store_true")
         parser.add_argument("--no-bots", action="store_true")
+        parser.add_argument("podcasts", nargs="*")
 
     def handle(self, *args, **options):
-        for podcast in Podcast.objects.all():
+        podcasts = Podcast.objects.all()
+        if options["podcasts"]:
+            podcasts = podcasts.filter(slug__in=options["podcasts"])
+
+        for podcast in podcasts:
             self.stdout.write(f"Getting new audio request logs for {podcast} ...")
             for log in get_audio_request_logs(
                 podcast=podcast,
