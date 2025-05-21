@@ -118,7 +118,7 @@ class RequestLog(ModelMixin, models.Model):
         default=None,
         related_name="logs",
     )
-    referrer = TruncatedCharField(max_length=100, blank=True, default="")
+    referrer = TruncatedCharField(max_length=150, blank=True, default="")
     referrer_category = models.CharField(max_length=10, null=True, default=None, choices=ReferrerCategory.choices)
     referrer_name = models.CharField(max_length=50, blank=True, default="")
 
