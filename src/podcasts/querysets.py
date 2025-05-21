@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, TypeVar
 
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from django.utils import timezone
 from polymorphic.query import PolymorphicQuerySet
 
@@ -18,6 +18,16 @@ class PodcastQuerySet(QuerySet["Podcast"]):
         if user.is_superuser:
             return self
         return self.filter(Q(owner=user) | Q(authors=user))
+
+    def order_by_last_content(self, reverse: bool = False):
+        field_name = "last_content" if not reverse else "-last_content"
+
+        return self.alias(
+            last_content=Max(
+                "contents__published",
+                filter=Q(contents__is_draft=False, contents__published__lte=timezone.localdate()),
+            ),
+        ).order_by(field_name, "name")
 
 
 class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):

@@ -45,7 +45,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         ],
         "links": ["links"],
     }
-    queryset = Podcast.objects.all()
+    queryset = Podcast.objects.order_by_last_content(reverse=True)
     serializer_class = serializers.PodcastSerializer
 
     @action(
