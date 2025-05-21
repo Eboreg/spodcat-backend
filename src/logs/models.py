@@ -255,6 +255,7 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
         remote_addr: str | None = None,
         referrer: str | None = None,
         created: datetime.datetime | None = None,
+        no_bots: bool = False,
         defaults: dict | None = None,
     ):
         defaults = defaults or {}
@@ -278,6 +279,9 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
             "geoip",
             *defaults,
         ]
+
+        if obj.is_bot and no_bots:
+            return None, False
 
         return cls.objects.update_or_create(
             remote_addr=obj.remote_addr,

@@ -37,7 +37,12 @@ class GetAudioRequestLogError(Exception):
             self.error_list = [self]
 
 
-def get_audio_request_logs(podcast: "Podcast", environment: str | None = None, complete: bool = False):
+def get_audio_request_logs(
+    podcast: "Podcast",
+    environment: str | None = None,
+    complete: bool = False,
+    no_bots: bool = False,
+):
     from logs.models import PodcastEpisodeAudioRequestLog
     from podcasts.models.episode import Episode
 
@@ -108,6 +113,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None, c
                         remote_addr=row["CallerIpAddress"].split(":")[0] if row["CallerIpAddress"] else None,
                         referrer=row["ReferrerHeader"],
                         created=row["TimeGenerated"],
+                        no_bots=no_bots,
                         defaults={
                             "duration_ms": row["DurationMs"],
                             "episode": episode,
@@ -116,7 +122,7 @@ def get_audio_request_logs(podcast: "Podcast", environment: str | None = None, c
                             "status_code": row["StatusCode"],
                         },
                     )
-                    if created:
+                    if created and log:
                         yield log
                 except Exception as e:
                     errors.append(GetAudioRequestLogError(e.args, podcast=podcast))

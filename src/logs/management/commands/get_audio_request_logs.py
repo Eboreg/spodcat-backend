@@ -8,6 +8,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--environment", "-e", type=str)
         parser.add_argument("--complete", action="store_true")
+        parser.add_argument("--no-bots", action="store_true")
 
     def handle(self, *args, **options):
         for podcast in Podcast.objects.all():
@@ -16,6 +17,7 @@ class Command(BaseCommand):
                 podcast=podcast,
                 environment=options["environment"],
                 complete=options["complete"],
+                no_bots=options["no_bots"],
             ):
                 created = log.created.strftime("%Y-%m-%d %H:%M:%S")
                 self.stdout.write(f"{created}\t{log.remote_addr}\t{log.episode}")
