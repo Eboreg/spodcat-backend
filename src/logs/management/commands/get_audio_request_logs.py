@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from logs.utils import get_audio_request_logs
+from logs.utils import create_audio_request_logs
 from podcasts.models import Podcast
 
 
@@ -18,8 +18,8 @@ class Command(BaseCommand):
 
         for podcast in podcasts:
             self.stdout.write(f"Getting new audio request logs for {podcast} ...")
-            for log in get_audio_request_logs(
-                podcast=podcast,
+            for log in create_audio_request_logs(
+                podcast_slug=podcast.slug,
                 environment=options["environment"],
                 complete=options["complete"],
                 no_bots=options["no_bots"],
