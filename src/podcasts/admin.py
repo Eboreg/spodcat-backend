@@ -14,6 +14,7 @@ from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.db.models import Count, F, OuterRef, Q, Subquery
+from django.forms import ModelChoiceField
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
@@ -96,6 +97,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         "view_count",
         "total_view_count",
         "play_count",
+        "player_count",
         "play_time",
         "frontend_link",
     )
@@ -171,6 +173,14 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                     .filter(is_bot=False)
                     .get_play_time_query(episode__podcast=OuterRef("slug"))
                 ),
+                player_count=Subquery(
+                    PodcastEpisodeAudioRequestLog.objects
+                    .filter(is_bot=False, response_body_size__gt=0, episode__podcast=OuterRef("slug"))
+                    .order_by()
+                    .values("episode__podcast")
+                    .annotate(player_count=Count("remote_addr", distinct=True))
+                    .values("player_count")
+                )
             )
         )
 
@@ -209,14 +219,12 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
     @admin.display(description="play time", ordering="play_time")
     def play_time(self, obj):
-        if obj.play_time is None:
-            return timedelta()
+        play_time = obj.play_time or timedelta()
+        return timedelta(seconds=round(play_time.total_seconds()))
 
-        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
-            text=obj.play_time,
-            episode__podcast__slug__exact=obj.pk,
-            is_bot__exact=0,
-        )
+    @admin.display(description="players", ordering="player_count")
+    def player_count(self, obj):
+        return obj.player_count
 
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
@@ -265,7 +273,7 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("podcast")
-        if field and not request.user.is_superuser:
+        if isinstance(field, ModelChoiceField) and not request.user.is_superuser:
             field.queryset = field.queryset.filter(Q(authors=request.user) | Q(owner=request.user)).distinct()
         return Form
 
@@ -275,7 +283,19 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
             .select_related("podcast", "podcast__owner")
             .prefetch_related("podcast__authors")
             .annotate(view_count=Count("requests", distinct=True))
+            .annotate(visitor_count=Count("requests__remote_addr", distinct=True))
         )
+
+    @admin.display(description="views", ordering="view_count")
+    def view_count(self, obj):
+        if not obj.view_count:
+            return 0
+
+        return PodcastContentRequestLog.get_admin_list_link(text=obj.view_count, content__id__exact=obj.pk)
+
+    @admin.display(description="visitors", ordering="visitor_count")
+    def visitor_count(self, obj):
+        return obj.visitor_count
 
 
 @admin.register(Episode)
@@ -302,7 +322,9 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "podcast_link",
         "published",
         "view_count",
+        "visitor_count",
         "play_count",
+        "player_count",
         "play_time",
         "frontend_link",
     )
@@ -353,7 +375,12 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                     PodcastEpisodeAudioRequestLog.objects
                     .filter(is_bot=False)
                     .get_play_time_query(episode=OuterRef("pk"))
-                )
+                ),
+                player_count=Count(
+                    "audio_requests__remote_addr",
+                    distinct=True,
+                    filter=Q(audio_requests__is_bot=False, audio_requests__response_body_size__gt=0),
+                ),
             )
         )
 
@@ -396,19 +423,12 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
     @admin.display(description="play time", ordering="play_time")
     def play_time(self, obj):
-        if obj.play_time is None:
-            return timedelta()
+        play_time = obj.play_time if obj.play_time is not None else timedelta()
+        return timedelta(seconds=round(play_time.total_seconds()))
 
-        play_time = timedelta(seconds=round(obj.play_time.total_seconds()))
-
-        if not play_time:
-            return play_time
-
-        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
-            text=play_time,
-            episode__podcastcontent_ptr__exact=obj.pk,
-            is_bot__exact=0,
-        )
+    @admin.display(description="players", ordering="player_count")
+    def player_count(self, obj):
+        return obj.player_count
 
     @admin.display(description="podcast", ordering="podcast")
     def podcast_link(self, obj: Episode):
@@ -459,13 +479,6 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                 kwargs={"instance": obj, "temp_file": temp_file, "stem": stem},
             ).start()
 
-    @admin.display(description="views", ordering="view_count")
-    def view_count(self, obj):
-        if not obj.view_count:
-            return 0
-
-        return PodcastContentRequestLog.get_admin_list_link(text=obj.view_count, content__id__exact=obj.pk)
-
 
 @admin.register(Post)
 class PostAdmin(BasePodcastContentAdmin):
@@ -475,7 +488,16 @@ class PostAdmin(BasePodcastContentAdmin):
         ("is_draft", "published"),
         "description",
     )
-    list_display = ("name", "is_visible", "is_draft", "podcast", "published", "frontend_link")
+    list_display = (
+        "name",
+        "is_visible",
+        "is_draft",
+        "podcast",
+        "published",
+        "view_count",
+        "visitor_count",
+        "frontend_link",
+    )
 
     def frontend_link(self, obj: Post):
         return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">Link</a>')
@@ -516,7 +538,7 @@ class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("episode")
-        if field:
+        if isinstance(field, ModelChoiceField):
             field.queryset = (
                 field.queryset
                 .filter(Q(podcast__authors=request.user) | Q(podcast__owner=request.user))
@@ -554,17 +576,6 @@ class CommentAdmin(AdminMixin, admin.ModelAdmin):
 
     def frontend_link(self, obj: Comment):
         return mark_safe(f'<a href="{obj.podcast_content.frontend_url}" target="_blank">Link</a>')
-
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        Form = super().get_form(request, obj, change, **kwargs)
-        field = Form.base_fields.get("podcast_content")
-        if field:
-            field.queryset = (
-                field.queryset
-                .filter(Q(podcast__authors=request.user) | Q(podcast__owner=request.user))
-                .distinct()
-            )
-        return Form
 
     def get_queryset(self, request):
         return (

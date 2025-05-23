@@ -98,3 +98,7 @@
 #songs-group .vTextField {
     width: auto;
 }
+
+.change-list-legend p {
+    margin: .4em 0 !important;
+}
