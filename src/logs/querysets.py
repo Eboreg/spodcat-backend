@@ -112,17 +112,26 @@ class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequest
         )
 
     def get_play_time_query(self, **filters):
+        from django.db import connections
+
+        connection = connections[self.db]
+        if connection.vendor == "postgresql":
+            play_time = Cast(Concat(Sum(F("play_time")), V(" seconds")), DurationField())
+        else:
+            play_time = Cast(Sum(F("play_time")) * 1_000_000, DurationField())
+
         return (
             self
             .filter(**filters)
             .order_by()
             .values(*filters.keys())
             .with_play_time_alias()
-            .annotate(play_time=Cast(Concat(Sum(F("play_time")), V(" seconds")), DurationField()))
+            .annotate(play_time=play_time)
             .values("play_time")
         )
 
     def with_play_time_alias(self):
+        # play_time = seconds as integer
         return self.alias(
             play_time=Round(
                 Cast(F("response_body_size"), FloatField()) /
