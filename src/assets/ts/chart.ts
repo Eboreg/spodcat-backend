@@ -48,7 +48,6 @@ Chart.defaults.datasets.line.fill = "start";
 Chart.defaults.animation = false;
 Chart.defaults.datasets.line.normalized = true;
 Chart.defaults.datasets.line.tension = 0.25;
-// Chart.defaults.datasets.line.spanGaps = true;
 Chart.defaults.scales.time.time.tooltipFormat = "yyyy-MM-dd";
 Chart.defaults.plugins.colors = {
     enabled: true,
@@ -60,6 +59,17 @@ Chart.defaults.interaction = {
     intersect: false,
     includeInvisible: false,
 };
+
+function getEarliestDate(): Date {
+    return new Date(Date.UTC(2025, 4, 1));
+}
+
+function checkStartDate(date: Date): Date {
+    const earliestDate = getEarliestDate();
+
+    if (earliestDate.getTime() > date.getTime()) return earliestDate;
+    return date;
+}
 
 function formatDuration(totalSeconds: number) {
     const hours = Math.floor(totalSeconds / 60 / 60);
@@ -74,16 +84,9 @@ export async function renderEpisodePlayTimeGraph(
     canvas: HTMLCanvasElement,
     podcastSlug: string,
     podcastName: string,
-    startDate?: Date,
-    endDate?: Date
+    startDate: Date,
+    endDate: Date
 ): Promise<Chart> {
-    const now = new Date();
-
-    startDate = startDate || new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-    endDate = endDate || new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    startDate.setMinutes(-startDate.getTimezoneOffset());
-    endDate.setMinutes(-endDate.getTimezoneOffset());
-
     const start = startDate.toISOString().slice(0, 10);
     const end = endDate.toISOString().slice(0, 10);
     const url = `/podcasts/${podcastSlug}/episode_chart/?start=${start}&end=${end}`;
@@ -117,8 +120,8 @@ export async function renderEpisodePlayTimeGraph(
             scales: {
                 x: {
                     type: "time",
-                    min: startDate.getTime(),
-                    max: endDate.getTime(),
+                    min: startDate.getTime() + (startDate.getTimezoneOffset() * 60_000),
+                    max: endDate.getTime() + (endDate.getTimezoneOffset() * 60_000),
                     ticks: {
                         source: "auto",
                     },
@@ -156,7 +159,7 @@ export async function renderEpisodePlayTimeGraph(
 export async function renderPodcastPlayTimeGraph(
     canvas: HTMLCanvasElement,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
 ): Promise<Chart> {
     const start = startDate.toISOString().slice(0, 10);
     const end = endDate.toISOString().slice(0, 10);
@@ -193,8 +196,8 @@ export async function renderPodcastPlayTimeGraph(
             scales: {
                 x: {
                     type: "time",
-                    min: startDate.getTime(),
-                    max: endDate.getTime(),
+                    min: startDate.getTime() + (startDate.getTimezoneOffset() * 60_000),
+                    max: endDate.getTime() + (endDate.getTimezoneOffset() * 60_000),
                     ticks: {
                         source: "auto",
                     },
@@ -225,11 +228,13 @@ async function initPlayTimeGraph(
     canvas: HTMLCanvasElement,
     render: (startDate: Date, endDate: Date) => Promise<Chart>
 ) {
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 0, -now.getTimezoneOffset());
-    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, -now.getTimezoneOffset());
     const startElem = canvas.closest(".chart-container")?.querySelector("input[name=start]");
     const endElem = canvas.closest(".chart-container")?.querySelector("input[name=end]");
+
+    const now = new Date();
+    const earliestDate = getEarliestDate();
+    const endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const startDate = checkStartDate(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 30)));
 
     let graph = await render(startDate, endDate);
 
@@ -237,7 +242,9 @@ async function initPlayTimeGraph(
         startElem.valueAsDate = startDate;
         endElem.valueAsDate = endDate;
         endElem.min = startElem.value;
+        endElem.max = endDate.toISOString().slice(0, 10);
         startElem.max = endElem.value;
+        startElem.min = earliestDate.toISOString().slice(0, 10);
 
         startElem.addEventListener("change", async () => {
             graph.destroy();
@@ -256,7 +263,7 @@ const podcastPlayTimeCanvas = document.getElementById("podcast-play-time-chart")
 
 if (podcastPlayTimeCanvas instanceof HTMLCanvasElement) {
     initPlayTimeGraph(podcastPlayTimeCanvas, async (startDate, endDate) => {
-        return renderPodcastPlayTimeGraph(podcastPlayTimeCanvas, startDate, endDate);
+        return renderPodcastPlayTimeGraph(podcastPlayTimeCanvas, checkStartDate(startDate), endDate);
     });
 }
 
@@ -267,7 +274,7 @@ document.querySelectorAll(".episode-play-time-chart").forEach((element) => {
                 element,
                 element.dataset.podcastSlug,
                 element.dataset.podcastName,
-                startDate,
+                checkStartDate(startDate),
                 endDate,
             );
         });
