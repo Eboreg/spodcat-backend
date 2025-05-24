@@ -1,7 +1,7 @@
+import logging
 from datetime import date, timedelta
 from typing import cast
 from urllib.parse import urljoin
-import logging
 
 import rest_framework.renderers
 from django.conf import settings
@@ -15,6 +15,7 @@ from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -118,12 +119,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     def rss(self, request: Request, pk: str):
         logger.info("%s: referrer=%s", request.path_info, request.headers.get("Referer", ""))
 
-        podcast: Podcast = (
-            self.get_queryset()
-            .prefetch_related("authors", "categories")
-            .select_related("owner")
-            .get(slug=pk)
-        )
+        queryset = self.get_queryset().prefetch_related("authors", "categories").select_related("owner")
+        podcast: Podcast = get_object_or_404(queryset, slug=pk)
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
         categories = [c.to_dict() for c in podcast.categories.all()]
         episode_qs = Episode.objects.filter(podcast=podcast).listed().with_has_chapters()
