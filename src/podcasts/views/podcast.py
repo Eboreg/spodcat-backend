@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from typing import cast
 from urllib.parse import urljoin
+import logging
 
 import rest_framework.renderers
 from django.conf import settings
@@ -24,6 +25,9 @@ from podcasts import serializers
 from podcasts.models import Episode, Podcast, PodcastContent
 from podcasts.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from utils import date_to_datetime
+
+
+logger = logging.getLogger(__name__)
 
 
 class PodcastFeedGenerator(FeedGenerator):
@@ -112,6 +116,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["get"], detail=True)
     # pylint: disable=no-member
     def rss(self, request: Request, pk: str):
+        logger.info("%s: referrer=%s", request.path_info, request.headers.get("Referer", ""))
+
         podcast: Podcast = (
             self.get_queryset()
             .prefetch_related("authors", "categories")
@@ -128,6 +134,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         fg.load_extension("podcast")
         fg.register_extension("podcast2", Podcast2Extension, Podcast2EntryExtension)
         fg = cast(PodcastFeedGenerator, fg)
+        if podcast.slug == "musikensmakt":
+            fg.podcast2.podcast_txt("mb8z6ibsaewmquo7pqajD2sh3wbnURce2jbhbvra")
         fg.title(podcast.name)
         fg.link([
             {"href": podcast.rss_url, "rel": "self", "type": "application/rss+xml"},

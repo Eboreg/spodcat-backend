@@ -9,6 +9,7 @@ class Podcast2Extension(BaseExtension):
     def __init__(self):
         self.__podcast_guid = None
         self.__podcast_images: list[tuple[str, int]] = []
+        self.__podcast_txt: list[tuple[str, str | None]] = []
 
     def extend_ns(self):
         return {"podcast": NAMESPACE}
@@ -25,6 +26,12 @@ class Podcast2Extension(BaseExtension):
             images = xml_elem("{%s}images" % NAMESPACE, channel)
             images.attrib["srcset"] = srcset
 
+        for txt, purpose in self.__podcast_txt:
+            elem = xml_elem("{%s}txt" % NAMESPACE, channel)
+            elem.text = txt
+            if purpose:
+                elem.attrib["purpose"] = purpose
+
         return feed
 
     def podcast_guid(self, guid: str | None = None):
@@ -34,6 +41,9 @@ class Podcast2Extension(BaseExtension):
 
     def podcast_image(self, url: str, width: int):
         self.__podcast_images.append((url, width))
+
+    def podcast_txt(self, txt: str, purpose: str | None = None):
+        self.__podcast_txt.append((txt, purpose))
 
 
 class Podcast2EntryExtension(BaseEntryExtension):
