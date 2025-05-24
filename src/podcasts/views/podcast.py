@@ -203,5 +203,5 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         return HttpResponse(
             content=rss,
             content_type="application/xml; charset=utf-8",
-            headers={"Content-Disposition": f"attachment; filename=\"{podcast.slug}.rss.xml\""},
+            headers={"Content-Disposition": f"inline; filename=\"{podcast.slug}.rss.xml\""},
         )
