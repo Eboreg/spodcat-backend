@@ -17,6 +17,7 @@ class PodcastSerializer(serializers.ModelSerializer):
         many=True,
     )
     description_html = serializers.SerializerMethodField()
+    episodes_fm_url = serializers.SerializerMethodField()
     links = ResourceRelatedField(queryset=PodcastLink.objects, many=True)
     rss_url = serializers.SerializerMethodField()
 
@@ -33,6 +34,9 @@ class PodcastSerializer(serializers.ModelSerializer):
 
     def get_description_html(self, obj: Podcast) -> str:
         return obj.description_html
+
+    def get_episodes_fm_url(self, obj: Podcast) -> str:
+        return obj.episodes_fm_url
 
     def get_rss_url(self, obj: Podcast) -> str:
         return obj.rss_url

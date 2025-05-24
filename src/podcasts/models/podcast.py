@@ -2,6 +2,7 @@ import logging
 import mimetypes
 import re
 import uuid
+from base64 import b64encode
 from io import BytesIO
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
@@ -134,6 +135,10 @@ class Podcast(ModelMixin, models.Model):
         if self.description:
             return markdown(self.description, extensions=["nl2br", "smarty", MarkdownExtension()])
         return ""
+
+    @property
+    def episodes_fm_url(self) -> str:
+        return "https://episodes.fm/" + b64encode(self.rss_url.encode()).decode().strip("=")
 
     @property
     def frontend_url(self) -> str:
