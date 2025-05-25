@@ -10,9 +10,10 @@ from rest_framework_json_api import views
 from logs.models import PodcastContentRequestLog
 from podcasts import serializers
 from podcasts.models import PodcastContent
+from utils.filters import IdListFilter
 
 
-class PodcastContentFilter(filters.FilterSet):
+class PodcastContentFilter(IdListFilter):
     podcast = filters.CharFilter(method="filter_podcast")
 
     def filter_content(self, queryset, name, value):

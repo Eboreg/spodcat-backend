@@ -16,10 +16,6 @@ from podcasts.views.podcast_content import (
 class EpisodeFilter(PodcastContentFilter):
     episode = filters.CharFilter(method="filter_content")
 
-    class Meta:
-        model = Episode
-        fields = []
-
 
 class EpisodeViewSet(PodcastContentViewSet):
     filterset_class = EpisodeFilter

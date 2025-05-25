@@ -12,10 +12,6 @@ from podcasts.views.podcast_content import (
 class PostFilter(PodcastContentFilter):
     post = filters.CharFilter(method="filter_content")
 
-    class Meta:
-        model = Post
-        fields = []
-
 
 class PostViewSet(PodcastContentViewSet):
     filterset_class = PostFilter
