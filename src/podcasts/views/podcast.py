@@ -21,7 +21,11 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
 
-from logs.models import PodcastEpisodeAudioRequestLog, PodcastRequestLog
+from logs.models import (
+    PodcastEpisodeAudioRequestLog,
+    PodcastRequestLog,
+    PodcastRssRequestLog,
+)
 from podcasts import serializers
 from podcasts.models import Episode, Podcast, PodcastContent
 from podcasts.podcasting2 import Podcast2EntryExtension, Podcast2Extension
@@ -117,7 +121,11 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["get"], detail=True)
     # pylint: disable=no-member
     def rss(self, request: Request, pk: str):
-        logger.info("%s: referrer=%s", request.path_info, request.headers.get("Referer", ""))
+        PodcastRssRequestLog.objects.create(
+            path_info=request.path_info or "",
+            remote_addr=request.META.get("REMOTE_ADDR", None),
+            referrer=request.headers.get("Referer", ""),
+        )
 
         queryset = self.get_queryset().prefetch_related("authors", "categories").select_related("owner")
         podcast: Podcast = get_object_or_404(queryset, slug=pk)

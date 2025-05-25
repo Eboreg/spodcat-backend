@@ -288,3 +288,10 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
             created=obj.created,
             defaults={key: getattr(obj, key) for key in defaults_keys},
         )
+
+
+class PodcastRssRequestLog(ModelMixin, models.Model):
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+    path_info = TruncatedCharField(max_length=50, blank=True, default="")
+    remote_addr = models.GenericIPAddressField(null=True, db_index=True, default=None)
+    referrer = TruncatedCharField(max_length=100, blank=True, default="")
