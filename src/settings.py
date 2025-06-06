@@ -12,15 +12,8 @@ def env_boolean(key: str):
 SRC_DIR = Path(__file__).resolve().parent
 BASE_DIR = SRC_DIR.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env_boolean("DEBUG")
-
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ".localhost,127.0.0.1,[::1]").split(",")
 INTERNAL_IPS = os.environ.get("INTERNAL_IPS", "127.0.0.1").split(",")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
@@ -30,7 +23,6 @@ ADMINS = [("Robert", "robert@huseli.us")]
 
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -305,9 +297,12 @@ redis_db = os.environ.get("REDIS_DB", "0")
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://127.0.0.1:6379/{redis_db}",
-    }
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
 }
 CACHALOT_DATABASES = ["default"]
 # CACHALOT_UNCACHABLE_APPS = ["logs"]
