@@ -35,8 +35,11 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
         return self.only(
             "Episode___audio_file",
             "Episode___duration_seconds",
+            "Episode___image_thumbnail",
             "Episode___number",
             "Episode___podcastcontent_ptr_id",
+            "Episode___season",
+            "id",
             "name",
             "podcast",
             "polymorphic_ctype_id",
