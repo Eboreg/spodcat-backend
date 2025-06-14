@@ -248,6 +248,10 @@ LOGGING = {
             "handlers": ["console"],
             "level": "INFO",
         },
+        "pydub.converter": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        }
     },
 }
 

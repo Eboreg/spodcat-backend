@@ -2,6 +2,7 @@ import datetime
 import locale
 import logging
 import mimetypes
+import os
 import tempfile
 from io import BytesIO
 from time import struct_time
@@ -15,6 +16,7 @@ from django.core.files.images import ImageFile
 from django.db import models
 from klaatu_python.utils import getitem0_nullable
 from markdownify import markdownify
+from pydub import AudioSegment
 from pydub.utils import mediainfo
 from slugify import slugify
 
@@ -23,6 +25,7 @@ from utils import (
     delete_storage_file,
     generate_thumbnail,
     get_audio_file_dbfs_array,
+    get_audio_segment_dbfs_array,
 )
 
 
@@ -115,6 +118,27 @@ class Episode(PodcastContent):
         name += slugify(self.name, max_length=50)
 
         return name
+
+    # pylint: disable=no-member,consider-using-with
+    def get_dbfs_and_duration(self, temp_file: tempfile._TemporaryFileWrapper | None = None):
+        if temp_file is None:
+            _, extension = os.path.splitext(os.path.basename(self.audio_file.name))
+            temp_file = tempfile.NamedTemporaryFile(suffix=extension)
+            temp_file.write(self.audio_file.read())
+            temp_file.seek(0)
+
+        info = mediainfo(temp_file.name)
+        self.duration_seconds = float(info["duration"])
+        self.save(update_fields=["duration_seconds"])
+
+        audio: AudioSegment = AudioSegment.from_file(
+            file=temp_file.name,
+            format=info["format_name"],
+            codec=info["codec_name"],
+        )
+        temp_file.close()
+        self.dbfs_array = get_audio_segment_dbfs_array(audio)
+        self.save(update_fields=["dbfs_array"])
 
     # pylint: disable=no-member
     def handle_uploaded_image(self, save: bool = False):

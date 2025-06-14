@@ -21,7 +21,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from martor.models import MartorField
 from pydub import AudioSegment
-from pydub.utils import mediainfo
 
 from logs.models import (
     PodcastContentRequestLog,
@@ -44,11 +43,7 @@ from podcasts.models import (
     Podcast,
     Post,
 )
-from utils import (
-    delete_storage_file,
-    get_audio_segment_dbfs_array,
-    seconds_to_timestamp,
-)
+from utils import delete_storage_file, seconds_to_timestamp
 from utils.admin_mixin import AdminMixin
 from utils.widgets import AdminMartorWidget
 
@@ -384,24 +379,15 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             )
         )
 
-    def handle_audio_file_async(self, instance: Episode, temp_file: tempfile._TemporaryFileWrapper, stem: str):
+    def handle_audio_file_async(self, instance: Episode, temp_file: tempfile._TemporaryFileWrapper):
         logger.info("handle_audio_file_async starting for %s, temp_file=%s", instance, temp_file)
 
         try:
-            update_fields = ["dbfs_array", "duration_seconds"]
-            info = mediainfo(temp_file.name)
-            instance.duration_seconds = float(info["duration"])
-            audio: AudioSegment = AudioSegment.from_file(temp_file, info["format_name"])
-            temp_file.close()
-
+            instance.get_dbfs_and_duration(temp_file=temp_file)
             # Skipping the applying of gain, but here is how to use it:
             # temp_stem, _ = os.path.splitext(temp_file.name)
             # if self.apply_gain(instance=instance, audio=audio, stem=temp_stem, tags=info.get("TAG"), save=False):
             #     update_fields.extend(["audio_file", "audio_content_type", "audio_file_length"])
-
-            instance.dbfs_array = get_audio_segment_dbfs_array(audio)
-            instance.save(update_fields=update_fields)
-
             logger.info("handle_audio_file_async finished for %s", instance)
         except Exception as e:
             logger.error("handle_audio_file_async error", exc_info=e)
@@ -462,7 +448,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
         if "audio_file" in form.changed_data and form.cleaned_data["audio_file"]:
             audio_file: UploadedFile = form.cleaned_data["audio_file"]
-            stem, extension = os.path.splitext(os.path.basename(audio_file.name))
+            _, extension = os.path.splitext(os.path.basename(audio_file.name))
 
             # Cannot send the UploadedFile itself, because it may be closed
             # once the thread runs.
@@ -476,7 +462,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
             Thread(
                 target=self.handle_audio_file_async,
-                kwargs={"instance": obj, "temp_file": temp_file, "stem": stem},
+                kwargs={"instance": obj, "temp_file": temp_file},
             ).start()
 
 
