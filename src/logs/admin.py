@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models.functions import Coalesce
 from django.forms import ModelChoiceField, ModelForm
 
 from logs.models import (
@@ -6,6 +7,7 @@ from logs.models import (
     PodcastContentRequestLog,
     PodcastEpisodeAudioRequestLog,
     PodcastRequestLog,
+    RequestLog,
     UserAgent,
 )
 from utils.admin_mixin import AdminMixin
@@ -50,6 +52,12 @@ class LogAdmin(AdminMixin, admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    @admin.display(ordering=Coalesce("user_agent_data__name", "user_agent"))
+    def user_agent_name(self, obj: RequestLog):
+        if obj.user_agent_data:
+            return obj.user_agent_data.name
+        return obj.user_agent
+
 
 @admin.register(PodcastRequestLog)
 class PodcastRequestLogAdmin(LogAdmin):
@@ -57,7 +65,7 @@ class PodcastRequestLogAdmin(LogAdmin):
         "created",
         "podcast_link",
         "remote_addr",
-        "user_agent_data__name",
+        "user_agent_name",
         "user_agent_data__type",
         "is_bot",
     ]
@@ -83,7 +91,7 @@ class PodcastContentRequestLogAdmin(LogAdmin):
         "content_link",
         "podcast_link",
         "remote_addr",
-        "user_agent_data__name",
+        "user_agent_name",
         "user_agent_data__type",
         "is_bot",
     ]
@@ -114,7 +122,7 @@ class PodcastEpisodeAudioRequestLogAdmin(LogAdmin):
         "episode_link",
         "podcast_link",
         "remote_addr",
-        "user_agent_data__name",
+        "user_agent_name",
         "user_agent_data__type",
         "percent_fetched",
         "is_bot",

@@ -97,7 +97,7 @@ class RequestLog(ModelMixin, models.Model):
     is_bot = models.BooleanField(default=False, db_index=True)
     path_info = TruncatedCharField(max_length=200, blank=True, default="")
     user_agent = models.CharField(max_length=400, blank=True, default="")
-    user_agent_data = models.ForeignKey(
+    user_agent_data: "UserAgent | None" = models.ForeignKey(
         "logs.UserAgent",
         on_delete=models.SET_NULL,
         null=True,
@@ -111,7 +111,7 @@ class RequestLog(ModelMixin, models.Model):
         default=IpAddressCategory.UNKNOWN,
     )
     remote_host = models.CharField(max_length=100, blank=True, default="")
-    geoip = models.ForeignKey(
+    geoip: "GeoIP | None" = models.ForeignKey(
         "logs.GeoIP",
         on_delete=models.SET_NULL,
         null=True,
