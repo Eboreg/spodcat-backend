@@ -89,6 +89,14 @@ def get_useragent_data(user_agent: str) -> UserAgentData | None:
         (UserAgentType.BROWSER, "browsers"),
     ]
 
+    if user_agent.startswith("azsdk-python-storage-blob"):
+        return UserAgentData(
+            user_agent=user_agent,
+            type=UserAgentType.LIBRARY,
+            is_bot=True,
+            name="Azure SDK",
+        )
+
     for key, basename in basenames:
         ua_dict: UserAgentDict | None = get_dict_from_file(basename, user_agent)
 
@@ -105,14 +113,14 @@ def get_useragent_data(user_agent: str) -> UserAgentData | None:
     return None
 
 
-def get_dict_from_file(basename: str, value: str):
+def get_dict_from_file(basename: str, value: str) -> dict | None:
     for ua_dict in get_dicts_from_file(basename):
         if re.search(ua_dict["pattern"], value):
             return ua_dict
     return None
 
 
-def get_dicts_from_file(basename: str):
+def get_dicts_from_file(basename: str) -> list[dict]:
     from logs import user_agent
 
     cached = user_agent.user_agent_dict_cache.get(basename, None)
