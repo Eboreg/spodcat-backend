@@ -12,7 +12,6 @@ def generate_term():
 
 
 class Challenge(ModelMixin, models.Model):
-    # NUMBER_STRINGS = ["noll", "ett", "två", "tre", "fyra", "fem", "sex", "sju", "åtta", "nio"]
     NUMBER_STRINGS = [
         _("zero"),
         _("one"),
