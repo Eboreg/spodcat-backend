@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from django.http import HttpRequest
+from django.utils.translation import gettext_lazy as _
 
 
 def env_boolean(key: str):
@@ -127,6 +128,11 @@ TIME_ZONE = "Europe/Stockholm"
 USE_I18N = True
 USE_TZ = True
 FORMAT_MODULE_PATH = ["formats"]
+LOCALE_PATHS = [SRC_DIR / "locale"]
+LANGUAGES = [
+    ("en", _("English")),
+    ("sv", _("Swedish")),
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -257,10 +263,10 @@ LOGGING = {
 
 
 # Email
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "podd@huseli.us")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "admin@localhost")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "podd@huseli.us")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "admin")
 EMAIL_PORT = os.environ.get("EMAIL_PORT", 587)
 EMAIL_USE_TLS = env_boolean("EMAIL_USE_TLS")
 
@@ -270,7 +276,7 @@ def show_toolbar(request: HttpRequest):
     from django.conf import settings
 
     remote_addr = str(request.META.get("REMOTE_ADDR", ""))
-    return settings.DEBUG and (remote_addr in settings.INTERNAL_IPS or remote_addr.startswith("192.168.1"))
+    return settings.DEBUG and (remote_addr in settings.INTERNAL_IPS or remote_addr.startswith("192.168"))
 
 
 DEBUG_TOOLBAR_CONFIG = {
