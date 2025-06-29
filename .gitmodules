@@ -1,0 +1,6 @@
+[submodule "src/spodcat/submodules/user-agents-v2"]
+	path = src/spodcat/submodules/user-agents-v2
+	url = https://github.com/opawg/user-agents-v2.git
+[submodule "src/spodcat/submodules/GoodBots"]
+	path = src/spodcat/submodules/GoodBots
+	url = https://github.com/AnTheMaker/GoodBots.git
