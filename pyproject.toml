@@ -3,6 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools"]
 
 [project]
+version = "0.2.21"
 name = "spodcat-backend"
 authors = [
     {name = "Robert Huselius", email = "robert@huseli.us"},
@@ -12,8 +13,8 @@ license = {file = "LICENSE"}
 requires-python = ">=3.10"
 dependencies = [
     "django",
-    "python-dotenv",
-    "django-extensions",
+    # "python-dotenv",
+    # "django-extensions",
     "djangorestframework",
     "djangorestframework-jsonapi[django-polymorphic,django-filter]",
     "pillow",                   # thumbnail generation
@@ -21,43 +22,41 @@ dependencies = [
     "feedgen",                  # generating RSS feed
     "iso639-lang",              # getting language choices for podcast
     "python-slugify",           # generating slugs for podcast content
-    "django-storages[azure]",
-    "whitenoise",               # serving static stuff
+    # "django-storages[azure]",
+    # "whitenoise",               # serving static stuff
     "django-polymorphic",
-    "django-cors-headers",      # see settings.CORS_ALLOWED_ORIGINS
+    # "django-cors-headers",      # see settings.CORS_ALLOWED_ORIGINS
     "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
     "martor",                   # Markdown editor for admin
     "feedparser",               # importing RSS feed
     "markdownify",              # convert HTML to Markdown when importing RSS feed
-    "azure-monitor-query",      # used by get_audio_request_logs
-    "azure-identity",           # used by get_audio_request_logs
+    # "azure-monitor-query",      # used by get_audio_request_logs
+    # "azure-identity",           # used by get_audio_request_logs
     "geoip2",                   # used to get geo data for remote IPs
-    "redis",                    # used by cachalot
-    "hiredis",                  # makes stuff better somehow
-    "django-cachalot",
-    "django-redis",
-    "psycopg[binary]",          # postgresql
+    # "redis",                    # used by cachalot
+    # "hiredis",                  # makes stuff better somehow
+    # "django-cachalot",
+    # "django-redis",
+    # "psycopg[binary]",          # postgresql
 ]
-dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
     "django-debug-toolbar",
+    "django-extensions",
     "flake8",
     "ipdb",
     "ipython",
     "isort",
     "pylint-django",
     "pylint",
+    "python-dotenv",
     "types-markdown",
     "types-requests",
 ]
 
 [project.scripts]
 m = "manage:main"
-
-[tool.setuptools.dynamic]
-version = {attr = "__version__"}
 
 [tool.pylint.main]
 disable = [
@@ -81,6 +80,7 @@ disable = [
 ]
 ignore = [".venv", "node_modules"]
 ignore-patterns = ["^\\.#", ".*\\.pyi", "apps\\.py"]
+ignore-paths = [".*migrations.*"]
 max-line-length = 119
 
 [tool.isort]

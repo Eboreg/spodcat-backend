@@ -1,0 +1,6 @@
+include README.md LICENSE
+recursive-include src/spodcat/templates *.html
+recursive-include src/spodcat/static *.css *.js *.map
+recursive-include src/spodcat/locale *.po *.mo
+include user-agents-v2/src/*.json
+include GoodBots/iplists/*.ips

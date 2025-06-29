@@ -1,0 +1,13 @@
+{% extends "admin/change_list.html" %}
+
+{% block result_list %}
+<div class="change-list-legend">
+    <p><strong>N.B. Audio file download stats only go back to 2025-05-01. The stats before that were not reliable.</strong></p>
+    <p><code>VIEWS</code> = number of times the episode's details page has been visited.</p>
+    <p><code>VISITORS</code> = number of unique IP addresses that have visited the episode's detail page.</p>
+    <p><code>PLAYS</code> = number of times the episode's audio file has been downloaded <em>by a non-bot client</em> (as far as we're able to tell). May be a fraction because of partial downloads (common when streaming).</p>
+    <p><code>PLAYERS</code> = number of unique IP addresses that have downloaded the episode's audio file (bots excluded).</p>
+    <p><code>PLAY TIME</code> = same as <code>PLAYS</code> but multiplied by the episode's length.</p>
+</div>
+{{ block.super }}
+{% endblock result_list %}

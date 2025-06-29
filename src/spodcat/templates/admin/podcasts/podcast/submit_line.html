@@ -1,0 +1,10 @@
+{% extends "admin/submit_line.html" %}
+{% load admin_urls %}
+
+{% block submit-row %}
+{{ block.super }}
+{% if has_change_permission %}
+{% url opts|admin_urlname:'change_slug' original.pk|admin_urlquote as change_slug_url %}
+<a href="{% add_preserved_filters change_slug_url %}">Change slug</a>
+{% endif %}
+{% endblock %}

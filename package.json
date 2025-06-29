@@ -16,15 +16,15 @@
   },
   "targets": {
     "chart": {
-      "distDir": "src/assets/js",
+      "distDir": "src/spodcat/static/spodcat/js",
       "source": "src/assets/ts/chart.ts"
     },
     "artist_autocomplete": {
-      "distDir": "src/assets/js",
+      "distDir": "src/spodcat/static/spodcat/js",
       "source": "src/assets/ts/artist_autocomplete.ts"
     },
     "admin": {
-        "distDir": "src/assets/js",
+        "distDir": "src/spodcat/static/spodcat/js",
         "source": "src/assets/ts/admin.ts"
     }
   }

@@ -1,0 +1,700 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-24 07:00+0200\n"
+"PO-Revision-Date: 2025-06-24 07:05+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: build/lib/podcasts/models/challenge.py:16
+#: build/lib/spodcat/models/challenge.py:16 src/spodcat/models/challenge.py:16
+msgid "zero"
+msgstr "noll"
+
+#: build/lib/podcasts/models/challenge.py:17
+#: build/lib/spodcat/models/challenge.py:17 src/spodcat/models/challenge.py:17
+msgid "one"
+msgstr "ett"
+
+#: build/lib/podcasts/models/challenge.py:18
+#: build/lib/spodcat/models/challenge.py:18 src/spodcat/models/challenge.py:18
+msgid "two"
+msgstr "två"
+
+#: build/lib/podcasts/models/challenge.py:19
+#: build/lib/spodcat/models/challenge.py:19 src/spodcat/models/challenge.py:19
+msgid "three"
+msgstr "tre"
+
+#: build/lib/podcasts/models/challenge.py:20
+#: build/lib/spodcat/models/challenge.py:20 src/spodcat/models/challenge.py:20
+msgid "four"
+msgstr "fyra"
+
+#: build/lib/podcasts/models/challenge.py:21
+#: build/lib/spodcat/models/challenge.py:21 src/spodcat/models/challenge.py:21
+msgid "five"
+msgstr "fem"
+
+#: build/lib/podcasts/models/challenge.py:22
+#: build/lib/spodcat/models/challenge.py:22 src/spodcat/models/challenge.py:22
+msgid "six"
+msgstr "sex"
+
+#: build/lib/podcasts/models/challenge.py:23
+#: build/lib/spodcat/models/challenge.py:23 src/spodcat/models/challenge.py:23
+msgid "seven"
+msgstr "sju"
+
+#: build/lib/podcasts/models/challenge.py:24
+#: build/lib/spodcat/models/challenge.py:24 src/spodcat/models/challenge.py:24
+msgid "eight"
+msgstr "åtta"
+
+#: build/lib/podcasts/models/challenge.py:25
+#: build/lib/spodcat/models/challenge.py:25 src/spodcat/models/challenge.py:25
+msgid "nine"
+msgstr "nio"
+
+#: build/lib/podcasts/models/challenge.py:36
+#: build/lib/spodcat/models/challenge.py:36 src/spodcat/models/challenge.py:40
+#, python-format
+msgid "%(term1)s plus %(term2)s"
+msgstr "%(term1)s plus %(term2)s"
+
+#: build/lib/spodcat/serializers/comment.py:38
+#: src/spodcat/serializers/comment.py:38
+msgid "The answer is not correct."
+msgstr "Svaret är inte korrekt."
+
+#: build/lib/spodcat/serializers/comment.py:41
+#: src/spodcat/serializers/comment.py:41
+msgid "This podcast does not support comments"
+msgstr "Denna podcast stöder inte kommentarer"
+
+#: src/spodcat/admin/inlines.py:15
+msgid "song"
+msgstr ""
+
+#: src/spodcat/admin/inlines.py:16 src/spodcat/admin/podcasts.py:502
+msgid "songs"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:21
+msgid "City"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:22
+msgid "Region"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:23
+msgid "Country"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:24
+msgid "Org"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:31
+msgid "Name"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:32
+msgid "Type"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:33
+msgid "Device category"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:34
+msgid "Device name"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:83 src/spodcat/admin/logs.py:114
+#: src/spodcat/admin/logs.py:156 src/spodcat/admin/podcasts.py:418
+#: src/spodcat/models/podcast.py:165
+msgid "podcast"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:107 src/spodcat/admin/podcasts.py:558
+msgid "content"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:139 src/spodcat/admin/podcasts.py:519
+#: src/spodcat/models/episode.py:89 src/spodcat/models/episode_chapter.py:59
+#: src/spodcat/models/episode_song.py:26
+msgid "episode"
+msgstr ""
+
+#: src/spodcat/admin/logs.py:152
+#, python-format
+msgid "% fetched"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:101 src/spodcat/models/podcast.py:67
+msgid "authors"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:118
+msgid "The slug was changed."
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:199 src/spodcat/models/podcast.py:136
+msgid "owner"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:203 src/spodcat/admin/podcasts.py:398
+msgid "plays"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:214 src/spodcat/admin/podcasts.py:409
+msgid "play time"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:219 src/spodcat/admin/podcasts.py:414
+msgid "players"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:248
+msgid "views recursive"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:252 src/spodcat/admin/podcasts.py:283
+msgid "views"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:290
+msgid "visitors"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:336
+#, python-format
+msgid "Applying %(gain)f dBFS gain to %(instance)s"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:357 src/spodcat/admin/podcasts.py:488
+msgid "Link"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:394 src/spodcat/models/episode.py:82
+msgid "number"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:515 src/spodcat/models/artist.py:17
+#: src/spodcat/models/episode_song.py:19
+msgid "artists"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:541 src/spodcat/models/episode_chapter.py:22
+msgid "start time"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:546
+msgid "Approve comments"
+msgstr ""
+
+#: src/spodcat/admin/podcasts.py:572 src/spodcat/models/comment.py:25
+msgid "text"
+msgstr ""
+
+#: src/spodcat/forms.py:16
+#, python-brace-format
+msgid "Another podcast with slug={slug} exists."
+msgstr ""
+
+#: src/spodcat/models/artist.py:10 src/spodcat/models/comment.py:18
+#: src/spodcat/models/logs.py:46 src/spodcat/models/podcast.py:119
+#: src/spodcat/models/podcast_content.py:37
+msgid "name"
+msgstr ""
+
+#: src/spodcat/models/artist.py:16
+msgid "artist"
+msgstr ""
+
+#: src/spodcat/models/category.py:17
+msgid "category"
+msgstr ""
+
+#: src/spodcat/models/category.py:18
+msgid "categories"
+msgstr ""
+
+#: src/spodcat/models/challenge.py:34
+msgid "challenge"
+msgstr ""
+
+#: src/spodcat/models/challenge.py:35
+msgid "challenges"
+msgstr ""
+
+#: src/spodcat/models/comment.py:16 src/spodcat/models/logs.py:244
+#: src/spodcat/models/logs.py:253 src/spodcat/models/logs.py:266
+#: src/spodcat/models/logs.py:325 src/spodcat/models/podcast_content.py:33
+msgid "created"
+msgstr ""
+
+#: src/spodcat/models/comment.py:17
+msgid "is approved"
+msgstr ""
+
+#: src/spodcat/models/comment.py:23 src/spodcat/models/podcast_content.py:51
+msgid "podcast content"
+msgstr ""
+
+#: src/spodcat/models/comment.py:29 src/spodcat/models/episode_song.py:21
+msgid "comment"
+msgstr ""
+
+#: src/spodcat/models/comment.py:30
+msgid "comments"
+msgstr ""
+
+#: src/spodcat/models/episode.py:52
+msgid "audio content type"
+msgstr ""
+
+#: src/spodcat/models/episode.py:58
+msgid "audio file"
+msgstr ""
+
+#: src/spodcat/models/episode.py:64
+msgid "audio file length"
+msgstr ""
+
+#: src/spodcat/models/episode.py:66
+msgid "dBFS array"
+msgstr ""
+
+#: src/spodcat/models/episode.py:67 src/spodcat/models/logs.py:267
+msgid "duration"
+msgstr ""
+
+#: src/spodcat/models/episode.py:73 src/spodcat/models/episode_chapter.py:29
+msgid "image"
+msgstr ""
+
+#: src/spodcat/models/episode.py:83
+msgid "season"
+msgstr ""
+
+#: src/spodcat/models/episode.py:90
+msgid "episodes"
+msgstr ""
+
+#: src/spodcat/models/episode.py:118
+msgid ""
+"A non-draft episode must have an audio file. Upload a file or mark this as "
+"draft."
+msgstr ""
+
+#: src/spodcat/models/episode_chapter.py:21
+#: src/spodcat/models/episode_song.py:28
+msgid "title"
+msgstr ""
+
+#: src/spodcat/models/episode_chapter.py:23
+msgid "end time"
+msgstr ""
+
+#: src/spodcat/models/episode_chapter.py:31
+#: src/spodcat/models/podcast_link.py:39
+msgid "URL"
+msgstr ""
+
+#: src/spodcat/models/episode_chapter.py:63
+msgid "episode chapter"
+msgstr ""
+
+#: src/spodcat/models/episode_chapter.py:64
+msgid "episode chapters"
+msgstr ""
+
+#: src/spodcat/models/episode_song.py:33
+msgid "episode song"
+msgstr ""
+
+#: src/spodcat/models/episode_song.py:34
+msgid "episode songs"
+msgstr ""
+
+#: src/spodcat/models/logs.py:45 src/spodcat/models/logs.py:58
+#: src/spodcat/models/logs.py:114
+msgid "user agent"
+msgstr ""
+
+#: src/spodcat/models/logs.py:47
+msgid "type"
+msgstr ""
+
+#: src/spodcat/models/logs.py:53
+msgid "device category"
+msgstr ""
+
+#: src/spodcat/models/logs.py:55
+msgid "device name"
+msgstr ""
+
+#: src/spodcat/models/logs.py:59
+msgid "user agents"
+msgstr ""
+
+#: src/spodcat/models/logs.py:79
+msgid "IP"
+msgstr ""
+
+#: src/spodcat/models/logs.py:80
+msgid "city"
+msgstr ""
+
+#: src/spodcat/models/logs.py:81
+msgid "region"
+msgstr ""
+
+#: src/spodcat/models/logs.py:82
+msgid "country"
+msgstr ""
+
+#: src/spodcat/models/logs.py:83
+msgid "org"
+msgstr ""
+
+#: src/spodcat/models/logs.py:86
+msgid "GeoIP"
+msgstr ""
+
+#: src/spodcat/models/logs.py:87
+msgid "GeoIP:s"
+msgstr ""
+
+#: src/spodcat/models/logs.py:112
+msgid "is bot"
+msgstr ""
+
+#: src/spodcat/models/logs.py:113 src/spodcat/models/logs.py:326
+msgid "path"
+msgstr ""
+
+#: src/spodcat/models/logs.py:121
+msgid "user agent data"
+msgstr ""
+
+#: src/spodcat/models/logs.py:123 src/spodcat/models/logs.py:331
+msgid "remote address"
+msgstr ""
+
+#: src/spodcat/models/logs.py:128
+msgid "remote address category"
+msgstr ""
+
+#: src/spodcat/models/logs.py:130
+msgid "remote host"
+msgstr ""
+
+#: src/spodcat/models/logs.py:138 src/spodcat/models/logs.py:333
+msgid "referrer"
+msgstr ""
+
+#: src/spodcat/models/logs.py:144
+msgid "referrer category"
+msgstr ""
+
+#: src/spodcat/models/logs.py:146
+msgid "referrer name"
+msgstr ""
+
+#: src/spodcat/models/logs.py:149
+msgid "request log"
+msgstr ""
+
+#: src/spodcat/models/logs.py:150
+msgid "request logs"
+msgstr ""
+
+#: src/spodcat/models/logs.py:248
+msgid "podcast page request log"
+msgstr ""
+
+#: src/spodcat/models/logs.py:249
+msgid "podcast page request logs"
+msgstr ""
+
+#: src/spodcat/models/logs.py:261
+msgid "podcast content page request log"
+msgstr ""
+
+#: src/spodcat/models/logs.py:262
+msgid "podcast content page request logs"
+msgstr ""
+
+#: src/spodcat/models/logs.py:273
+msgid "response body size"
+msgstr ""
+
+#: src/spodcat/models/logs.py:274
+msgid "status code"
+msgstr ""
+
+#: src/spodcat/models/logs.py:279
+msgid "podcast episode audio request log"
+msgstr ""
+
+#: src/spodcat/models/logs.py:280
+msgid "podcast episode audio request logs"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:74
+msgid "banner image"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:75
+msgid "Should be >= 960px wide and have aspect ratio 3:1."
+msgstr ""
+
+#: src/spodcat/models/podcast.py:86
+msgid "This is the round 'avatar' image."
+msgstr ""
+
+#: src/spodcat/models/podcast.py:87
+msgid "cover"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:101 src/spodcat/models/podcast_content.py:34
+msgid "description"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:102
+msgid "enable comments"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:108
+msgid "favicon"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:117
+msgid "language"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:124
+msgid "name font family"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:130
+msgid "name font size"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:138
+msgid "require comment approval"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:142
+msgid "Will be used in URLs."
+msgstr ""
+
+#: src/spodcat/models/podcast.py:143 src/spodcat/models/podcast_content.py:40
+msgid "slug"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:145
+msgid "tagline"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:150
+msgid "custom GUID"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:152
+msgid ""
+"Don't set if you don't know what you're doing. Ref: https://podcasting2.org/"
+"podcast-namespace/tags/guid"
+msgstr ""
+
+#: src/spodcat/models/podcast.py:166
+msgid "podcasts"
+msgstr ""
+
+#: src/spodcat/models/podcast_content.py:36
+msgid "draft"
+msgstr ""
+
+#: src/spodcat/models/podcast_content.py:39
+msgid "published"
+msgstr ""
+
+#: src/spodcat/models/podcast_content.py:52
+msgid "podcast contents"
+msgstr ""
+
+#: src/spodcat/models/podcast_content.py:112
+msgid "visible"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:13
+msgid "The Facebook"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:14
+msgid "Patreon"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:15
+msgid "Discord"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:16
+msgid "Apple"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:17
+msgid "Android"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:18
+msgid "Spotify"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:19
+msgid "Itunes"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:22
+msgid "Primary"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:23
+msgid "Secondary"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:24
+msgid "Tertiary"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:25
+msgid "Boring"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:32
+msgid "custom icon"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:34
+msgid "icon"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:35
+msgid "label"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:36
+msgid "order"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:38
+msgid "theme"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:44
+msgid "podcast link"
+msgstr ""
+
+#: src/spodcat/models/podcast_link.py:45
+msgid "podcast links"
+msgstr ""
+
+#: src/spodcat/models/post.py:8
+msgid "post"
+msgstr ""
+
+#: src/spodcat/models/post.py:9
+msgid "posts"
+msgstr ""
+
+#: src/spodcat/serializers/comment.py:46
+#, python-brace-format
+msgid ""
+"A new comment for {podcast} was just posted by {name}. Check it out here: "
+"{url}"
+msgstr ""
+
+#: src/spodcat/serializers/comment.py:53
+#, python-brace-format
+msgid "Comment for {podcast} posted"
+msgstr ""
+
+#: src/spodcat/serializers/comment.py:60
+#, python-brace-format
+msgid ""
+"You have a new comment for {podcast} awaiting approval. Look here: {url}"
+msgstr ""
+
+#: src/spodcat/serializers/comment.py:66
+#, python-brace-format
+msgid "Comment for {podcast} needs approval"
+msgstr ""
+
+#: src/spodcat/user_agent.py:13
+msgid "Auto"
+msgstr ""
+
+#: src/spodcat/user_agent.py:14
+msgid "Computer"
+msgstr ""
+
+#: src/spodcat/user_agent.py:15
+msgid "Mobile"
+msgstr ""
+
+#: src/spodcat/user_agent.py:16
+msgid "Smart speaker"
+msgstr ""
+
+#: src/spodcat/user_agent.py:17
+msgid "Smart TV"
+msgstr ""
+
+#: src/spodcat/user_agent.py:18
+msgid "Watch"
+msgstr ""
+
+#: src/spodcat/user_agent.py:22
+msgid "App"
+msgstr ""
+
+#: src/spodcat/user_agent.py:23
+msgid "Bot"
+msgstr ""
+
+#: src/spodcat/user_agent.py:24
+msgid "Browser"
+msgstr ""
+
+#: src/spodcat/user_agent.py:25
+msgid "Library"
+msgstr ""
+
+#: src/spodcat/validators.py:8
+msgid "Cover image width and height should be >= 1400px"
+msgstr ""
+
+#: src/spodcat/validators.py:14
+#, python-brace-format
+msgid "'{value}' is a forbidden slug for podcasts."
+msgstr ""
+
+#: src/spodcat/views/admin.py:24
+msgid "Invalid request"
+msgstr ""
