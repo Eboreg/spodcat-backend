@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools"]
 
 [project]
-version = "0.2.21"
+version = "0.2.22"
 name = "spodcat-backend"
 authors = [
     {name = "Robert Huselius", email = "robert@huseli.us"},
