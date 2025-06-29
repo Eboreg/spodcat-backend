@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypedDict
 
-from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+
+submodule_dir = Path(__file__).parent / "submodules"
 
 
 class DeviceCategory(models.TextChoices):
@@ -129,7 +131,7 @@ def get_dicts_from_file(basename: str) -> list[dict]:
         return cached
 
     dicts = []
-    json_path = Path(settings.BASE_DIR).resolve() / f"user-agents-v2/src/{basename}.json"
+    json_path = submodule_dir / f"user-agents-v2/src/{basename}.json"
 
     if json_path.is_file():
         with json_path.open("rt") as f:

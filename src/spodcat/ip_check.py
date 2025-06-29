@@ -6,11 +6,12 @@ from typing import NotRequired, TypedDict
 import geoip2.database
 import geoip2.errors
 import geoip2.models
-from django.conf import settings
 from django.db import models
 
 
 logger = logging.getLogger(__name__)
+data_dir = Path(__file__).parent / "data"
+submodule_dir = Path(__file__).parent / "submodules"
 
 
 class IpAddressCategory(models.TextChoices):
@@ -47,7 +48,7 @@ ip_list_cache: dict[IpAddressCategory, list[ipaddress.IPv4Network | ipaddress.IP
 
 def get_geoip2_asn(ip: str) -> geoip2.models.ASN | None:
     try:
-        with geoip2.database.Reader(settings.BASE_DIR / "GeoLite2-ASN.mmdb") as reader:
+        with geoip2.database.Reader(data_dir / "GeoLite2-ASN.mmdb") as reader:
             return reader.asn(ip)
     except geoip2.errors.GeoIP2Error as e:
         logger.warning("Exception getting geoip2 ASN for %s: %s", ip, e)
@@ -56,7 +57,7 @@ def get_geoip2_asn(ip: str) -> geoip2.models.ASN | None:
 
 def get_geoip2_city(ip: str) -> geoip2.models.City | None:
     try:
-        with geoip2.database.Reader(settings.BASE_DIR / "GeoLite2-City.mmdb") as reader:
+        with geoip2.database.Reader(data_dir / "GeoLite2-City.mmdb") as reader:
             return reader.city(ip)
     except geoip2.errors.GeoIP2Error as e:
         logger.warning("Exception getting geoip2 city for %s: %s", ip, e)
@@ -84,7 +85,7 @@ def get_ip_network_list(category: IpAddressCategory) -> list[ipaddress.IPv4Netwo
     if cached is not None:
         return cached
 
-    path = Path(settings.BASE_DIR).resolve() / f"GoodBots/iplists/{category.value}.ips"
+    path = submodule_dir / f"GoodBots/iplists/{category.value}.ips"
     with path.open("rt") as f:
         networks = [ipaddress.ip_network(line.strip()) for line in f]
 
