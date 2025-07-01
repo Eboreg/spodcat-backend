@@ -1,7 +1,7 @@
 from django.forms import TimeInput
 
-from spodcat.models.fields import TimestampField
-from spodcat.models.model_mixin import ModelMixin
+from spodcat.utils.model_fields import TimestampField
+from spodcat.utils.model_mixin import ModelMixin
 
 
 class AdminMixin:

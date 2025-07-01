@@ -3,8 +3,9 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from spodcat.utils.model_mixin import ModelMixin
+
 from .functions import podcast_link_icon_path
-from .model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:

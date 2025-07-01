@@ -35,10 +35,3 @@ urlpatterns = [
     path("martor/", include("martor.urls")),
 ]
 urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=serve_media))
-
-try:
-    import debug_toolbar
-
-    urlpatterns.append(path("__debug__/", include(debug_toolbar.urls)))
-except ImportError:
-    pass

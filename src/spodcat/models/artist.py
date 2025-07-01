@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
-from .model_mixin import ModelMixin
+from spodcat.utils.model_mixin import ModelMixin
 
 
 class Artist(ModelMixin, models.Model):

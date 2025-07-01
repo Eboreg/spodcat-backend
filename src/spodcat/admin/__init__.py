@@ -1,8 +1,3 @@
-from .logs import (
-    PodcastContentRequestLogAdmin,
-    PodcastEpisodeAudioRequestLogAdmin,
-    PodcastRequestLogAdmin,
-)
 from .podcasts import (
     ArtistAdmin,
     CommentAdmin,
@@ -20,9 +15,6 @@ __all__ = [
     "EpisodeAdmin",
     "EpisodeSongAdmin",
     "PodcastAdmin",
-    "PodcastContentRequestLogAdmin",
-    "PodcastEpisodeAudioRequestLogAdmin",
-    "PodcastRequestLogAdmin",
     "PostAdmin",
     "UserAdmin",
 ]

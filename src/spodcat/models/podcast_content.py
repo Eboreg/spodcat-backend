@@ -17,8 +17,7 @@ from slugify import slugify
 from spodcat.markdown import MarkdownExtension
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.settings import spodcat_settings
-
-from .model_mixin import ModelMixin
+from spodcat.utils.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:

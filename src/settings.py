@@ -1,21 +1,14 @@
-import os
 from pathlib import Path
-
-from django.utils.translation import gettext_lazy as _
-
-
-def env_boolean(key: str):
-    return key in os.environ and os.environ[key].lower() not in ("false", "no", "0")
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 SRC_DIR = Path(__file__).resolve().parent
 BASE_DIR = SRC_DIR.parent
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-DEBUG = env_boolean("DEBUG")
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ".localhost,127.0.0.1,[::1]").split(",")
-INTERNAL_IPS = os.environ.get("INTERNAL_IPS", "127.0.0.1").split(",")
+SECRET_KEY = "x;'?49q5y^1h2@]_2}08:)&rkl)cd(be})/ewv;r:t'[^0"
+DEBUG = True
+ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]"]
+INTERNAL_IPS = "127.0.0.1"
 
 
 # Application definition
@@ -33,11 +26,11 @@ INSTALLED_APPS = [
     "martor",
     "django_filters",
     "spodcat",
-    "spodcat.admin_site.SpodcatAdminConfig",
+    "spodcat.logs",
+    "spodcat.contrib.admin",
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -118,65 +111,3 @@ JSON_API_FORMAT_TYPES = "dasherize"
 # martor
 MARTOR_ENABLE_LABEL = True
 MARTOR_UPLOAD_URL = "/markdown-image-upload/"
-
-
-# logging
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {
-        "require_debug_false": {
-            "()": "django.utils.log.RequireDebugFalse",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-        "mail_admins": {
-            "level": "ERROR",
-            "class": "spodcat.logging.AdminEmailHandler",
-            "include_html": True,
-            "filters": ["require_debug_false"],
-        },
-        "null": {
-            "class": "logging.NullHandler",
-        },
-    },
-    "loggers": {
-        "django.security.DisallowedHost": {
-            "handlers": ["null"],
-            "propagate": False,
-        },
-        "django": {
-            "handlers": ["console", "mail_admins"],
-            "level": "INFO",
-        },
-        "logs": {
-            "handlers": ["console"],
-            "level": "INFO",
-        },
-        "podcasts": {
-            "handlers": ["console"],
-            "level": "INFO",
-        },
-        "pydub.converter": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-        }
-    },
-}
-
-
-# Own stuff
-FRONTEND_ROOT_URL = os.environ.get("FRONTEND_ROOT_URL")
-ROOT_URL = os.environ.get("ROOT_URL")
-
-def episode_audio_file_path(instance, filename):
-    return f"{instance.podcast.slug}/bög/{filename}"
-
-SPODCAT = {
-    "EPISODE_AUDIO_FILE_PATH": episode_audio_file_path,
-    "FRONTEND_ROOT_URL": os.environ.get("FRONTEND_ROOT_URL"),
-    "ROOT_URL": os.environ.get("ROOT_URL"),
-}

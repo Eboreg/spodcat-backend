@@ -5,8 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from markdown import markdown
 
 from spodcat.markdown import MarkdownExtension
-
-from .model_mixin import ModelMixin
+from spodcat.utils.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:

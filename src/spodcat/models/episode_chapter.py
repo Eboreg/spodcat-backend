@@ -5,10 +5,10 @@ from django.utils.translation import gettext_lazy as _
 
 from spodcat.types import ChapterDict
 from spodcat.utils import filter_values_not_null
+from spodcat.utils.model_fields import TimestampField
+from spodcat.utils.model_mixin import ModelMixin
 
-from .fields import TimestampField
 from .functions import episode_chapter_image_path
-from .model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:

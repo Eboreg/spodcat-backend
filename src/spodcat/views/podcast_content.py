@@ -9,7 +9,8 @@ from rest_framework_json_api import views
 
 from spodcat import serializers
 from spodcat.filters import IdListFilter
-from spodcat.models import PodcastContent, PodcastContentRequestLog
+from spodcat.logs.models import PodcastContentRequestLog
+from spodcat.models import PodcastContent
 
 
 class PodcastContentFilter(IdListFilter):

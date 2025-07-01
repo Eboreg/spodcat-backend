@@ -22,11 +22,8 @@ from polymorphic.query import PolymorphicQuerySet
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractUser, AnonymousUser
 
-    from spodcat.models import (
-        Podcast,
-        PodcastContent,
-        PodcastEpisodeAudioRequestLog,
-    )
+    from spodcat.logs.models import PodcastEpisodeAudioRequestLog
+    from spodcat.models import Podcast, PodcastContent
 
     _T = TypeVar("_T", bound=PodcastContent)
 

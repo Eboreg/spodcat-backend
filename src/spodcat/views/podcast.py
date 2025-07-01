@@ -21,14 +21,12 @@ from rest_framework.response import Response
 from rest_framework_json_api import views
 
 from spodcat import serializers
-from spodcat.models import (
-    Episode,
-    Podcast,
-    PodcastContent,
+from spodcat.logs.models import (
     PodcastEpisodeAudioRequestLog,
     PodcastRequestLog,
     PodcastRssRequestLog,
 )
+from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
 from spodcat.utils import date_to_datetime
@@ -211,7 +209,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         if request.query_params.get("html"):
             return TemplateResponse(
                 request=request,
-                template="podcasts/rss.html",
+                template="spodcat/rss.html",
                 context={"rss": rss.decode()},
             )
 

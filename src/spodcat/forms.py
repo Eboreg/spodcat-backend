@@ -2,7 +2,8 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.translation import gettext as _
 
-from spodcat.models import Podcast, PodcastContent, PodcastRequestLog
+from spodcat.logs.models import PodcastRequestLog
+from spodcat.models import Podcast, PodcastContent
 
 
 class PodcastChangeSlugForm(ModelForm):

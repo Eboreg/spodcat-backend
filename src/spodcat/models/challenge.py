@@ -4,7 +4,7 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .model_mixin import ModelMixin
+from spodcat.utils.model_mixin import ModelMixin
 
 
 def generate_term():

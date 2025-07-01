@@ -11,9 +11,11 @@ import feedparser
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.files.images import ImageFile
 from django.db import models
 from django.db.models import Q
+from django.db.models.fields.files import ImageFieldFile
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from iso639 import iter_langs
@@ -29,7 +31,7 @@ from spodcat.utils import (
     downscale_image,
     generate_thumbnail,
 )
-from spodcat.validators import podcast_cover_validator, podcast_slug_validator
+from spodcat.utils.model_mixin import ModelMixin
 
 from .functions import (
     podcast_banner_path,
@@ -37,7 +39,6 @@ from .functions import (
     podcast_cover_thumbnail_path,
     podcast_favicon_path,
 )
-from .model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
@@ -53,6 +54,17 @@ logger = logging.getLogger(__name__)
 
 def get_language_choices():
     return [(l.pt1, l.name) for l in iter_langs() if l.pt1]
+
+
+def podcast_cover_validator(value: ImageFieldFile):
+    if value.height < 1400 or value.width < 1400:
+        raise ValidationError(_("Cover image width and height should be >= 1400px"))
+
+
+def podcast_slug_validator(value: str):
+    VERBOTEN = ["sw.js", "episode", "workbox-4723e66c.js", "post"]
+    if value.lower() in VERBOTEN:
+        raise ValidationError(_("'{value}' is a forbidden slug for podcasts.") % {"value": value})
 
 
 class Podcast(ModelMixin, models.Model):

@@ -32,17 +32,12 @@ from spodcat.admin.inlines import (
 )
 from spodcat.admin.mixins import AdminMixin
 from spodcat.forms import PodcastChangeSlugForm
-from spodcat.models import (
-    Artist,
-    Comment,
-    Episode,
-    EpisodeSong,
-    Podcast,
+from spodcat.logs.models import (
     PodcastContentRequestLog,
     PodcastEpisodeAudioRequestLog,
     PodcastRequestLog,
-    Post,
 )
+from spodcat.models import Artist, Comment, Episode, EpisodeSong, Podcast, Post
 from spodcat.utils import delete_storage_file, seconds_to_timestamp
 from spodcat.widgets import AdminMartorWidget
 
@@ -333,7 +328,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             dbfs = audio.dBFS
             if dbfs < -14:
                 gain = min(-max_dbfs, -dbfs - 14)
-                logger.info(_("Applying %(gain)f dBFS gain to %(instance)s") % {"gain": gain, "instance": instance})
+                logger.info("Applying %f dBFS gain to %s", gain, instance)
                 audio = audio.apply_gain(gain)
 
                 with audio.export(stem + ".mp3", format="mp3", bitrate="192k", tags=tags) as new_file:

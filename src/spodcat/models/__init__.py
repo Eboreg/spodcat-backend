@@ -5,15 +5,6 @@ from .comment import Comment
 from .episode import Episode
 from .episode_chapter import EpisodeChapter
 from .episode_song import EpisodeSong
-from .logs import (
-    GeoIP,
-    PodcastContentRequestLog,
-    PodcastEpisodeAudioRequestLog,
-    PodcastRequestLog,
-    PodcastRssRequestLog,
-    RequestLog,
-    UserAgent,
-)
 from .podcast import Podcast
 from .podcast_content import PodcastContent
 from .podcast_link import PodcastLink
@@ -28,15 +19,8 @@ __all__ = [
     "Episode",
     "EpisodeChapter",
     "EpisodeSong",
-    "GeoIP",
     "Podcast",
     "PodcastContent",
-    "PodcastContentRequestLog",
-    "PodcastEpisodeAudioRequestLog",
     "PodcastLink",
-    "PodcastRequestLog",
-    "PodcastRssRequestLog",
     "Post",
-    "RequestLog",
-    "UserAgent",
 ]
