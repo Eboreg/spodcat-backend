@@ -121,12 +121,6 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["get"], detail=True)
     # pylint: disable=no-member
     def rss(self, request: Request, pk: str):
-        PodcastRssRequestLog.objects.create(
-            path_info=request.path_info or "",
-            remote_addr=request.META.get("REMOTE_ADDR", None),
-            referrer=request.headers.get("Referer", ""),
-        )
-
         queryset = self.get_queryset().prefetch_related("authors", "categories").select_related("owner")
         podcast: Podcast = get_object_or_404(queryset, slug=pk)
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
@@ -134,6 +128,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         episode_qs = Episode.objects.filter(podcast=podcast).listed().with_has_chapters()
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
+
+        PodcastRssRequestLog.create_from_request(request=request, podcast=podcast)
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
