@@ -1,10 +1,10 @@
 from django.conf import settings
 from django.core.signals import setting_changed
-from django.utils.module_loading import import_string
 
 
 REST_FRAMEWORK_DEFAULTS = {
     "EXCEPTION_HANDLER": "rest_framework_json_api.exceptions.exception_handler",
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PAGINATION_CLASS":
         "rest_framework_json_api.pagination.JsonApiPageNumberPagination",
     "DEFAULT_PARSER_CLASSES": (
@@ -42,20 +42,6 @@ def patch_django_settings():
             setattr(settings, key, value)
 
     settings.REST_FRAMEWORK = {**REST_FRAMEWORK_DEFAULTS, **getattr(settings, "REST_FRAMEWORK", {})}
-
-
-def perform_import(val):
-    """
-    If the given setting is a string import notation,
-    then perform the necessary import or imports.
-    """
-    if val is None:
-        return None
-    if isinstance(val, str):
-        return import_string(val)
-    if isinstance(val, (list, tuple)):
-        return [import_string(item) for item in val]
-    return val
 
 
 class SpodcatSettings:

@@ -15,7 +15,6 @@ from django.core.exceptions import ValidationError
 from django.core.files.images import ImageFile
 from django.db import models
 from django.db.models import Q
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from iso639 import iter_langs
 from markdown import markdown
@@ -30,6 +29,7 @@ from spodcat.utils import (
     delete_storage_file,
     downscale_image,
     generate_thumbnail,
+    get_absolute_url,
 )
 
 from .functions import (
@@ -212,7 +212,7 @@ class Podcast(ModelMixin, models.Model):
 
     @property
     def rss_url(self) -> str:
-        return urljoin(spodcat_settings.ROOT_URL, reverse("podcast-rss", args=(self.slug,)))
+        return get_absolute_url("spodcat:podcast-rss", args=(self.slug,))
 
     def __str__(self):
         return self.name

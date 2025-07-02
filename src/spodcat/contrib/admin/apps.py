@@ -1,5 +1,6 @@
 from django.contrib.admin import autodiscover
 from django.contrib.admin.apps import SimpleAdminConfig
+from django.urls.exceptions import NoReverseMatch
 
 
 class SpodcatContribAdminConfig(SimpleAdminConfig):
@@ -17,9 +18,12 @@ class SpodcatContribAdminConfig(SimpleAdminConfig):
         from django.urls import reverse
 
         if not hasattr(settings, "MARTOR_UPLOAD_URL"):
-            url = reverse("markdown-image-upload")
-            settings.MARTOR_UPLOAD_URL = url
-            martor.settings.MARTOR_UPLOAD_URL = url
+            try:
+                url = reverse("markdown-image-upload")
+                settings.MARTOR_UPLOAD_URL = url
+                martor.settings.MARTOR_UPLOAD_URL = url
+            except NoReverseMatch:
+                pass
         if not hasattr(settings, "MARTOR_ENABLE_LABEL"):
             settings.MARTOR_ENABLE_LABEL = True
             martor.settings.MARTOR_ENABLE_LABEL = True

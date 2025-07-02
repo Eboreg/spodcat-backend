@@ -21,6 +21,7 @@ router.register(prefix="podcast-links", viewset=PodcastLinkViewSet, basename="po
 router.register(prefix="posts", viewset=PostViewSet, basename="post")
 
 
+app_name = "spodcat"
 urlpatterns = [
     path("", include(router.urls)),
 ]

@@ -8,7 +8,6 @@ from django.apps import apps
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
-from django.urls import reverse
 from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
@@ -25,7 +24,7 @@ from spodcat import serializers
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
-from spodcat.utils import date_to_datetime
+from spodcat.utils import date_to_datetime, get_absolute_url
 
 
 logger = logging.getLogger(__name__)
@@ -100,14 +99,14 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
 
     def get_chart_end_date(self, request: Request):
         return (
-            date.fromisoformat(request.query_params.get("end"))
+            date.fromisoformat(request.query_params["end"])
             if "end" in request.query_params
             else date.today()
         )
 
     def get_chart_start_date(self, request: Request):
         return (
-            date.fromisoformat(request.query_params.get("start"))
+            date.fromisoformat(request.query_params["start"])
             if "start" in request.query_params
             else date.today() - timedelta(days=30)
         )
@@ -175,9 +174,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         for episode in episode_qs:
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
             if episode.has_chapters:
-                fe.podcast2.podcast_chapters(
-                    urljoin(spodcat_settings.ROOT_URL, reverse("episode-chapters", args=(episode.id,)))
-                )
+                fe.podcast2.podcast_chapters(get_absolute_url("spodcat:episode-chapters", args=(episode.id,)))
             fe.title(episode.name)
             fe.content(episode.description_html, type="CDATA")
             fe.description(episode.description_text)

@@ -1,5 +1,4 @@
 from typing import Any
-from urllib.parse import urlencode
 
 from django.contrib.admin import AdminSite
 from django.db.models import Model
@@ -43,10 +42,7 @@ class AdminMixin:
 
     def get_change_url(self, obj: Model, **params):
         meta = obj.get_real_instance_class()._meta if isinstance(obj, PolymorphicModel) else obj._meta
-        url = reverse(f"admin:{meta.app_label}_{meta.model_name}_change", args=(obj.pk,))
-        if params:
-            url += "?" + urlencode(params)
-        return url
+        return reverse(f"admin:{meta.app_label}_{meta.model_name}_change", args=(obj.pk,), query=params)
 
     def get_changelist_link(self, model: type[Model], text: Any, **params):
         return format_html(
@@ -56,10 +52,7 @@ class AdminMixin:
         )
 
     def get_changelist_url(self, model: type[Model], **params):
-        url = reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_changelist")
-        if params:
-            url += "?" + urlencode(params)
-        return url
+        return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_changelist", query=params)
 
     def has_change_permission(self, request, obj=None):
         return obj is None or (isinstance(obj, ModelMixin) and obj.has_change_permission(request))

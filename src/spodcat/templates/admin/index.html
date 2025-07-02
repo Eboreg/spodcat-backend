@@ -11,6 +11,7 @@
         <h3><a href="{% url "admin:charts" %}">{% translate "Yes, here they are" %}</a></h3>
     </div>
     {% endif %}
+    {% if comments_awaiting_approval %}
     <div class="module">
         <h2>{% translate "Comments awaiting approval" %}</h2>
         <ul class="actionlist">
@@ -23,6 +24,7 @@
             {% endfor %}
         </ul>
     </div>
+    {% endif %}
     {{ block.super }}
 </div>
 {% endblock sidebar %}

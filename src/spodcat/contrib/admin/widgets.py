@@ -40,7 +40,9 @@ class MartorWidget(BaseMartorWidget):
         attrs = attrs or {}
         # This setting is patched in spodcat.contrib.admin.apps, but Martor
         # reads and caches is before we get to do that.
-        attrs["data-upload-url"] = settings.MARTOR_UPLOAD_URL
+        martor_upload_url = getattr(settings, "MARTOR_UPLOAD_URL", None)
+        if martor_upload_url:
+            attrs["data-upload-url"] = settings.MARTOR_UPLOAD_URL
         return super().render(name, value, attrs, renderer, **kwargs)
 
 
