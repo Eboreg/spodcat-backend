@@ -47,7 +47,7 @@ X_FRAME_OPTIONS = "SAMEORIGIN"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [SRC_DIR / "templates"],
+        "DIRS": [SRC_DIR / "spodcat/templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "debug": DEBUG,

@@ -95,7 +95,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
     @admin.display(description=_("authors"))
     def author_links(self, obj: Podcast):
-        return mark_safe("<br>".join(u.get_admin_link() for u in obj.authors.all()))
+        return mark_safe("<br>".join(self.get_change_link(u) for u in obj.authors.all()))
 
     def change_slug_view(self, request: HttpRequest, object_id):
         obj = self.get_object(request, unquote(object_id))
@@ -193,14 +193,15 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
     @admin.display(description=_("owner"))
     def owner_link(self, obj: Podcast):
-        return obj.owner.get_admin_link()
+        return self.get_change_link(obj.owner)
 
     @admin.display(description=_("plays"), ordering="play_count")
     def play_count(self, obj):
         if obj.play_count is None:
             return 0.0
 
-        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
+        return self.get_changelist_link(
+            model=PodcastEpisodeAudioRequestLog,
             text=round(obj.play_count, 2),
             episode__podcast__slug__exact=obj.pk,
             is_bot__exact=0,
@@ -249,7 +250,11 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         if not obj.view_count:
             return 0
 
-        return PodcastRequestLog.get_admin_list_link(text=obj.view_count, podcast__slug__exact=obj.pk)
+        return self.get_changelist_link(
+            model=PodcastRequestLog,
+            text=obj.view_count,
+            podcast__slug__exact=obj.pk,
+        )
 
 
 class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
@@ -280,7 +285,11 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
         if not obj.view_count:
             return 0
 
-        return PodcastContentRequestLog.get_admin_list_link(text=obj.view_count, content__id__exact=obj.pk)
+        return self.get_changelist_link(
+            model=PodcastContentRequestLog,
+            text=obj.view_count,
+            content__id__exact=obj.pk,
+        )
 
     @admin.display(description=_("visitors"), ordering="visitor_count")
     def visitor_count(self, obj):
@@ -395,7 +404,8 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         if obj.play_count is None:
             return 0.0
 
-        return PodcastEpisodeAudioRequestLog.get_admin_list_link(
+        return self.get_changelist_link(
+            model=PodcastEpisodeAudioRequestLog,
             text=round(obj.play_count, 2),
             episode__podcastcontent_ptr__exact=obj.pk,
             is_bot__exact=0,
@@ -412,7 +422,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
     @admin.display(description=_("podcast"), ordering="podcast")
     def podcast_link(self, obj: Episode):
-        return obj.podcast.get_admin_link()
+        return self.get_change_link(obj.podcast)
 
     def save_form(self, request, form, change):
         instance: Episode = super().save_form(request, form, change)
@@ -509,11 +519,11 @@ class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
 
     @admin.display(description=_("artists"))
     def artists_str(self, obj: EpisodeSong):
-        return mark_safe("<br>".join(a.get_admin_link(text=a.name) for a in obj.artists.all()))
+        return mark_safe("<br>".join(self.get_change_link(a, text=a.name) for a in obj.artists.all()))
 
     @admin.display(description=_("episode"), ordering="episode__number")
     def episode_str(self, obj: EpisodeSong):
-        return obj.episode.get_admin_link()
+        return self.get_change_link(obj.episode)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
@@ -552,7 +562,7 @@ class CommentAdmin(AdminMixin, admin.ModelAdmin):
 
     @admin.display(description=_("content"))
     def content_link(self, obj: Comment):
-        return obj.podcast_content.get_real_instance().get_admin_link()
+        return self.get_change_link(obj.podcast_content)
 
     def frontend_link(self, obj: Comment):
         return mark_safe(f'<a href="{obj.podcast_content.frontend_url}" target="_blank">Link</a>')

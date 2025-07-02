@@ -82,7 +82,7 @@ class PodcastRequestLogAdmin(LogAdmin):
 
     @admin.display(description=_("podcast"), ordering="podcast__name")
     def podcast_link(self, obj: PodcastRequestLog):
-        return obj.podcast.get_admin_link()
+        return self.get_change_link(obj.podcast)
 
 
 @admin.register(PodcastContentRequestLog)
@@ -106,14 +106,14 @@ class PodcastContentRequestLogAdmin(LogAdmin):
 
     @admin.display(description=_("content"), ordering="content__name")
     def content_link(self, obj: PodcastContentRequestLog):
-        return obj.content.get_admin_link()
+        return self.get_change_link(obj.content)
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("content__podcast", "user_agent_data")
 
     @admin.display(description=_("podcast"), ordering="content__podcast__name")
     def podcast_link(self, obj: PodcastContentRequestLog):
-        return obj.content.podcast.get_admin_link()
+        return self.get_change_link(obj.content.podcast)
 
 
 @admin.register(PodcastEpisodeAudioRequestLog)
@@ -139,7 +139,7 @@ class PodcastEpisodeAudioRequestLogAdmin(LogAdmin):
     @admin.display(description=_("episode"), ordering="episode__name")
     def episode_link(self, obj: PodcastEpisodeAudioRequestLog):
         if obj.episode:
-            return obj.episode.get_admin_link()
+            return self.get_change_link(obj.episode)
         return None
 
     def get_queryset(self, request):
@@ -156,5 +156,5 @@ class PodcastEpisodeAudioRequestLogAdmin(LogAdmin):
     @admin.display(description=_("podcast"), ordering="episode__podcast__name")
     def podcast_link(self, obj: PodcastEpisodeAudioRequestLog):
         if obj.episode:
-            return obj.episode.podcast.get_admin_link()
+            return self.get_change_link(obj.episode.podcast)
         return None

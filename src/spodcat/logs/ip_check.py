@@ -10,8 +10,8 @@ from django.db import models
 
 
 logger = logging.getLogger(__name__)
-data_dir = Path(__file__).parent / "data"
-submodule_dir = Path(__file__).parent / "submodules"
+data_dir = Path(__file__).parent.parent / "data"
+submodule_dir = Path(__file__).parent.parent / "submodules"
 
 
 class IpAddressCategory(models.TextChoices):

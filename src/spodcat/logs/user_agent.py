@@ -8,7 +8,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-submodule_dir = Path(__file__).parent / "submodules"
+submodule_dir = Path(__file__).parent.parent / "submodules"
 
 
 class DeviceCategory(models.TextChoices):
