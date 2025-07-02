@@ -7,3 +7,6 @@ class SpodcatConfig(AppConfig):
 
     def ready(self):
         from spodcat import signals
+        from spodcat.settings import patch_django_settings
+
+        patch_django_settings()

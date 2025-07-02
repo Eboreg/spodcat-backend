@@ -1,8 +1,12 @@
+from django.apps import apps
 from django.contrib import admin
 from django.db.models import Q
 from django.http import HttpRequest
 from django.urls import path
+from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
+
+from spodcat.models.podcast import spodcat_settings
 
 
 class AdminSite(admin.AdminSite):
@@ -30,6 +34,13 @@ class AdminSite(admin.AdminSite):
 
         context = {
             "podcasts": Podcast.objects.filter_by_user(request.user),
+            "title": _("Charts"),
+            "root_url": spodcat_settings.ROOT_URL,
             **self.each_context(request),
         }
         return TemplateView.as_view(template_name="admin/charts.html", extra_context=context)(request)
+
+    def each_context(self, request):
+        context = super().each_context(request)
+        context["logs_app_installed"] = apps.is_installed("spodcat.logs")
+        return context

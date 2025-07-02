@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load admin_urls static %}
+{% load admin_urls static i18n %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -16,11 +16,11 @@
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">Home</a>
+<a href="{% url 'admin:index' %}">{% translate "Home" %}</a>
 &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
 &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
 &rsaquo; <a href="{% url opts|admin_urlname:'change' form.instance.pk|admin_urlquote %}">{{ form.instance|truncatewords:"18" }}</a>
-&rsaquo; Change slug
+&rsaquo; {% translate "Change slug" %}
 </div>
 {% endblock %}
 
@@ -30,18 +30,22 @@
         {% csrf_token %}
         <div>
             {% if form.errors %}
-            <p class="errornote">Please correct the error(s) below.</p>
+            <p class="errornote">{% translate "Please correct the error(s) below." %}</p>
             {{ form.non_field_errors }}
             {% endif %}
-            <p>Please note that changing the slug will change all public URLs for the podcast, its episodes, etc.</p>
+            <p>
+                {% translate "Please note that changing the slug will change all public URLs for the podcast, its episodes, etc." %}
+            </p>
             <div>
                 {{ form.slug.errors }}
                 {{ form.slug.label_tag }}
                 {{ form.slug }}
             </div>
-            <p>Current value: {{ form.instance.slug }}</p>
+            <p>
+                {% blocktranslate with value=form.instance.slug %}Current value: {{ value }}{% endblocktranslate %}
+            </p>
             <div class="submit-row">
-                <input type="submit" value="Save" class="default" name="_save">
+                <input type="submit" value="{% translate "Save" %}" class="default" name="_save">
             </div>
         </div>
     </form>

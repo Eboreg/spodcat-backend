@@ -10,6 +10,8 @@ class AdminEmailHandler(BaseAdminEmailHandler):
 
     def format_subject(self, subject):
         subject = super().format_subject(subject)
+
         if hasattr(self, "_record_name"):
             return f"[{self._record_name}] {subject}"
+
         return subject

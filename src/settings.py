@@ -40,14 +40,23 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "spodcat.urls"
+try:
+    # pylint: disable=unused-import
+    import debug_toolbar
+
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+except ImportError:
+    pass
+
+ROOT_URLCONF = "urls"
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [SRC_DIR / "spodcat/templates"],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "debug": DEBUG,
@@ -66,7 +75,7 @@ WSGI_APPLICATION = "wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES: dict[str, dict] = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -76,8 +85,9 @@ DATABASES: dict[str, dict] = {
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-LANGUAGE_CODE = "en-us"
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
+# LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "sv"
 TIME_ZONE = "Europe/Stockholm"
 USE_I18N = True
 USE_TZ = True
@@ -85,29 +95,23 @@ LOCALE_PATHS = [SRC_DIR / "spodcat/locale"]
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 # https://django-storages.readthedocs.io/en/latest/backends/azure.html
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
+MEDIA_URL = "media/"
 
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Django REST Framework
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
     "TEST_REQUEST_RENDERER_CLASSES": (
         "rest_framework_json_api.renderers.JSONRenderer",
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
 }
-
-JSON_API_FORMAT_FIELD_NAMES = "dasherize"
-JSON_API_FORMAT_TYPES = "dasherize"
-
-
-# martor
-MARTOR_ENABLE_LABEL = True
-MARTOR_UPLOAD_URL = "/markdown-image-upload/"

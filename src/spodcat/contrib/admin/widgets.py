@@ -36,6 +36,13 @@ class MartorWidget(BaseMartorWidget):
             "martor/js/martor.bootstrap.min.js",
         )
 
+    def render(self, name, value, attrs=None, renderer=None, **kwargs):
+        attrs = attrs or {}
+        # This setting is patched in spodcat.contrib.admin.apps, but Martor
+        # reads and caches is before we get to do that.
+        attrs["data-upload-url"] = settings.MARTOR_UPLOAD_URL
+        return super().render(name, value, attrs, renderer, **kwargs)
+
 
 class AdminMartorWidget(MartorWidget, AdminTextareaWidget):
     pass

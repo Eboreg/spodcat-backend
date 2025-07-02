@@ -38,7 +38,12 @@ class PodcastLink(ModelMixin, models.Model):
     icon = models.CharField(max_length=10, choices=Icon, null=True, default=None, verbose_name=_("icon"))
     label = models.CharField(max_length=100, verbose_name=_("label"))
     order = models.PositiveSmallIntegerField(default=0, verbose_name=_("order"))
-    podcast: "Podcast" = models.ForeignKey("spodcat.Podcast", on_delete=models.CASCADE, related_name="links")
+    podcast: "Podcast" = models.ForeignKey(
+        "spodcat.Podcast",
+        on_delete=models.CASCADE,
+        related_name="links",
+        verbose_name=_("podcast"),
+    )
     theme = models.CharField(max_length=10, choices=Theme, default=Theme.PRIMARY, verbose_name=_("theme"))
     url = models.URLField(verbose_name=_("URL"))
 

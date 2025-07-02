@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from spodcat.admin.mixins import AdminMixin
+from spodcat.contrib.admin.mixin import AdminMixin
+from spodcat.contrib.admin.widgets import ArtistAutocompleteWidget
 from spodcat.form_fields import ArtistMultipleChoiceField
 from spodcat.models import Artist, EpisodeChapter, EpisodeSong, PodcastLink
-from spodcat.widgets import ArtistAutocompleteWidget
 
 
 class ArtistSongInline(AdminMixin, admin.TabularInline):

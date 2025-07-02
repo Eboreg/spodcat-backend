@@ -35,7 +35,12 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     is_draft = models.BooleanField(verbose_name=_("draft"), default=False)
     name = models.CharField(max_length=100, verbose_name=_("name"))
-    podcast: "Podcast" = models.ForeignKey("spodcat.Podcast", on_delete=models.PROTECT, related_name="contents")
+    podcast: "Podcast" = models.ForeignKey(
+        "spodcat.Podcast",
+        on_delete=models.PROTECT,
+        related_name="contents",
+        verbose_name=_("podcast"),
+    )
     published = models.DateField(default=today, verbose_name=_("published"))
     slug = models.SlugField(max_length=100, verbose_name=_("slug"))
 

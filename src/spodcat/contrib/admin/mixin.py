@@ -6,15 +6,20 @@ from django.db.models import Model
 from django.forms import TimeInput
 from django.urls import reverse
 from django.utils.html import format_html
+from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
 
+from spodcat.contrib.admin.widgets import AdminMartorWidget
 from spodcat.model_fields import TimestampField
 from spodcat.model_mixin import ModelMixin
 
 
 class AdminMixin:
     admin_site: AdminSite
-    formfield_overrides = {TimestampField: {"widget": TimeInput}}
+    formfield_overrides = {
+        TimestampField: {"widget": TimeInput},
+        MartorField: {"widget": AdminMartorWidget},
+    }
 
     class Media:
         css = {"all": ["spodcat/css/admin.css"]}

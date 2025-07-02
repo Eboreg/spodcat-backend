@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "sourceMap": true,
-        "outDir": "src/assets/js",
+        "outDir": "src/spodcat/static/spodcat/js",
         "lib": ["ES2017", "DOM"]
     },
     "include": ["src/assets/ts/**/*"]

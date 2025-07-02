@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from django.apps import apps
 from django.db.models import Q
 from django_filters import rest_framework as filters
 from rest_framework.decorators import action
@@ -9,7 +10,6 @@ from rest_framework_json_api import views
 
 from spodcat import serializers
 from spodcat.filters import IdListFilter
-from spodcat.logs.models import PodcastContentRequestLog
 from spodcat.models import PodcastContent
 
 
@@ -43,5 +43,10 @@ class PodcastContentViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
         instance = self.get_object()
-        PodcastContentRequestLog.create_from_request(request=request, content=instance)
+
+        if apps.is_installed("spodcat.logs"):
+            from spodcat.logs.models import PodcastContentRequestLog
+
+            PodcastContentRequestLog.create_from_request(request=request, content=instance)
+
         return Response()

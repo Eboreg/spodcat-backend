@@ -1,16 +1,18 @@
 {% extends "admin/index.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "spodcat/css/admin.css" %}">{% endblock %}
 
 {% block sidebar %}
 <div id="sidebar">
+    {% if logs_app_installed %}
     <div class="module">
-        <h2>Charts</h2>
-        <h3><a href="{% url "admin:charts" %}">Yes, here they are</a></h3>
+        <h2>{% translate "Charts" %}</h2>
+        <h3><a href="{% url "admin:charts" %}">{% translate "Yes, here they are" %}</a></h3>
     </div>
+    {% endif %}
     <div class="module">
-        <h2>Comments awaiting approval</h2>
+        <h2>{% translate "Comments awaiting approval" %}</h2>
         <ul class="actionlist">
             {% for comment in comments_awaiting_approval %}
                 <li class="changelink">

@@ -14,7 +14,7 @@ class ArtistAutocompleteWidget(AutocompleteSelectMultiple):
                 f"admin/js/vendor/jquery/jquery{extra}.js",
                 f"admin/js/vendor/select2/select2.full{extra}.js",
                 "admin/js/jquery.init.js",
-                "assets/js/artist_autocomplete.js",
+                "spodcat/js/artist_autocomplete.js",
             ),
             css={
                 "screen": (

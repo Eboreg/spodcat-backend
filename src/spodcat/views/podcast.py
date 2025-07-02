@@ -4,6 +4,7 @@ from typing import cast
 from urllib.parse import urljoin
 
 import rest_framework.renderers
+from django.apps import apps
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
@@ -21,11 +22,6 @@ from rest_framework.response import Response
 from rest_framework_json_api import views
 
 from spodcat import serializers
-from spodcat.logs.models import (
-    PodcastEpisodeAudioRequestLog,
-    PodcastRequestLog,
-    PodcastRssRequestLog,
-)
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
@@ -66,6 +62,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def chart(self, request: Request):
+        from spodcat.logs.models import PodcastEpisodeAudioRequestLog
+
         start_date = self.get_chart_start_date(request)
         end_date = self.get_chart_end_date(request)
         chart_data = (
@@ -87,6 +85,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def episode_chart(self, request: Request, pk: str):
+        from spodcat.logs.models import PodcastEpisodeAudioRequestLog
+
         start_date = self.get_chart_start_date(request)
         end_date = self.get_chart_end_date(request)
         chart_data = (
@@ -115,7 +115,12 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
         instance = self.get_object()
-        PodcastRequestLog.create_from_request(request=request, podcast=instance)
+
+        if apps.is_installed("spodcat.logs"):
+            from spodcat.logs.models import PodcastRequestLog
+
+            PodcastRequestLog.create_from_request(request=request, podcast=instance)
+
         return Response()
 
     @action(methods=["get"], detail=True)
@@ -129,14 +134,15 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 
-        PodcastRssRequestLog.create_from_request(request=request, podcast=podcast)
+        if apps.is_installed("spodcat.logs"):
+            from spodcat.logs.models import PodcastRssRequestLog
+
+            PodcastRssRequestLog.create_from_request(request=request, podcast=podcast)
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
         fg.register_extension("podcast2", Podcast2Extension, Podcast2EntryExtension)
         fg = cast(PodcastFeedGenerator, fg)
-        if podcast.slug == "musikensmakt":
-            fg.podcast2.podcast_txt("mb8z6ibsaewmquo7pqajD2sh3wbnURce2jbhbvra")
         fg.title(podcast.name)
         fg.link([
             {"href": podcast.rss_url, "rel": "self", "type": "application/rss+xml"},

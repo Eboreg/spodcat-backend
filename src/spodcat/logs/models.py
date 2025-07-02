@@ -139,6 +139,7 @@ class RequestLog(ModelMixin, models.Model):
         null=True,
         default=None,
         related_name="logs",
+        verbose_name=_("GeoIP"),
     )
     referrer = TruncatedCharField(max_length=150, blank=True, default="", verbose_name=_("referrer"))
     referrer_category = models.CharField(
@@ -247,7 +248,12 @@ class RequestLog(ModelMixin, models.Model):
 
 class PodcastRequestLog(RequestLog):
     created = models.DateTimeField(db_index=True, verbose_name=_("created"))
-    podcast: "Podcast" = models.ForeignKey("spodcat.Podcast", on_delete=models.CASCADE, related_name="requests")
+    podcast: "Podcast" = models.ForeignKey(
+        "spodcat.Podcast",
+        on_delete=models.CASCADE,
+        related_name="requests",
+        verbose_name=_("podcast"),
+    )
 
     class Meta:
         verbose_name = _("podcast page request log")
@@ -260,6 +266,7 @@ class PodcastContentRequestLog(RequestLog):
         "spodcat.PodcastContent",
         on_delete=models.CASCADE,
         related_name="requests",
+        verbose_name=_("podcast content"),
     )
 
     class Meta:
@@ -274,6 +281,7 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
         "spodcat.Episode",
         on_delete=models.CASCADE,
         related_name="audio_requests",
+        verbose_name=_("episode"),
     )
     response_body_size = models.IntegerField(db_index=True, verbose_name=_("response body size"))
     status_code = models.CharField(max_length=10, verbose_name=_("status code"))
@@ -328,4 +336,9 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
 
 class PodcastRssRequestLog(RequestLog):
     created = models.DateTimeField(db_index=True, verbose_name=_("created"))
-    podcast: "Podcast" = models.ForeignKey("spodcat.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
+    podcast: "Podcast" = models.ForeignKey(
+        "spodcat.Podcast",
+        on_delete=models.CASCADE,
+        related_name="rss_requests",
+        verbose_name=_("podcast"),
+    )

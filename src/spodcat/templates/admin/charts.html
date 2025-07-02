@@ -1,8 +1,19 @@
 {% extends "admin/base_site.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block extrahead %}
 {{ block.super }}
+{% translate "Daily play time per episode" as episode_play_time_title %}
+{% translate "Daily play time per podcast" as podcast_play_time_title %}
+<script type="application/json" id="context">
+    {
+        "rootUrl": "{{ root_url }}",
+        "strings": {
+            "episodePlayTimeTitle": "{{ episode_play_time_title }}",
+            "podcastPlayTimeTitle": "{{ podcast_play_time_title }}",
+        },
+    }
+</script>
 <script type="module" src={% static "spodcat/js/chart.js" %}></script>
 {% endblock extrahead %}
 
@@ -13,25 +24,24 @@
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">Home</a>
-&rsaquo; Charts
+<a href="{% url 'admin:index' %}">{% translate "Home" %}</a>
+&rsaquo; {% translate "Charts" %}
 </div>
 {% endblock %}
 
 {% block content %}
-<p>Note that the play time stats only go back to 2025-05-01. Stats before that were not reliable.</p>
 <div class="charts">
     <div class="chart-container">
-        Start: <input type="date" name="start">
-        End: <input type="date" name="end">
+        {% translate "Start" %}: <input type="date" name="start">
+        {% translate "End" %}: <input type="date" name="end">
         <div class="chart">
             <canvas id="podcast-play-time-chart"></canvas>
         </div>
     </div>
     {% for podcast in podcasts %}
         <div class="chart-container">
-            Start: <input type="date" name="start">
-            End: <input type="date" name="end">
+            {% translate "Start" %}: <input type="date" name="start">
+            {% translate "End" %}: <input type="date" name="end">
             <div class="chart">
                 <canvas class="episode-play-time-chart" data-podcast-slug="{{podcast.slug}}" data-podcast-name="{{podcast.name}}"></canvas>
             </div>

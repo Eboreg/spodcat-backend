@@ -44,27 +44,29 @@ class CommentSerializer(serializers.ModelSerializer):
         if not podcast_content.podcast.require_comment_approval:
             attrs["is_approved"] = True
             if podcast_content.podcast.owner.email:
-                email_text = _("A new comment for {podcast} was just posted by {name}. Check it out here: {url}") % {
+                email_text = _(
+                    "A new comment for %(podcast)s was just posted by %(name)s. Check it out here: %(url)s"
+                ) % {
                     "podcast": podcast_content.podcast.name,
                     "name": attrs.get("name"),
                     "url": podcast_content.frontend_url,
                 }
                 send_mail(
                     from_email=None,
-                    subject=_("Comment for {podcast} posted") % {"podcast": podcast_content.podcast.name},
+                    subject=_("Comment for %(podcast)s posted") % {"podcast": podcast_content.podcast.name},
                     message=email_text,
                     recipient_list=[podcast_content.podcast.owner.email],
                 )
         elif podcast_content.podcast.owner.email:
             admin_url = urljoin(spodcat_settings.ROOT_URL, reverse("admin:podcasts_comment_changelist")) + \
                 f"?is_approved__exact=0&podcast_content__podcast__slug__exact={podcast_content.podcast.slug}"
-            email_text = _("You have a new comment for {podcast} awaiting approval. Look here: {url}") % {
+            email_text = _("You have a new comment for %(podcast)s awaiting approval. Look here: %(url)s") % {
                 "podcast": podcast_content.podcast.name,
                 "url": admin_url,
             }
             send_mail(
                 from_email=None,
-                subject=_("Comment for {podcast} needs approval") % {"podcast": podcast_content.podcast.name},
+                subject=_("Comment for %(podcast)s needs approval") % {"podcast": podcast_content.podcast.name},
                 message=email_text,
                 recipient_list=[podcast_content.podcast.owner.email],
             )

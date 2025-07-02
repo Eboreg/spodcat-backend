@@ -3,7 +3,8 @@ from django.db.models.functions import Coalesce
 from django.forms import ModelChoiceField, ModelForm
 from django.utils.translation import gettext_lazy as _
 
-from spodcat.admin.mixins import AdminMixin
+from spodcat.contrib.admin.mixin import AdminMixin
+from spodcat.contrib.admin.widgets import ReadOnlyInlineModelWidget
 from spodcat.logs.models import (
     GeoIP,
     PodcastContentRequestLog,
@@ -12,7 +13,6 @@ from spodcat.logs.models import (
     RequestLog,
     UserAgent,
 )
-from spodcat.widgets import ReadOnlyInlineModelWidget
 
 
 class GeoIPWidget(ReadOnlyInlineModelWidget):
@@ -53,7 +53,7 @@ class LogAdmin(AdminMixin, admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    @admin.display(ordering=Coalesce("user_agent_data__name", "user_agent"))
+    @admin.display(ordering=Coalesce("user_agent_data__name", "user_agent"), description=_("user agent name"))
     def user_agent_name(self, obj: RequestLog):
         if obj.user_agent_data:
             return obj.user_agent_data.name

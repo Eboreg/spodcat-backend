@@ -64,7 +64,7 @@ def podcast_cover_validator(value: ImageFieldFile):
 def podcast_slug_validator(value: str):
     VERBOTEN = ["sw.js", "episode", "workbox-4723e66c.js", "post"]
     if value.lower() in VERBOTEN:
-        raise ValidationError(_("'{value}' is a forbidden slug for podcasts.") % {"value": value})
+        raise ValidationError(_("'%(value)s' is a forbidden slug for podcasts.") % {"value": value})
 
 
 class Podcast(ModelMixin, models.Model):
@@ -82,7 +82,7 @@ class Podcast(ModelMixin, models.Model):
     ]
     FONT_SIZES = ["small", "normal", "large"]
 
-    authors: "RelatedManager[AbstractUser]" = models.ManyToManyField(
+    authors: "models.ManyToManyField[AbstractUser]" = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="podcasts",
         blank=True,
@@ -98,7 +98,11 @@ class Podcast(ModelMixin, models.Model):
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
-    categories: "RelatedManager[Category]" = models.ManyToManyField("spodcat.Category", blank=True)
+    categories: "models.ManyToManyField[Category]" = models.ManyToManyField(
+        "spodcat.Category",
+        blank=True,
+        verbose_name=_("categories"),
+    )
     cover = models.ImageField(
         null=True,
         default=None,
@@ -206,6 +210,7 @@ class Podcast(ModelMixin, models.Model):
         if self.custom_guid:
             return self.custom_guid
         url = re.sub(r"^\w+://", "", self.rss_url).strip("/")
+        # https://github.com/Podcast-Standards-Project/PSP-1-Podcast-RSS-Specification?tab=readme-ov-file#podcastguid
         return uuid.uuid5(uuid.UUID("ead4c236-bf58-58c6-a2c6-a6b28d128cb6"), url)
 
     @property
