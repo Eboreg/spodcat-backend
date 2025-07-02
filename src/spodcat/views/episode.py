@@ -32,6 +32,7 @@ class EpisodeViewSet(PodcastContentViewSet):
 
     @action(methods=["get"], detail=True)
     def chapters(self, request: Request, pk: str):
+        # https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/examples/chapters/jsonChapters.md
         episode: Episode = (
             self.get_queryset()
             .prefetch_related("songs__artists", "chapters")

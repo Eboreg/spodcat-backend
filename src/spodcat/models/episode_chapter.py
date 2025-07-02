@@ -41,6 +41,7 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
 
     # pylint: disable=no-member
     def to_dict(self) -> ChapterDict:
+        # https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/examples/chapters/jsonChapters.md
         return filter_values_not_null({
             "endTime": self.end_time,
             "img": self.image.url if self.image else None,
