@@ -25,6 +25,7 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
         blank=True,
         upload_to=episode_chapter_image_path,
         verbose_name=_("image"),
+        max_length=300,
     )
     url = models.URLField(null=True, default=None, blank=True, verbose_name=_("URL"))
 

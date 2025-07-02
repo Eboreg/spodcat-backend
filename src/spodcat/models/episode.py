@@ -54,6 +54,7 @@ class Episode(PodcastContent):
         default=None,
         blank=True,
         verbose_name=_("audio file"),
+        max_length=300,
     )
     audio_file_length = models.PositiveIntegerField(
         blank=True,
@@ -69,6 +70,7 @@ class Episode(PodcastContent):
         blank=True,
         upload_to=episode_image_path,
         verbose_name=_("image"),
+        max_length=300,
     )
     image_height = models.PositiveIntegerField(null=True, default=None)
     image_mimetype = models.CharField(max_length=50, null=True, default=None)
@@ -77,6 +79,7 @@ class Episode(PodcastContent):
         default=None,
         blank=True,
         upload_to=episode_image_thumbnail_path,
+        max_length=300,
     )
     image_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     image_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)

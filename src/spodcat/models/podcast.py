@@ -89,6 +89,7 @@ class Podcast(ModelMixin, models.Model):
         upload_to=podcast_banner_path,
         verbose_name=_("banner image"),
         help_text=_("Should be >= 960px wide and have aspect ratio 3:1."),
+        max_length=300,
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
@@ -104,6 +105,7 @@ class Podcast(ModelMixin, models.Model):
         upload_to=podcast_cover_path,
         help_text=_("This is the round 'avatar' image. It should ideally have height and width >= 1400px."),
         verbose_name=_("cover"),
+        max_length=300,
     )
     cover_height = models.PositiveIntegerField(null=True, default=None)
     cover_mimetype = models.CharField(max_length=50, null=True, default=None)
@@ -112,6 +114,7 @@ class Podcast(ModelMixin, models.Model):
         default=None,
         blank=True,
         upload_to=podcast_cover_thumbnail_path,
+        max_length=300,
     )
     cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     cover_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
@@ -125,6 +128,7 @@ class Podcast(ModelMixin, models.Model):
         blank=True,
         upload_to=podcast_favicon_path,
         verbose_name=_("favicon"),
+        max_length=300,
     )
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
     language = models.CharField(

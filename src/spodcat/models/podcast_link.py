@@ -34,6 +34,7 @@ class PodcastLink(ModelMixin, models.Model):
         default=None,
         blank=True,
         verbose_name=_("custom icon"),
+        max_length=300,
     )
     icon = models.CharField(max_length=10, choices=Icon, null=True, default=None, verbose_name=_("icon"))
     label = models.CharField(max_length=100, verbose_name=_("label"))
