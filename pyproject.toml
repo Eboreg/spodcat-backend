@@ -97,7 +97,7 @@ sections = [
     "FIRSTPARTY",
     "LOCALFOLDER",
 ]
-skip = [".venv", "node_modules"]
+skip = [".venv", "node_modules", "build"]
 
 [tool.mypy]
 follow_imports = "skip"

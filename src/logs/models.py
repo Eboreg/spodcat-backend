@@ -295,3 +295,8 @@ class PodcastRssRequestLog(ModelMixin, models.Model):
     path_info = TruncatedCharField(max_length=50, blank=True, default="")
     remote_addr = models.GenericIPAddressField(null=True, db_index=True, default=None)
     referrer = TruncatedCharField(max_length=100, blank=True, default="")
+
+
+class PodcastRssRequestLog2(RequestLog):
+    created = models.DateTimeField(db_index=True)
+    podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
