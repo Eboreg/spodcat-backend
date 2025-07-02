@@ -15,7 +15,6 @@ from django.core.exceptions import ValidationError
 from django.core.files.images import ImageFile
 from django.db import models
 from django.db.models import Q
-from django.db.models.fields.files import ImageFieldFile
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from iso639 import iter_langs
@@ -54,11 +53,6 @@ logger = logging.getLogger(__name__)
 
 def get_language_choices():
     return [(l.pt1, l.name) for l in iter_langs() if l.pt1]
-
-
-def podcast_cover_validator(value: ImageFieldFile):
-    if value.height < 1400 or value.width < 1400:
-        raise ValidationError(_("Cover image width and height should be >= 1400px"))
 
 
 def podcast_slug_validator(value: str):
@@ -107,9 +101,8 @@ class Podcast(ModelMixin, models.Model):
         null=True,
         default=None,
         blank=True,
-        validators=[podcast_cover_validator],
         upload_to=podcast_cover_path,
-        help_text=_("This is the round 'avatar' image."),
+        help_text=_("This is the round 'avatar' image. It should ideally have height and width >= 1400px."),
         verbose_name=_("cover"),
     )
     cover_height = models.PositiveIntegerField(null=True, default=None)

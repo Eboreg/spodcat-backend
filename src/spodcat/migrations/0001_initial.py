@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
                 ('banner', models.ImageField(blank=True, default=None, help_text='Should be >= 960px wide and have aspect ratio 3:1.', null=True, upload_to=spodcat.models.functions.podcast_banner_path, verbose_name='banner image')),
                 ('banner_height', models.PositiveIntegerField(default=None, null=True)),
                 ('banner_width', models.PositiveIntegerField(default=None, null=True)),
-                ('cover', models.ImageField(blank=True, default=None, help_text="This is the round 'avatar' image.", null=True, upload_to=spodcat.models.functions.podcast_cover_path, validators=[spodcat.models.podcast.podcast_cover_validator], verbose_name='cover')),
+                ('cover', models.ImageField(blank=True, default=None, help_text="This is the round 'avatar' image.", null=True, upload_to=spodcat.models.functions.podcast_cover_path, verbose_name='cover')),
                 ('cover_height', models.PositiveIntegerField(default=None, null=True)),
                 ('cover_mimetype', models.CharField(default=None, max_length=50, null=True)),
                 ('cover_thumbnail', models.ImageField(blank=True, default=None, null=True, upload_to=spodcat.models.functions.podcast_cover_thumbnail_path)),
