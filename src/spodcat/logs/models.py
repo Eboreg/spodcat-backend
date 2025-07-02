@@ -326,13 +326,6 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
         )
 
 
-class PodcastRssRequestLog(ModelMixin, models.Model):
-    created = models.DateTimeField(db_index=True, auto_now_add=True, verbose_name=_("created"))
-    path_info = TruncatedCharField(max_length=50, blank=True, default="", verbose_name=_("path"))
-    remote_addr = models.GenericIPAddressField(
-        null=True,
-        db_index=True,
-        default=None,
-        verbose_name=_("remote address"),
-    )
-    referrer = TruncatedCharField(max_length=100, blank=True, default="", verbose_name=_("referrer"))
+class PodcastRssRequestLog(RequestLog):
+    created = models.DateTimeField(db_index=True, verbose_name=_("created"))
+    podcast: "Podcast" = models.ForeignKey("spodcat.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
