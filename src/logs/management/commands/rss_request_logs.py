@@ -2,7 +2,7 @@ import itertools
 
 from django.core.management import BaseCommand
 
-from logs.models import PodcastRssRequestLog2
+from logs.models import PodcastRssRequestLog
 
 
 class Command(BaseCommand):
@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for path_info, logs in itertools.groupby(
-            PodcastRssRequestLog2.objects
+            PodcastRssRequestLog.objects
             .using(options["database"])
             .order_by("path_info", "created"),
             key=lambda l: l.path_info,

@@ -24,7 +24,7 @@ from rest_framework_json_api import views
 from logs.models import (
     PodcastEpisodeAudioRequestLog,
     PodcastRequestLog,
-    PodcastRssRequestLog2,
+    PodcastRssRequestLog,
 )
 from podcasts import serializers
 from podcasts.models import Episode, Podcast, PodcastContent
@@ -129,7 +129,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
         author_string = ", ".join([a["name"] for a in authors if a["name"]])
 
-        PodcastRssRequestLog2.create_from_request(request=request, podcast=podcast)
+        PodcastRssRequestLog.create_from_request(request=request, podcast=podcast)
 
         fg = FeedGenerator()
         fg.load_extension("podcast")

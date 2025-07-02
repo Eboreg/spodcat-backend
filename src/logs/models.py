@@ -290,6 +290,6 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
         )
 
 
-class PodcastRssRequestLog2(RequestLog):
+class PodcastRssRequestLog(RequestLog):
     created = models.DateTimeField(db_index=True)
     podcast: "Podcast" = models.ForeignKey("podcasts.Podcast", on_delete=models.CASCADE, related_name="rss_requests")
