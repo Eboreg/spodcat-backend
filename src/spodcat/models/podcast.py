@@ -24,6 +24,7 @@ from markdownify import markdownify
 from martor.models import MartorField
 
 from spodcat.markdown import MarkdownExtension
+from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastQuerySet
 from spodcat.settings import spodcat_settings
 from spodcat.utils import (
@@ -31,7 +32,6 @@ from spodcat.utils import (
     downscale_image,
     generate_thumbnail,
 )
-from spodcat.utils.model_mixin import ModelMixin
 
 from .functions import (
     podcast_banner_path,

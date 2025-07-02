@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from spodcat.model_fields import TimestampField
+from spodcat.model_mixin import ModelMixin
 from spodcat.types import ChapterDict
 from spodcat.utils import filter_values_not_null
-from spodcat.utils.model_fields import TimestampField
-from spodcat.utils.model_mixin import ModelMixin
 
 from .functions import episode_chapter_image_path
 

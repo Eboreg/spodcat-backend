@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.data import CATEGORIES
-from spodcat.utils.model_mixin import ModelMixin
+from spodcat.model_mixin import ModelMixin
 
 
 class Category(ModelMixin, models.Model):

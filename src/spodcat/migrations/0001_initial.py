@@ -8,12 +8,12 @@ import martor.models
 from django.conf import settings
 from django.db import migrations, models
 
+import spodcat.model_fields
+import spodcat.model_mixin
 import spodcat.models.challenge
 import spodcat.models.functions
 import spodcat.models.podcast
 import spodcat.models.podcast_content
-import spodcat.utils.model_fields
-import spodcat.utils.model_mixin
 
 
 class Migration(migrations.Migration):
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'challenge',
                 'verbose_name_plural': 'challenges',
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='PodcastContent',
@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
                 'ordering': ['-published'],
                 'get_latest_by': 'published',
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Podcast',
@@ -93,7 +93,7 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'podcasts',
                 'ordering': ['name'],
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Artist',
@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
                 'indexes': [models.Index(fields=['name'], name='spodcat_art_name_30d017_idx')],
                 'constraints': [models.UniqueConstraint(fields=('name',), name='podcasts__artist__name__uq')],
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Category',
@@ -123,7 +123,7 @@ class Migration(migrations.Migration):
                 'ordering': ['cat', 'sub'],
                 'indexes': [models.Index(fields=['cat', 'sub'], name='spodcat_cat_cat_8f0c74_idx')],
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Episode',
@@ -177,7 +177,7 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'comments',
                 'ordering': ['created'],
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.AddField(
             model_name='podcastcontent',
@@ -211,14 +211,14 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'podcast links',
                 'ordering': ['order'],
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='EpisodeSong',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('start_time', spodcat.utils.model_fields.TimestampField(verbose_name='start time')),
-                ('end_time', spodcat.utils.model_fields.TimestampField(blank=True, default=None, null=True, verbose_name='end time')),
+                ('start_time', spodcat.model_fields.TimestampField(verbose_name='start time')),
+                ('end_time', spodcat.model_fields.TimestampField(blank=True, default=None, null=True, verbose_name='end time')),
                 ('image', models.ImageField(blank=True, default=None, null=True, upload_to=spodcat.models.functions.episode_chapter_image_path, verbose_name='image')),
                 ('url', models.URLField(blank=True, default=None, null=True, verbose_name='URL')),
                 ('comment', models.CharField(blank=True, default=None, max_length=100, null=True, verbose_name='comment')),
@@ -231,15 +231,15 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'episode songs',
                 'ordering': ['start_time'],
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='EpisodeChapter',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.CharField(blank=True, default='', max_length=100, verbose_name='title')),
-                ('start_time', spodcat.utils.model_fields.TimestampField(verbose_name='start time')),
-                ('end_time', spodcat.utils.model_fields.TimestampField(blank=True, default=None, null=True, verbose_name='end time')),
+                ('start_time', spodcat.model_fields.TimestampField(verbose_name='start time')),
+                ('end_time', spodcat.model_fields.TimestampField(blank=True, default=None, null=True, verbose_name='end time')),
                 ('image', models.ImageField(blank=True, default=None, null=True, upload_to=spodcat.models.functions.episode_chapter_image_path, verbose_name='image')),
                 ('url', models.URLField(blank=True, default=None, null=True, verbose_name='URL')),
                 ('episode', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chapters', to='spodcat.episode', verbose_name='episode')),
@@ -248,7 +248,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'episode chapter',
                 'verbose_name_plural': 'episode chapters',
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.AddIndex(
             model_name='podcastcontent',

@@ -25,7 +25,7 @@ from spodcat.logs.user_agent import (
     get_referrer_dict,
     get_useragent_data,
 )
-from spodcat.utils.model_mixin import ModelMixin
+from spodcat.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:

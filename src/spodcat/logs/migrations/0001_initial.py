@@ -4,7 +4,7 @@ import django.db.models.deletion
 import klaatu_django.db
 from django.db import migrations, models
 
-import spodcat.utils.model_mixin
+import spodcat.model_mixin
 
 
 class Migration(migrations.Migration):
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'GeoIP',
                 'verbose_name_plural': 'GeoIP:s',
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='UserAgent',
@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'user agent',
                 'verbose_name_plural': 'user agents',
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='RequestLog',
@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'request log',
                 'verbose_name_plural': 'request logs',
             },
-            bases=(spodcat.utils.model_mixin.ModelMixin, models.Model),
+            bases=(spodcat.model_mixin.ModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='PodcastContentRequestLog',

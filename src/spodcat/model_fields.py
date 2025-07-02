@@ -1,6 +1,6 @@
 from django.db import models
 
-from spodcat.utils import form_fields
+from spodcat import form_fields
 
 
 class TimestampField(models.IntegerField):
