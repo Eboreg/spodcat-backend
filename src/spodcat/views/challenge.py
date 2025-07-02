@@ -10,5 +10,5 @@ from spodcat.models import Challenge
 
 
 class ChallengeViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):
-    queryset = Challenge.objects.all()
+    queryset = Challenge.objects.select_related("podcast")
     serializer_class = serializers.ChallengeSerializer
