@@ -131,7 +131,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
             }),
             (_("Graphics"), {
                 "fields": (
-                    ("cover", "banner"),
+                    "cover", "banner",
                     "favicon",
                     ("name_font_face", "name_font_size"),
                     "name_font_family",
@@ -146,8 +146,15 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
         return fieldsets
 
+    def get_detail_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("authors").select_related("owner", "name_font_face")
+
+    def get_object(self, request, object_id, from_field=None):
+        queryset = self.get_detail_queryset(request)
+        return queryset.filter(slug=object_id).first()
+
     def get_queryset(self, request):
-        qs = super().get_queryset(request).prefetch_related("authors").select_related("owner", "name_font_face")
+        qs = self.get_detail_queryset(request)
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastEpisodeAudioRequestLog
@@ -318,7 +325,7 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
 class EpisodeAdmin(BasePodcastContentAdmin):
     fields = (
         ("id", "slug"),
-        ("podcast", "name"),
+        ("name", "podcast"),
         ("season", "number"),
         ("is_draft", "published"),
         "audio_file",
@@ -329,21 +336,6 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "audio_file_length",
     )
     inlines = [EpisodeSongInline, EpisodeChapterInline]
-    list_display = (
-        "name",
-        "season",
-        "number_string",
-        "is_visible",
-        "is_draft",
-        "podcast_link",
-        "published",
-        "view_count",
-        "visitor_count",
-        "play_count",
-        "player_count",
-        "play_time",
-        "frontend_link",
-    )
     list_filter = ["is_draft", "published", "podcast"]
     readonly_fields = ("audio_content_type", "audio_file_length", "slug", "duration", "id")
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
@@ -526,20 +518,10 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 @admin.register(Post)
 class PostAdmin(BasePodcastContentAdmin):
     fields = (
-        "podcast",
-        "name",
+        ("id", "slug"),
+        ("name", "podcast"),
         ("is_draft", "published"),
         "description",
-    )
-    list_display = (
-        "name",
-        "is_visible",
-        "is_draft",
-        "podcast",
-        "published",
-        "view_count",
-        "visitor_count",
-        "frontend_link",
     )
 
     def frontend_link(self, obj: Post):
@@ -669,8 +651,10 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
         "Stora, smidiga sedlar",
         "Slå smutsen in i mig",
         "Doftar det autistbarn här?",
-        "Oh! You touch my tra-la-la",
+        "You touch my tra-la-la",
         "Tro på Gud och runka pung",
+        "Triangel",
+        "Homosexualitet",
     ]
 
     def change_view(self, request, object_id, form_url="", extra_context=None):

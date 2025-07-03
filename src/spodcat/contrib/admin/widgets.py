@@ -13,11 +13,12 @@ class MartorWidget(BaseMartorWidget):
     class Media:
         css = {
             "all": (
-                "plugins/css/bootstrap.min.css",
-                "martor/css/martor-admin.min.css",
+                # "plugins/css/bootstrap.min.css",
+                # "martor/css/martor-admin.min.css",
                 "plugins/css/ace.min.css",
                 "plugins/css/resizable.min.css",
                 "spodcat/css/martor.css",
+                "spodcat/css/martor-extra.css",
             )
         }
 

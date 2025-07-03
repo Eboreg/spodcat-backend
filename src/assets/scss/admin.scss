@@ -121,3 +121,38 @@
         width: min(300px, 100%);
     }
 }
+
+.checkbox-row {
+    width: 440px;
+
+    .vCheckboxLabel {
+        width: 100% !important;
+        margin-left: 5px;
+    }
+}
+
+.clearable-file-input {
+    margin-left: 10px;
+
+    input {
+        margin-right: 5px;
+    }
+}
+
+fieldset .fieldBox {
+    margin-right: 40px;
+    min-width: 440px;
+}
+
+form .aligned p.help, form .aligned div.help {
+    padding-left: 0 !important;
+}
+
+nav caption {
+    caption-side: top !important;
+}
+
+.flex-container .vTextField {
+    flex: 1 1 auto;
+    width: unset;
+}
