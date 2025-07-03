@@ -39,7 +39,7 @@ class FontFace(ModelMixin, models.Model):
         ordering = [Lower("name")]
 
     def __str__(self):
-        return f"{self.name} ({self.weight})"
+        return self.name
 
     @classmethod
     def guess_format(cls, filename: str, content_type: str) -> Format | None:

@@ -25,5 +25,5 @@ router.register(prefix="posts", viewset=PostViewSet, basename="post")
 app_name = "spodcat"
 urlpatterns = [
     path("", include(router.urls)),
-    path("font-faces/", font_face_css),
+    path("font-faces/", font_face_css, name="font-faces"),
 ]

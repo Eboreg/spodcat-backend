@@ -6,7 +6,7 @@ function getFontSampleInput(): HTMLInputElement | undefined {
 }
 
 function getFontSampleOutput(): HTMLElement | undefined {
-    return document.getElementById("font-sample");
+    return document.querySelector(".font-sample-output");
 }
 
 function getFontSampleSizeInput(): HTMLInputElement | undefined {
@@ -21,6 +21,47 @@ function getWeightSelect(): HTMLSelectElement | undefined {
 
     if (elem instanceof HTMLSelectElement) return elem;
     return;
+}
+
+export function initPodcastNameFontSample() {
+    const fontSelect = document.querySelector(".model-podcast.change-form #id_name_font_face");
+    const sizeSelect = document.querySelector(".model-podcast.change-form #id_name_font_size");
+    const nameInput = document.querySelector(".model-podcast.change-form #id_name");
+    const sample = getFontSampleOutput();
+
+    if (sample) {
+        if (fontSelect instanceof HTMLSelectElement) {
+            const changeFontFamily = () => {
+                const family = '"' + fontSelect.options.item(fontSelect.selectedIndex).text + '"';
+                sample.style.fontFamily = family;
+            };
+
+            changeFontFamily();
+            fontSelect.addEventListener("change", changeFontFamily);
+        }
+
+        if (sizeSelect instanceof HTMLSelectElement) {
+            const changeFontSize = () => {
+                const size = sizeSelect.options.item(sizeSelect.selectedIndex).value;
+
+                if (size == "small") sample.style.fontSize = "35px";
+                else if (size == "normal") sample.style.fontSize = "50px";
+                else if (size == "large") sample.style.fontSize = "70px";
+            };
+
+            changeFontSize();
+            sizeSelect.addEventListener("change", changeFontSize);
+        }
+
+        if (nameInput instanceof HTMLInputElement) {
+            const changeText = () => {
+                sample.textContent = nameInput.value;
+            }
+
+            changeText();
+            nameInput.addEventListener("input", changeText);
+        }
+    }
 }
 
 export function initFontSampleInput() {

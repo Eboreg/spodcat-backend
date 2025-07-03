@@ -9,12 +9,12 @@
         src: url("{{ original.file.url }}") format({{ original.format }});
         font-weight: {{ original.weight }};
     }
-    #font-sample {
+    .font-sample-output {
         font-family: "{{ original.name }}";
     }
 </style>
 <div class="form-row">
-    <div id="font-sample">{{ sample_text }}</div>
+    <div class="font-sample-output">{{ sample_text }}</div>
     <div class="font-sample-inputs">
         <label for="font-sample-input">Sample text: </label>
         <input type="text" id="font-sample-input" value="{{ sample_text }}">

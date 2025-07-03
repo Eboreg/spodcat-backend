@@ -1,9 +1,9 @@
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm
+from django.forms import ModelChoiceField, ModelForm, Select
 from django.utils.translation import gettext as _
 
-from spodcat.models import Podcast, PodcastContent
+from spodcat.models import FontFace, Podcast, PodcastContent
 
 
 class PodcastChangeSlugForm(ModelForm):
@@ -43,3 +43,11 @@ class PodcastChangeSlugForm(ModelForm):
             old_instance.delete()
 
         return self.instance
+
+
+class FontFaceSelect(Select):
+    template_name = "spodcat/font_face_select.html"
+
+
+class PodcastAdminForm(ModelForm):
+    name_font_face = ModelChoiceField(queryset=FontFace.objects.all(), widget=FontFaceSelect)

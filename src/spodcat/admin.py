@@ -33,7 +33,7 @@ from spodcat.admin_inlines import (
 )
 from spodcat.contrib.admin.filters import ArtistSongCountFilter
 from spodcat.contrib.admin.mixin import AdminMixin
-from spodcat.forms import PodcastChangeSlugForm
+from spodcat.forms import PodcastAdminForm, PodcastChangeSlugForm
 from spodcat.models import (
     Artist,
     Comment,
@@ -55,10 +55,11 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
     inlines = [PodcastLinkInline]
     readonly_fields = ("slug",)
     save_on_top = True
+    form = PodcastAdminForm
 
     def get_list_display(self, request):
         if apps.is_installed("spodcat.logs"):
-            return (
+            return [
                 "name",
                 "slug",
                 "owner_link",
@@ -69,8 +70,8 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                 "player_count",
                 "play_time",
                 "frontend_link",
-            )
-        return ("name", "slug", "owner_link", "author_links", "frontend_link")
+            ]
+        return ["name", "slug", "owner_link", "author_links", "frontend_link"]
 
     @admin.display(description=_("authors"))
     def author_links(self, obj: Podcast):
@@ -119,29 +120,15 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
-            (None, {
-                "fields": (
-                    ("name", "slug"),
-                    ("tagline", "language"),
-                    "description",
-                ),
-            }),
-            (_("Comments"), {
-                "fields": (("enable_comments", "require_comment_approval"),),
-            }),
-            (_("Graphics"), {
-                "fields": (
-                    "cover", "banner",
-                    "favicon",
-                    ("name_font_face", "name_font_size"),
-                ),
-            }),
+            (None, {"fields": [("name", "slug"), ("tagline", "language"), "description"]}),
+            (_("Comments"), {"fields": [("enable_comments", "require_comment_approval"),]}),
+            (_("Graphics"), {"fields": ["cover", "banner", "favicon", "name_font_size", "name_font_face"]}),
         ]
 
         if obj:
-            fieldsets.append((None, {"fields": ("categories", "owner", "authors", "custom_guid")}))
+            fieldsets.append((None, {"fields": ["categories", "owner", "authors", "custom_guid"]}))
         else:
-            fieldsets.append((None, {"fields": ("categories", "custom_guid")}))
+            fieldsets.append((None, {"fields": ["categories", "custom_guid"]}))
 
         return fieldsets
 
@@ -322,7 +309,7 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
 
 @admin.register(Episode)
 class EpisodeAdmin(BasePodcastContentAdmin):
-    fields = (
+    fields = [
         ("id", "slug"),
         ("name", "podcast"),
         ("season", "number"),
@@ -333,15 +320,15 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "duration",
         "audio_content_type",
         "audio_file_length",
-    )
+    ]
     inlines = [EpisodeSongInline, EpisodeChapterInline]
     list_filter = ["is_draft", "published", "podcast"]
-    readonly_fields = ("audio_content_type", "audio_file_length", "slug", "duration", "id")
+    readonly_fields = ["audio_content_type", "audio_file_length", "slug", "duration", "id"]
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
 
     def get_list_display(self, request):
         if apps.is_installed("spodcat.logs"):
-            return (
+            return [
                 "name",
                 "season",
                 "number_string",
@@ -355,8 +342,8 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                 "player_count",
                 "play_time",
                 "frontend_link",
-            )
-        return (
+            ]
+        return [
             "name",
             "season",
             "number_string",
@@ -365,7 +352,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             "podcast_link",
             "published",
             "frontend_link",
-        )
+        ]
 
     def apply_gain(self, instance: Episode, audio: AudioSegment, stem: str, tags: Any, save: bool = True) -> bool:
         max_dbfs = audio.max_dBFS
@@ -516,19 +503,19 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
 @admin.register(Post)
 class PostAdmin(BasePodcastContentAdmin):
-    fields = (
+    fields = [
         ("id", "slug"),
         ("name", "podcast"),
         ("is_draft", "published"),
         "description",
-    )
+    ]
 
     def frontend_link(self, obj: Post):
         return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Link") + "</a>")
 
     def get_list_display(self, request):
         if apps.is_installed("spodcat.logs"):
-            return (
+            return [
                 "name",
                 "is_visible",
                 "is_draft",
@@ -537,8 +524,8 @@ class PostAdmin(BasePodcastContentAdmin):
                 "view_count",
                 "visitor_count",
                 "frontend_link",
-            )
-        return ("name", "is_visible", "is_draft", "podcast", "published", "frontend_link")
+            ]
+        return ["name", "is_visible", "is_draft", "podcast", "published", "frontend_link"]
 
 
 @admin.register(Artist)
