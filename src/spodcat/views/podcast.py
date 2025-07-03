@@ -24,7 +24,7 @@ from spodcat import serializers
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
-from spodcat.utils import date_to_datetime, get_absolute_url
+from spodcat.utils import date_to_datetime
 
 
 logger = logging.getLogger(__name__)
@@ -177,7 +177,9 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         for episode in episode_qs:
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
             if episode.has_chapters:
-                fe.podcast2.podcast_chapters(get_absolute_url("spodcat:episode-chapters", args=(episode.id,)))
+                fe.podcast2.podcast_chapters(
+                    spodcat_settings.get_absolute_backend_url("spodcat:episode-chapters", args=(episode.id,))
+                )
             fe.title(episode.name)
             fe.content(episode.description_html, type="CDATA")
             fe.description(episode.description_text)

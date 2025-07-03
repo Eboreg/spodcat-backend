@@ -7,7 +7,7 @@ from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import PolymorphicResourceRelatedField
 
 from spodcat.models import Challenge, Comment, PodcastContent
-from spodcat.utils import get_absolute_url
+from spodcat.settings import spodcat_settings
 
 from .podcast_content import PodcastContentSerializer
 
@@ -42,7 +42,7 @@ class CommentSerializer(serializers.ModelSerializer):
         else:
             email_text = _("You have a new comment for %(podcast)s awaiting approval. Look here: %(url)s") % {
                 "podcast": podcast_content.podcast.name,
-                "url": get_absolute_url(
+                "url": spodcat_settings.get_absolute_backend_url(
                     viewname=f"admin:{Comment._meta.app_label}_{Comment._meta.model_name}_changelist",
                     query={
                         "is_approved__exact": 0,

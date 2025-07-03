@@ -85,9 +85,9 @@ function getContext() {
 }
 
 function getUrl(path: string) {
-    const rootUrl: string = getContext().rootUrl || "";
+    const root: string = getContext().rootPath || "";
 
-    return rootUrl.replace(/\/$/, "") + "/" + path.replace(/^\//, "");
+    return root.replace(/\/$/, "") + "/" + path.replace(/^\//, "");
 }
 
 export async function renderEpisodePlayTimeGraph(

@@ -35,7 +35,7 @@ class AdminSite(admin.AdminSite):
         context = {
             "podcasts": Podcast.objects.filter_by_user(request.user),
             "title": _("Charts"),
-            "root_url": spodcat_settings.ROOT_URL,
+            "root_path": spodcat_settings.get_backend_root_path(),
             **self.each_context(request),
         }
         return TemplateView.as_view(template_name="admin/charts.html", extra_context=context)(request)

@@ -5,7 +5,8 @@
 Spodcat is configured using a `SPODCAT` dict in your Django settings module. These are the available settings:
 
 * `FRONTEND_ROOT_URL`: Mainly used for RSS feed generation and some places in the admin. Default: `http://localhost:4200/`
-* `ROOT_URL`: Used for generating RSS feed URLs which are sent to the frontend, as well as some stuff in the admin. Default: `http://localhost:8000/`
+* `BACKEND_HOST`: Used (along with `BACKEND_ROOT`, see below) for generating RSS feed URLs which are sent to the frontend, as well as some stuff in the admin. Default: `http://localhost:8000/`
+* `BACKEND_ROOT`: Set this is your backend installation is not at the URL root. Default: empty string
 * `FILEFIELDS`: Described below.
 
 `FILEFIELDS` contains settings for various `FileField`s on different models, and govern where uploaded files will be stored and by which storage engine.

@@ -1,8 +1,12 @@
+from urllib.parse import urljoin
+
 from django.conf import settings
 from django.core.signals import setting_changed
+from django.urls import reverse
 
 
 REST_FRAMEWORK_DEFAULTS = {
+    "PAGE_SIZE": None,
     "EXCEPTION_HANDLER": "rest_framework_json_api.exceptions.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PAGINATION_CLASS":
@@ -32,7 +36,8 @@ DJANGO_DEFAULTS = {
 
 DEFAULTS = {
     "FRONTEND_ROOT_URL": "http://localhost:4200/",
-    "ROOT_URL": "http://localhost:8000/",
+    "BACKEND_HOST": "http://localhost:8000/",
+    "BACKEND_ROOT": "",
 }
 
 
@@ -66,6 +71,20 @@ class SpodcatSettings:
         self._cached_attrs.add(attr)
         setattr(self, attr, val)
         return val
+
+    def get_absolute_backend_url(self, viewname: str, args=None, kwargs=None, query=None):
+        return urljoin(self.get_backend_root_url(), reverse(viewname, args=args, kwargs=kwargs, query=query))
+
+    def get_backend_root_path(self):
+        """Only (absolute) path, without host."""
+        root = self.BACKEND_ROOT.strip("/")
+        if root:
+            return f"/{root}/"
+        return "/"
+
+    def get_backend_root_url(self):
+        """Host and absolute path."""
+        return self.BACKEND_HOST.rstrip("/") + self.get_backend_root_path()
 
     def reload(self):
         for attr in self._cached_attrs:

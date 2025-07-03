@@ -29,7 +29,6 @@ from spodcat.utils import (
     delete_storage_file,
     downscale_image,
     generate_thumbnail,
-    get_absolute_url,
 )
 
 from .functions import (
@@ -211,7 +210,7 @@ class Podcast(ModelMixin, models.Model):
 
     @property
     def rss_url(self) -> str:
-        return get_absolute_url("spodcat:podcast-rss", args=(self.slug,))
+        return spodcat_settings.get_absolute_backend_url("spodcat:podcast-rss", args=(self.slug,))
 
     def __str__(self):
         return self.name

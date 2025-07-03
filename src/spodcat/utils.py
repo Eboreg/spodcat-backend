@@ -3,16 +3,12 @@ import math
 import os
 from io import BytesIO
 from typing import BinaryIO, Generator
-from urllib.parse import urljoin
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
-from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
 from pydub import AudioSegment
-
-from spodcat.settings import spodcat_settings
 
 
 def date_to_datetime(date: datetime.date) -> datetime.datetime:
@@ -53,10 +49,6 @@ def generate_thumbnail(from_field: ImageFieldFile, to_field: ImageFieldFile, siz
 
     to_field.save(name=thumbnail_filename, content=ImageFile(file=buf), save=save)
     return mimetype
-
-
-def get_absolute_url(viewname: str, args=None, kwargs=None, query=None):
-    return urljoin(spodcat_settings.ROOT_URL, reverse(viewname, args=args, kwargs=kwargs, query=query))
 
 
 def get_audio_file_dbfs_array(file: BinaryIO, format_name: str) -> list[float]:
