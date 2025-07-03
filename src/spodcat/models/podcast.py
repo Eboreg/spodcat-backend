@@ -66,18 +66,6 @@ def podcast_slug_validator(value: str):
 
 
 class Podcast(ModelMixin, models.Model):
-    FONT_FAMILIES = [
-        "Anton",
-        "Bauhaus 93",
-        "Deutsche Uncialis",
-        "Fascinate Inline",
-        "Futura Display BQ",
-        "Limelight",
-        "Lobster",
-        "Roboto Black",
-        "Roboto Serif Bold",
-        "Unifraktur Cook",
-    ]
     FONT_SIZES = ["small", "normal", "large"]
 
     authors: "models.ManyToManyField[AbstractUser]" = models.ManyToManyField(
@@ -148,12 +136,6 @@ class Podcast(ModelMixin, models.Model):
         verbose_name=_("language"),
     )
     name = models.CharField(max_length=100, verbose_name=_("name"))
-    name_font_family = models.CharField(
-        max_length=50,
-        choices=[(c, c) for c in FONT_FAMILIES],
-        default="Unifraktur Cook",
-        verbose_name=_("name font family")
-    )
     name_font_face: "FontFace | None" = models.ForeignKey(
         "spodcat.FontFace",
         related_name="+",

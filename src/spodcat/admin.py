@@ -134,7 +134,6 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                     "cover", "banner",
                     "favicon",
                     ("name_font_face", "name_font_size"),
-                    "name_font_family",
                 ),
             }),
         ]
@@ -674,7 +673,7 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
             instance.updated = now()
 
         if ("name" in form.changed_data or not change) and not instance.name.strip():
-            instance.name = instance.file.name.split("/")[-1].split(".")[0]
+            instance.name = instance.file.name.split("/")[-1].split(".")[0][:30]
 
         if "file" in form.changed_data:
             if "file" in form.cleaned_data:
