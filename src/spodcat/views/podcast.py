@@ -49,6 +49,9 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         ],
         "links": ["links"],
     }
+    select_for_includes = {
+        "__all__": ["name_font_face"],
+    }
     queryset = Podcast.objects.order_by_last_content(reverse=True)
     serializer_class = serializers.PodcastSerializer
 

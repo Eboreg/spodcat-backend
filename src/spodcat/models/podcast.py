@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractUser
     from django.db.models.manager import RelatedManager
 
-    from spodcat.models import Category, PodcastLink
+    from spodcat.models import Category, FontFace, PodcastLink
     from spodcat.models.querysets import PodcastContentManager, PodcastManager
 
 
@@ -145,6 +145,15 @@ class Podcast(ModelMixin, models.Model):
         choices=[(c, c) for c in FONT_FAMILIES],
         default="Unifraktur Cook",
         verbose_name=_("name font family")
+    )
+    name_font_face: "FontFace | None" = models.ForeignKey(
+        "spodcat.FontFace",
+        related_name="+",
+        on_delete=models.SET_NULL,
+        verbose_name=_("name font face"),
+        null=True,
+        default=None,
+        blank=True,
     )
     name_font_size = models.CharField(
         max_length=10,

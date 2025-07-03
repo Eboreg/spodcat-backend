@@ -19,6 +19,7 @@ class PodcastSerializer(serializers.ModelSerializer):
     episodes_fm_url = serializers.SerializerMethodField()
     links = ResourceRelatedField(queryset=PodcastLink.objects, many=True)
     rss_url = serializers.SerializerMethodField()
+    name_font_family = serializers.SerializerMethodField()
 
     included_serializers = {
         "categories": "spodcat.serializers.CategorySerializer",
@@ -35,6 +36,11 @@ class PodcastSerializer(serializers.ModelSerializer):
 
     def get_episodes_fm_url(self, obj: Podcast) -> str:
         return obj.episodes_fm_url
+
+    def get_name_font_family(self, obj: Podcast) -> str | None:
+        if obj.name_font_face:
+            return obj.name_font_face.name
+        return None
 
     def get_rss_url(self, obj: Podcast) -> str:
         return obj.rss_url

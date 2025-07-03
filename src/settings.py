@@ -115,3 +115,6 @@ REST_FRAMEWORK = {
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
 }
+
+
+MARTOR_ENABLE_LABEL = True

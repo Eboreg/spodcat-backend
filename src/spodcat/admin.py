@@ -51,32 +51,6 @@ logger = logging.getLogger(__name__)
 
 @admin.register(Podcast)
 class PodcastAdmin(AdminMixin, admin.ModelAdmin):
-    add_fields = (
-        ("name", "slug"),
-        "tagline",
-        ("cover", "banner"),
-        "favicon",
-        "language",
-        ("name_font_family", "name_font_size"),
-        ("enable_comments", "require_comment_approval"),
-        "custom_guid",
-        "description",
-        "categories",
-    )
-    fields = (
-        ("name", "slug"),
-        "tagline",
-        ("cover", "banner"),
-        "favicon",
-        "language",
-        ("name_font_family", "name_font_size"),
-        ("enable_comments", "require_comment_approval"),
-        "custom_guid",
-        "owner",
-        "description",
-        "categories",
-        "authors",
-    )
     filter_horizontal = ["categories", "authors"]
     inlines = [PodcastLinkInline]
     readonly_fields = ("slug",)
@@ -143,13 +117,37 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
     def frontend_link(self, obj: Podcast):
         return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">{obj.frontend_url}</a>')
 
-    def get_fields(self, request, obj=None):
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = [
+            (None, {
+                "fields": (
+                    ("name", "slug"),
+                    ("tagline", "language"),
+                    "description",
+                ),
+            }),
+            (_("Comments"), {
+                "fields": (("enable_comments", "require_comment_approval"),),
+            }),
+            (_("Graphics"), {
+                "fields": (
+                    ("cover", "banner"),
+                    "favicon",
+                    ("name_font_face", "name_font_size"),
+                    "name_font_family",
+                ),
+            }),
+        ]
+
         if obj:
-            return self.fields
-        return self.add_fields
+            fieldsets.append((None, {"fields": ("categories", "owner", "authors", "custom_guid")}))
+        else:
+            fieldsets.append((None, {"fields": ("categories", "custom_guid")}))
+
+        return fieldsets
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).prefetch_related("authors").select_related("owner")
+        qs = super().get_queryset(request).prefetch_related("authors").select_related("owner", "name_font_face")
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastEpisodeAudioRequestLog
@@ -687,16 +685,19 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
 
     def save_form(self, request, form, change):
         instance: FontFace = super().save_form(request, form, change)
-        font_file: UploadedFile = form.cleaned_data["file"]
-        instance.format = FontFace.guess_format(font_file.name, content_type=font_file.content_type)
-
-        if not instance.name.strip():
-            instance.name = font_file.name.split(".")[0]
 
         if not change or form.has_changed():
             instance.updated = now()
 
-        if "file" in form.changed_data and "file" in form.initial:
-            delete_storage_file(form.initial["file"])
+        if "name" in form.changed_data and not instance.name.strip():
+            instance.name = instance.file.name.split("/")[-1].split(".")[0]
+
+        if "file" in form.changed_data:
+            if "file" in form.cleaned_data:
+                font_file: UploadedFile = form.cleaned_data["file"]
+                instance.format = FontFace.guess_format(font_file.name, content_type=font_file.content_type)
+
+            if "file" in form.initial:
+                delete_storage_file(form.initial["file"])
 
         return instance
