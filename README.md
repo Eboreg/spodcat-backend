@@ -2,26 +2,27 @@
 
 ## Spodcat configuration
 
-Spodcat is configured using a `SPODCAT` dict in your Django settings module. These are the most important settings:
+Spodcat is configured using a `SPODCAT` dict in your Django settings module. These are the available settings:
 
 * `FRONTEND_ROOT_URL`: Mainly used for RSS feed generation and some places in the admin. Default: `http://localhost:4200/`
 * `ROOT_URL`: Used for generating RSS feed URLs which are sent to the frontend, as well as some stuff in the admin. Default: `http://localhost:8000/`
+* `FILEFIELDS`: Described below.
 
-There is also a couple of settings referring to functions that govern where various uploaded media files will be stored, and by which storage engine. Here is the general structure:
+`FILEFIELDS` contains settings for various `FileField`s on different models, and govern where uploaded files will be stored and by which storage engine.
 
 ```python
 SPODCAT = {
-    "UPLOAD_TO": {
-        "FILEFIELD_CONSTANT": Callable[[Model, str], str] | str,
-    },
-    "STORAGES": {
-        "FILEFIELD_CONSTANT": Storage | Callable[[], Storage] | str,
+    "FILEFIELDS": {
+        "__FILEFIELD_CONSTANT__": {
+            "UPLOAD_TO": Callable[[Model, str], str] | str,
+            "STORAGE": Storage | Callable[[], Storage] | str,
+        },
     },
 }
 ```
-I.e. the members of the `UPLOAD_TO` dict represent `FileField.upload_to` callables or paths to them, and members of `STORAGES` represent the `storage` parameter of the same `FileField` (with the addition that they can also be strings, in which case the storage with this key in `django.core.files.storage.storages` will be used).
+I.e. the `UPLOAD_TO` values represent `FileField.upload_to` callables or paths to them, and `STORAGE` represent the `storage` parameter of the same `FileField` (with the addition that they can also be strings, in which case the storage with this key in `django.core.files.storage.storages` will be used).
 
-Here are the available values for `FILEFIELD_CONSTANT` and the model types and default values for their `UPLOAD_TO` thingies:
+Here are the available values for `__FILEFIELD_CONSTANT__` and the model types and default values for their `UPLOAD_TO` settings:
 
 * `EPISODE_AUDIO_FILE`: Model is `Episode`. Default: `f"{instance.podcast.slug}/episodes/{filename}"`
 * `EPISODE_CHAPTER_IMAGE`: Model is `AbstractEpisodeChapter`. Default: `f"{instance.episode.podcast.slug}/images/episodes/{instance.episode.slug}/chapters/{filename}"`

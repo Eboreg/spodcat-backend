@@ -42,7 +42,8 @@ def __reload(*args, **kwargs):
 
 def __get_storage(key: str):
     if key not in __user_storages:
-        user_storage = getattr(settings, "SPODCAT", {}).get("STORAGES", {}).get(key, None)
+        filefield_conf = getattr(settings, "SPODCAT", {}).get("FILEFIELDS", {}).get(key, None)
+        user_storage = filefield_conf.get("STORAGE", None)
         if isinstance(user_storage, str):
             user_storage = storages[user_storage]
         __user_storages[key] = user_storage
@@ -51,7 +52,8 @@ def __get_storage(key: str):
 
 def __get_upload_to(key: str, *args, **kwargs):
     if key not in __user_functions:
-        user_function = getattr(settings, "SPODCAT", {}).get("UPLOAD_TO", {}).get(key, None)
+        filefield_conf = getattr(settings, "SPODCAT", {}).get("FILEFIELDS", {}).get(key, None)
+        user_function = filefield_conf.get("UPLOAD_TO", None)
         __user_functions[key] = __perform_import(user_function)
     func = __user_functions[key]
     return func(*args, **kwargs) if func else None
