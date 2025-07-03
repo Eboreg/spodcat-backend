@@ -105,6 +105,10 @@
     margin: 0.4em 0 !important;
 }
 
+.font-sample-output {
+    line-height: 1.5em;
+}
+
 .change-form.model-fontface {
     .font-sample-output {
         font-size: 50px;
@@ -156,4 +160,13 @@ nav caption {
 .flex-container .vTextField {
     flex: 1 1 auto;
     width: unset;
+}
+
+.field-file .flex-container {
+    gap: 10px;
+    align-items: center;
+
+    label {
+        padding-right: 0;
+    }
 }
