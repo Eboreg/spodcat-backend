@@ -6,8 +6,13 @@ from django.utils.module_loading import import_string
 
 
 if TYPE_CHECKING:
-    from spodcat.models import Episode, Podcast, PodcastLink
-    from spodcat.models.episode_chapter import AbstractEpisodeChapter
+    from spodcat.models import (
+        AbstractEpisodeChapter,
+        Episode,
+        FontFace,
+        Podcast,
+        PodcastLink,
+    )
 
 
 __user_functions = {}
@@ -61,6 +66,10 @@ def episode_image_path(instance: "Episode", filename: str):
 def episode_image_thumbnail_path(instance: "Episode", filename: str):
     return __run_function("EPISODE_IMAGE_THUMBNAIL_PATH", instance, filename) \
         or f"{instance.podcast.slug}/images/episodes/{instance.slug}/{filename}"
+
+
+def fontface_file_path(instance: "FontFace", filename: str):
+    return __run_function("FONTFACE_FILE_PATH", instance, filename) or f"fonts/{filename}"
 
 
 def podcast_banner_path(instance: "Podcast", filename: str):

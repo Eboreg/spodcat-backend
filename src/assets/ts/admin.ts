@@ -1,3 +1,5 @@
+import { initFontSampleInput } from "./font_face";
+
 function formatTimestamp(value: string) {
     value = value.trim();
     const parts = value.split(":");
@@ -39,6 +41,7 @@ function onTimestampFieldChange(event: Event) {
 }
 
 addEventListener("DOMContentLoaded", () => {
+    initFontSampleInput();
     document.querySelectorAll(".inline-related input").forEach((input) => {
         input.addEventListener("change", onInlineValueChange);
     });

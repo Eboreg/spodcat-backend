@@ -9,6 +9,7 @@ from spodcat.views import (
     PodcastViewSet,
     PostViewSet,
 )
+from spodcat.views.font_face import font_face_css
 
 
 router = DefaultRouter()
@@ -24,4 +25,5 @@ router.register(prefix="posts", viewset=PostViewSet, basename="post")
 app_name = "spodcat"
 urlpatterns = [
     path("", include(router.urls)),
+    path("font-faces/", font_face_css),
 ]

@@ -1,31 +1,28 @@
 {
-  "devDependencies": {
-    "@types/jquery": "^3.5.32",
-    "@types/select2": "^4.0.63",
-    "chartjs-adapter-date-fns": "^3.0.0",
-    "date-fns": "^4.1.0",
-    "typescript": "^5.8.3"
-  },
-  "dependencies": {
-    "chart.js": "^4.4.9",
-    "parcel": "^2.14.4"
-  },
-  "scripts": {
-    "build": "parcel build",
-    "watch": "parcel watch"
-  },
-  "targets": {
-    "chart": {
-      "distDir": "src/spodcat/static/spodcat/js",
-      "source": "src/assets/ts/chart.ts"
+    "devDependencies": {
+        "@parcel/transformer-sass": "^2.14.4",
+        "@types/jquery": "^3.5.32",
+        "@types/select2": "^4.0.63",
+        "chartjs-adapter-date-fns": "^3.0.0",
+        "date-fns": "^4.1.0",
+        "typescript": "^5.8.3"
     },
-    "artist_autocomplete": {
-      "distDir": "src/spodcat/static/spodcat/js",
-      "source": "src/assets/ts/artist_autocomplete.ts"
+    "dependencies": {
+        "chart.js": "^4.4.9",
+        "parcel": "^2.14.4"
     },
-    "admin": {
-        "distDir": "src/spodcat/static/spodcat/js",
-        "source": "src/assets/ts/admin.ts"
+    "scripts": {
+        "build": "parcel build",
+        "watch": "parcel watch"
+    },
+    "targets": {
+        "js": {
+            "source": "src/assets/ts/*.ts",
+            "distDir": "src/spodcat/static/spodcat/js"
+        },
+        "css": {
+            "source": "src/assets/scss/*.scss",
+            "distDir": "src/spodcat/static/spodcat/css"
+        }
     }
-  }
 }

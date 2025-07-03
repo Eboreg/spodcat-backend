@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 import tempfile
 from datetime import timedelta
 from functools import update_wrapper
@@ -15,11 +16,12 @@ from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.db.models import Count, F, OuterRef, Q, Subquery
-from django.forms import ModelChoiceField
+from django.forms import ClearableFileInput, ModelChoiceField
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from pydub import AudioSegment
 
@@ -32,7 +34,15 @@ from spodcat.admin_inlines import (
 from spodcat.contrib.admin.filters import ArtistSongCountFilter
 from spodcat.contrib.admin.mixin import AdminMixin
 from spodcat.forms import PodcastChangeSlugForm
-from spodcat.models import Artist, Comment, Episode, EpisodeSong, Podcast, Post
+from spodcat.models import (
+    Artist,
+    Comment,
+    Episode,
+    EpisodeSong,
+    FontFace,
+    Podcast,
+    Post,
+)
 from spodcat.utils import delete_storage_file, seconds_to_timestamp
 
 
@@ -638,3 +648,55 @@ class CommentAdmin(AdminMixin, admin.ModelAdmin):
         if len(obj.text) > 1000:
             return obj.text[:1000] + "..."
         return obj.text
+
+
+class FontFileWidget(ClearableFileInput):
+    def build_attrs(self, base_attrs, extra_attrs=None):
+        return {
+            **super().build_attrs(base_attrs, extra_attrs),
+            "accept": ".woff, .woff2, .ttf, .otf, .eot, .svg, .svgz, .otc, .ttc, font/*",
+        }
+
+
+@admin.register(FontFace)
+class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
+    list_display = ["name", "format", "weight"]
+    formfield_overrides = {
+        models.FileField: {"widget": FontFileWidget},
+    }
+    add_fields = ["name", "file", "weight"]
+    fields = ["name", "file", "format", "weight"]
+    sample_texts = [
+        "Umpo bumpo español",
+        "Stora, smidiga sedlar",
+        "Slå smutsen in i mig",
+        "Doftar det autistbarn här?",
+        "Oh! You touch my tra-la-la",
+        "Tro på Gud och runka pung",
+    ]
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["sample_text"] = random.choice(self.sample_texts)
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def get_fields(self, request, obj=None):
+        if obj:
+            return self.fields
+        return self.add_fields
+
+    def save_form(self, request, form, change):
+        instance: FontFace = super().save_form(request, form, change)
+        font_file: UploadedFile = form.cleaned_data["file"]
+        instance.format = FontFace.guess_format(font_file.name, content_type=font_file.content_type)
+
+        if not instance.name.strip():
+            instance.name = font_file.name.split(".")[0]
+
+        if not change or form.has_changed():
+            instance.updated = now()
+
+        if "file" in form.changed_data and "file" in form.initial:
+            delete_storage_file(form.initial["file"])
+
+        return instance

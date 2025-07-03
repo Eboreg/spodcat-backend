@@ -1,7 +1,7 @@
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
-from spodcat.models import Episode, Podcast
+from spodcat.models import Episode, FontFace, Podcast
 from spodcat.utils import delete_storage_file
 
 
@@ -18,3 +18,8 @@ def on_podcast_pre_delete(sender, instance: Podcast, **kwargs):
     delete_storage_file(instance.cover)
     delete_storage_file(instance.favicon)
     delete_storage_file(instance.cover_thumbnail)
+
+
+@receiver(pre_delete, sender=FontFace, dispatch_uid="on_fontface_pre_delete")
+def on_fontface_pre_delete(sender, instance: FontFace, **kwargs):
+    delete_storage_file(instance.file)
