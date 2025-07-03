@@ -7,17 +7,31 @@ Spodcat is configured using a `SPODCAT` dict in your Django settings module. The
 * `FRONTEND_ROOT_URL`: Mainly used for RSS feed generation and some places in the admin. Default: `http://localhost:4200/`
 * `ROOT_URL`: Used for generating RSS feed URLs which are sent to the frontend, as well as some stuff in the admin. Default: `http://localhost:8000/`
 
-There is also a bunch of settings referring to functions that govern where various uploaded media files will be stored by your storage engine. Set these to the functions themselves or strings containing their full paths. All functions must accept two arguments - a model instance and a base filename - and return a string representing a path. These function settings are:
+There is also a couple of settings referring to functions that govern where various uploaded media files will be stored, and by which storage engine. Here is the general structure:
 
-* `EPISODE_AUDIO_FILE_PATH`: Instance is `Episode`. Default: `f"{instance.podcast.slug}/episodes/{filename}"`
-* `EPISODE_CHAPTER_IMAGE_PATH`: Instance is `AbstractEpisodeChapter`. Default: `f"{instance.episode.podcast.slug}/images/episodes/{instance.episode.slug}/chapters/{filename}"`
-* `EPISODE_IMAGE_PATH`: Instance is `Episode`. Default: `f"{instance.podcast.slug}/images/episodes/{instance.slug}/{filename}"`
-* `EPISODE_IMAGE_THUMBNAIL_PATH`: Same as above
-* `PODCAST_BANNER_PATH`: Instance is `Podcast`. Default: `f"{instance.slug}/images/{filename}"`
-* `PODCAST_COVER_PATH`: Same as above
-* `PODCAST_COVER_THUMBNAIL_PATH`: Same as above
-* `PODCAST_FAVICON_PATH`: Same as above
-* `PODCAST_LINK_ICON_PATH`: Instance is `PodcastLink`. Default: `f"{instance.podcast.slug}/images/links/{filename}"`
+```python
+SPODCAT = {
+    "UPLOAD_TO": {
+        "FILEFIELD_CONSTANT": Callable[[Model, str], str] | str,
+    },
+    "STORAGES": {
+        "FILEFIELD_CONSTANT": Storage | Callable[[], Storage] | str,
+    },
+}
+```
+I.e. the members of the `UPLOAD_TO` dict represent `FileField.upload_to` callables or paths to them, and members of `STORAGES` represent the `storage` parameter of the same `FileField` (with the addition that they can also be strings, in which case the storage with this key in `django.core.files.storage.storages` will be used).
+
+Here are the available values for `FILEFIELD_CONSTANT` and the model types and default values for their `UPLOAD_TO` thingies:
+
+* `EPISODE_AUDIO_FILE`: Model is `Episode`. Default: `f"{instance.podcast.slug}/episodes/{filename}"`
+* `EPISODE_CHAPTER_IMAGE`: Model is `AbstractEpisodeChapter`. Default: `f"{instance.episode.podcast.slug}/images/episodes/{instance.episode.slug}/chapters/{filename}"`
+* `EPISODE_IMAGE`: Model is `Episode`. Default: `f"{instance.podcast.slug}/images/episodes/{instance.slug}/{filename}"`
+* `EPISODE_IMAGE_THUMBNAIL`: Same as above
+* `PODCAST_BANNER`: Model is `Podcast`. Default: `f"{instance.slug}/images/{filename}"`
+* `PODCAST_COVER`: Same as above
+* `PODCAST_COVER_THUMBNAIL`: Same as above
+* `PODCAST_FAVICON`: Same as above
+* `PODCAST_LINK_ICON`: Model is `PodcastLink`. Default: `f"{instance.podcast.slug}/images/links/{filename}"`
 
 ## Other Django settings
 

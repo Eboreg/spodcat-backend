@@ -2,7 +2,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.model_mixin import ModelMixin
-from spodcat.models.functions import fontface_file_path
+from spodcat.models.functions import (
+    fontface_file_storage,
+    fontface_file_upload_to,
+)
 
 
 class FontFace(ModelMixin, models.Model):
@@ -16,7 +19,11 @@ class FontFace(ModelMixin, models.Model):
         SVG = "svg", "SVG font (deprecated)"
 
     name = models.CharField(max_length=30, verbose_name=_("name"), blank=True, unique=True)
-    file = models.FileField(upload_to=fontface_file_path, verbose_name=_("font file"))
+    file = models.FileField(
+        upload_to=fontface_file_upload_to,
+        verbose_name=_("font file"),
+        storage=fontface_file_storage,
+    )
     format = models.CharField(max_length=20, choices=Format.choices, verbose_name=_("format"), null=True, default=None)
     weight = models.PositiveSmallIntegerField(
         verbose_name=_("weight"),

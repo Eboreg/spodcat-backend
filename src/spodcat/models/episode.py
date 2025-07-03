@@ -29,9 +29,12 @@ from spodcat.utils import (
 )
 
 from .functions import (
-    episode_audio_file_path,
-    episode_image_path,
-    episode_image_thumbnail_path,
+    episode_audio_file_storage,
+    episode_audio_file_upload_to,
+    episode_image_storage,
+    episode_image_thumbnail_storage,
+    episode_image_thumbnail_upload_to,
+    episode_image_upload_to,
 )
 from .podcast_content import PodcastContent
 
@@ -49,7 +52,8 @@ logger = logging.getLogger(__name__)
 class Episode(PodcastContent):
     audio_content_type = models.CharField(max_length=100, blank=True, verbose_name=_("audio content type"))
     audio_file = models.FileField(
-        upload_to=episode_audio_file_path,
+        upload_to=episode_audio_file_upload_to,
+        storage=episode_audio_file_storage,
         null=True,
         default=None,
         blank=True,
@@ -68,7 +72,8 @@ class Episode(PodcastContent):
         null=True,
         default=None,
         blank=True,
-        upload_to=episode_image_path,
+        upload_to=episode_image_upload_to,
+        storage=episode_image_storage,
         verbose_name=_("image"),
         max_length=300,
     )
@@ -78,7 +83,8 @@ class Episode(PodcastContent):
         null=True,
         default=None,
         blank=True,
-        upload_to=episode_image_thumbnail_path,
+        upload_to=episode_image_thumbnail_upload_to,
+        storage=episode_image_thumbnail_storage,
         max_length=300,
     )
     image_thumbnail_height = models.PositiveIntegerField(null=True, default=None)

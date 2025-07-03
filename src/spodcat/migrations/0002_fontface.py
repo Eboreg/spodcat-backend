@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=30, verbose_name='name')),
-                ('file', models.FileField(upload_to=spodcat.models.functions.fontface_file_path, verbose_name='font file')),
+                ('file', models.FileField(upload_to=spodcat.models.functions.fontface_file_upload_to, verbose_name='font file')),
                 ('format', models.CharField(choices=[('truetype', 'Truetype'), ('woff', 'WOFF 1.0'), ('woff2', 'WOFF 2.0'), ('opentype', 'Opentype'), ('collection', 'Opentype Collection'), ('embedded-opentype', 'Embedded Opentype'), ('svg', 'SVG font (deprecated)')], max_length=20, verbose_name='format')),
                 ('weight', models.PositiveSmallIntegerField(choices=[(100, '100'), (200, '200'), (300, '300'), (400, '400'), (500, '500'), (600, '600'), (700, '700'), (800, '800'), (900, '900')], default=400, verbose_name='weight')),
             ],

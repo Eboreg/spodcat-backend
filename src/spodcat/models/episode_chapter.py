@@ -8,7 +8,10 @@ from spodcat.model_mixin import ModelMixin
 from spodcat.types import ChapterDict
 from spodcat.utils import filter_values_not_null
 
-from .functions import episode_chapter_image_path
+from .functions import (
+    episode_chapter_image_storage,
+    episode_chapter_image_upload_to,
+)
 
 
 if TYPE_CHECKING:
@@ -23,7 +26,8 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
         null=True,
         default=None,
         blank=True,
-        upload_to=episode_chapter_image_path,
+        upload_to=episode_chapter_image_upload_to,
+        storage=episode_chapter_image_storage,
         verbose_name=_("image"),
         max_length=300,
     )

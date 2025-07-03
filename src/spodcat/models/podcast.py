@@ -33,10 +33,14 @@ from spodcat.utils import (
 )
 
 from .functions import (
-    podcast_banner_path,
-    podcast_cover_path,
-    podcast_cover_thumbnail_path,
-    podcast_favicon_path,
+    podcast_banner_storage,
+    podcast_banner_upload_to,
+    podcast_cover_storage,
+    podcast_cover_thumbnail_storage,
+    podcast_cover_thumbnail_upload_to,
+    podcast_cover_upload_to,
+    podcast_favicon_storage,
+    podcast_favicon_upload_to,
 )
 
 
@@ -86,7 +90,8 @@ class Podcast(ModelMixin, models.Model):
         null=True,
         default=None,
         blank=True,
-        upload_to=podcast_banner_path,
+        upload_to=podcast_banner_upload_to,
+        storage=podcast_banner_storage,
         verbose_name=_("banner image"),
         help_text=_("Should be >= 960px wide and have aspect ratio 3:1."),
         max_length=300,
@@ -102,7 +107,8 @@ class Podcast(ModelMixin, models.Model):
         null=True,
         default=None,
         blank=True,
-        upload_to=podcast_cover_path,
+        upload_to=podcast_cover_upload_to,
+        storage=podcast_cover_storage,
         help_text=_("This is the round 'avatar' image. It should ideally have height and width >= 1400px."),
         verbose_name=_("cover"),
         max_length=300,
@@ -113,7 +119,8 @@ class Podcast(ModelMixin, models.Model):
         null=True,
         default=None,
         blank=True,
-        upload_to=podcast_cover_thumbnail_path,
+        upload_to=podcast_cover_thumbnail_upload_to,
+        storage=podcast_cover_thumbnail_storage,
         max_length=300,
     )
     cover_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
@@ -126,7 +133,8 @@ class Podcast(ModelMixin, models.Model):
         null=True,
         default=None,
         blank=True,
-        upload_to=podcast_favicon_path,
+        upload_to=podcast_favicon_upload_to,
+        storage=podcast_favicon_storage,
         verbose_name=_("favicon"),
         max_length=300,
     )

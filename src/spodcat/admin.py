@@ -689,7 +689,7 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
         if not change or form.has_changed():
             instance.updated = now()
 
-        if "name" in form.changed_data and not instance.name.strip():
+        if ("name" in form.changed_data or not change) and not instance.name.strip():
             instance.name = instance.file.name.split("/")[-1].split(".")[0]
 
         if "file" in form.changed_data:

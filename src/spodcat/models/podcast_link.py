@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from spodcat.model_mixin import ModelMixin
 
-from .functions import podcast_link_icon_path
+from .functions import podcast_link_icon_storage, podcast_link_icon_upload_to
 
 
 if TYPE_CHECKING:
@@ -29,7 +29,8 @@ class PodcastLink(ModelMixin, models.Model):
         BORING = "boring", _("Boring")
 
     custom_icon = models.ImageField(
-        upload_to=podcast_link_icon_path,
+        upload_to=podcast_link_icon_upload_to,
+        storage=podcast_link_icon_storage,
         null=True,
         default=None,
         blank=True,
