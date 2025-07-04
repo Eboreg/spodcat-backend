@@ -117,7 +117,7 @@ class RequestLog(ModelMixin, models.Model):
         on_delete=models.SET_NULL,
         null=True,
         default=None,
-        related_name="logs",
+        related_name="+",
         verbose_name=_("user agent data"),
     )
     remote_addr = models.GenericIPAddressField(
@@ -138,7 +138,7 @@ class RequestLog(ModelMixin, models.Model):
         on_delete=models.SET_NULL,
         null=True,
         default=None,
-        related_name="logs",
+        related_name="+",
         verbose_name=_("GeoIP"),
     )
     referrer = TruncatedCharField(max_length=150, blank=True, default="", verbose_name=_("referrer"))
@@ -154,6 +154,7 @@ class RequestLog(ModelMixin, models.Model):
     class Meta:
         verbose_name = _("request log")
         verbose_name_plural = _("request logs")
+        abstract = True
 
     @classmethod
     def create(
