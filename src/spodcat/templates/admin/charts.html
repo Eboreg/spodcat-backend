@@ -3,18 +3,18 @@
 
 {% block extrahead %}
 {{ block.super }}
-{% translate "Daily play time per episode" as episode_play_time_title %}
-{% translate "Daily play time per podcast" as podcast_play_time_title %}
 <script type="application/json" id="context">
     {
         "rootPath": "{{ root_path }}",
         "strings": {
-            "episodePlayTimeTitle": "{{ episode_play_time_title }}",
-            "podcastPlayTimeTitle": "{{ podcast_play_time_title }}"
+            "episodePlayTimeTitle": "{% translate 'Daily play count per episode' %}",
+            "podcastPlayTimeTitle": "{% translate 'Daily episode play count per podcast' %}",
+            "uniqueIpsTitle": "{% translate 'Unique listeners' %}",
+            "rssUniqueIpsTitle": "{% translate 'Unique subscribers' %}"
         }
     }
 </script>
-<script type="module" src={% static "spodcat/js/chart.js" %}></script>
+<script type="module" src={% static "spodcat/js/charts.js" %}></script>
 {% endblock extrahead %}
 
 {% block extrastyle %}
@@ -31,21 +31,48 @@
 
 {% block content %}
 <div class="charts">
-    <div class="chart-container">
-        {% translate "Start" %}: <input type="date" name="start">
-        {% translate "End" %}: <input type="date" name="end">
-        <div class="chart">
-            <canvas id="podcast-play-time-chart"></canvas>
+    <div class="chart-group">
+        <div>
+            <h2>{% translate "Approx. number of unique listeners and subscribers" %}</h2>
+            <small>
+                {% blocktranslate trimmed %}
+                More precisely, these measure the number of unique and non-bot (or rather: not-confirmed-to-be-bot) IP
+                addresses. The number of actual, physical <em>people</em> is unknown but definitely smaller.
+                {% endblocktranslate %}
+            </small>
         </div>
-    </div>
-    {% for podcast in podcasts %}
-        <div class="chart-container">
-            {% translate "Start" %}: <input type="date" name="start">
-            {% translate "End" %}: <input type="date" name="end">
+        <div class="horizontal">
             <div class="chart">
-                <canvas class="episode-play-time-chart" data-podcast-slug="{{podcast.slug}}" data-podcast-name="{{podcast.name}}"></canvas>
+                <canvas id="unique-ips-chart"></canvas>
+            </div>
+            <div class="chart">
+                <canvas id="rss-unique-ips-chart"></canvas>
             </div>
         </div>
-    {% endfor %}
+    </div>
+
+    <div class="chart-group">
+        <div>
+            <h2>{% translate "Daily play count charts" %}</h2>
+            <small>
+                {% blocktranslate trimmed %}
+                These measure the number of episode downloads per day by non-bot users. The numbers may be fractional
+                because of partial downloads.
+                {% endblocktranslate %}
+            </small>
+        </div>
+        <div class="date-fields">
+            {% translate "Start" %}: <input type="date" name="daily-plays-start-date">
+            {% translate "End" %}: <input type="date" name="daily-plays-end-date">
+        </div>
+        <div class="chart">
+            <canvas id="podcast-episode-plays-chart"></canvas>
+        </div>
+        {% for podcast in podcasts %}
+            <div class="chart">
+                <canvas class="episode-plays-chart" data-podcast-slug="{{podcast.slug}}" data-podcast-name="{{podcast.name}}"></canvas>
+            </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock content %}

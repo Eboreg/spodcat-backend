@@ -1,8 +1,8 @@
-import itertools
-from datetime import date, datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Iterable, TypedDict
+from datetime import date
+from typing import TYPE_CHECKING
 
 from django.db.models import (
+    Count,
     DurationField,
     F,
     FloatField,
@@ -12,61 +12,42 @@ from django.db.models import (
     Value as V,
 )
 from django.db.models.functions import Cast, Coalesce, Concat, Round
-from django.utils.timezone import get_current_timezone
+
+from spodcat.logs.chart_data import DailyChartData, MonthChartData
 
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractUser, AnonymousUser
 
-    from spodcat.logs.models import PodcastEpisodeAudioRequestLog
-
-    class ChartQuerySetValues(TypedDict):
-        name: str
-        slug: str
-        date: date
-        y: int
+    from spodcat.logs.models import (
+        PodcastEpisodeAudioRequestLog,
+        PodcastRssRequestLog,
+    )
 
 
-class ChartData:
-    class DataSet(TypedDict):
-        class DataPoint(TypedDict):
-            x: int
-            y: int
+class PodcastRssRequestLogQuerySet(QuerySet["PodcastRssRequestLog"]):
+    def filter_by_user(self, user: "AbstractUser | AnonymousUser"):
+        if user.is_superuser:
+            return self
+        if not user.is_staff:
+            return self.none()
+        return self.filter(Q(podcast__owner=user) | Q(podcast__authors=user))
 
-        label: str
-        data: list[DataPoint]
-
-    datasets: list[DataSet]
-    start_date: date
-    end_date: date
-    _epoch: datetime
-
-    def __init__(self, data: Iterable["ChartQuerySetValues"], start_date: date, end_date: date):
-        self.datasets = []
-        self.start_date = start_date
-        self.end_date = end_date
-        self._epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
-
-        for key, values in itertools.groupby(data, key=lambda v: tuple([v["slug"], v["name"]])):
-            self.datasets.append({
-                "label": key[1],
-                "data": [{"x": self._date_to_ms(v["date"]), "y": v["y"]} for v in values],
-            })
-
-    def _date_to_ms(self, d: date):
-        dt = datetime(d.year, d.month, d.day, tzinfo=get_current_timezone())
-        return int((dt - self._epoch).total_seconds() * 1000)
-
-    def fill_empty_points(self):
-        days = (self.end_date - self.start_date).days + 1
-        dates = [self._date_to_ms(self.start_date + timedelta(days=d)) for d in range(days)]
-
-        for dataset in self.datasets:
-            new_data: list[ChartData.DataSet.DataPoint] = []
-            datadict = {d["x"]: d["y"] for d in dataset["data"]}
-            for d in dates:
-                new_data.append({"x": d, "y": datadict.get(d, 0)})
-            dataset["data"] = new_data
+    def get_unique_ips_chart_data(self, start_date: date, end_date: date):
+        qs = (
+            self.order_by()
+            .filter(created__date__gte=start_date, created__date__lte=end_date)
+            .values(
+                month=F("created__date__month"),
+                year=F("created__date__year"),
+                name=F("podcast__name"),
+                slug=F("podcast__slug"),
+            )
+            .annotate(y=Count("remote_addr", distinct=True))
+            .values("month", "year", "y", "name", "slug")
+            .order_by("slug", "year", "month")
+        )
+        return MonthChartData(qs, start_date, end_date)
 
 
 class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequestLog"]):
@@ -77,28 +58,18 @@ class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequest
             return self.none()
         return self.filter(Q(episode__podcast__owner=user) | Q(episode__podcast__authors=user))
 
-    def get_episode_chart_data(self, start_date: date, end_date: date):
+    def get_episode_play_count_chart_data(self, start_date: date, end_date: date):
         qs = (
             self.order_by()
+            .filter(created__gte=start_date, created__lte=end_date)
             .values(name=F("episode__name"), slug=F("episode__slug"), date=F("created__date"))
-            .with_play_time_alias()
-            .annotate(y=Sum(F("play_time")))
+            .alias(plays=Cast(F("response_body_size"), FloatField()) / F("episode__audio_file_length"))
+            .annotate(y=Sum(F("plays")))
             .exclude(y=0.0)
             .values("name", "slug", "date", "y")
             .order_by("slug", "date")
         )
-        return ChartData(qs, start_date, end_date)
-
-    def get_podcast_chart_data(self, start_date: date, end_date: date):
-        qs = (
-            self.order_by()
-            .values(name=F("episode__podcast__name"), slug=F("episode__podcast__slug"), date=F("created__date"))
-            .with_play_time_alias()
-            .annotate(y=Sum(F("play_time")))
-            .values("name", "slug", "date", "y")
-            .order_by("slug", "date")
-        )
-        return ChartData(qs, start_date, end_date)
+        return DailyChartData(qs, start_date, end_date)
 
     def get_play_count_query(self, **filters):
         return (
@@ -112,6 +83,7 @@ class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequest
         )
 
     def get_play_time_query(self, **filters):
+        # Not used, keeping it just in case
         from django.db import connections
 
         connection = connections[self.db]
@@ -130,6 +102,39 @@ class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequest
             .values("play_time")
         )
 
+    def get_podcast_play_count_chart_data(self, start_date: date, end_date: date):
+        qs = (
+            self.order_by()
+            .filter(created__gte=start_date, created__lte=end_date)
+            .values(name=F("episode__podcast__name"), slug=F("episode__podcast__slug"), date=F("created__date"))
+            .alias(plays=Cast(F("response_body_size"), FloatField()) / F("episode__audio_file_length"))
+            .annotate(y=Sum(F("plays")))
+            .values("name", "slug", "date", "y")
+            .order_by("slug", "date")
+        )
+        return DailyChartData(qs, start_date, end_date)
+
+    def get_unique_ips_chart_data(self, start_date: date, end_date: date):
+        qs = (
+            self.order_by()
+            .filter(created__date__gte=start_date, created__date__lte=end_date)
+            .values(
+                month=F("created__date__month"),
+                year=F("created__date__year"),
+                name=F("episode__podcast__name"),
+                slug=F("episode__podcast__slug"),
+            )
+            .annotate(y=Count("remote_addr", distinct=True))
+            .values("month", "year", "y", "name", "slug")
+            .order_by("slug", "year", "month")
+        )
+        return MonthChartData(qs, start_date, end_date)
+
+    def with_percent_fetched(self):
+        return self.with_quota_fetched_alias().annotate(
+            percent_fetched=Cast(F("quota_fetched") * V(100), FloatField()),
+        )
+
     def with_play_time_alias(self):
         # play_time = seconds as integer
         return self.alias(
@@ -138,11 +143,6 @@ class PodcastEpisodeAudioRequestLogQuerySet(QuerySet["PodcastEpisodeAudioRequest
                 F("episode__audio_file_length") *
                 F("episode__duration_seconds")
             ),
-        )
-
-    def with_percent_fetched(self):
-        return self.with_quota_fetched_alias().annotate(
-            percent_fetched=Cast(F("quota_fetched") * V(100), FloatField()),
         )
 
     def with_quota_fetched_alias(self):
@@ -157,5 +157,6 @@ if TYPE_CHECKING:
     class PodcastEpisodeAudioRequestLogManager(
         Manager[PodcastEpisodeAudioRequestLog],
         PodcastEpisodeAudioRequestLogQuerySet,
-    ):
-        ...
+    ): ...
+
+    class PodcastRssRequestLogManager(Manager[PodcastRssRequestLog], PodcastRssRequestLogQuerySet): ...

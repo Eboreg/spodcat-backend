@@ -6,9 +6,7 @@
         "bootstrap": "^5.3.7",
         "chartjs-adapter-date-fns": "^3.0.0",
         "date-fns": "^4.1.0",
-        "typescript": "^5.8.3"
-    },
-    "dependencies": {
+        "typescript": "^5.8.3",
         "chart.js": "^4.4.9",
         "parcel": "^2.14.4"
     },

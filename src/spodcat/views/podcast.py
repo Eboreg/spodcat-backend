@@ -14,6 +14,7 @@ from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -21,6 +22,7 @@ from rest_framework.response import Response
 from rest_framework_json_api import views
 
 from spodcat import serializers
+from spodcat.logs.chart_data import ChartData
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
@@ -64,41 +66,66 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def chart(self, request: Request):
-        from spodcat.logs.models import PodcastEpisodeAudioRequestLog
+        from spodcat.logs.models import (
+            PodcastEpisodeAudioRequestLog,
+            PodcastRssRequestLog,
+        )
 
+        chart_type = request.query_params["type"]
+        chart_qs = PodcastEpisodeAudioRequestLog.objects.filter(is_bot=False).filter_by_user(request.user)
+        chart_data: ChartData | None = None
         start_date = self.get_chart_start_date(request)
         end_date = self.get_chart_end_date(request)
-        chart_data = (
-            PodcastEpisodeAudioRequestLog.objects
-            .filter(is_bot=False)
-            .filter_by_user(request.user)
-            .get_podcast_chart_data(start_date, end_date)
-        )
-        chart_data.fill_empty_points()
-        serializer = self.get_serializer(chart_data)
-        return Response(serializer.data)
+
+        if chart_type == "play-time":
+            chart_data = chart_qs.get_podcast_play_count_chart_data(start_date, end_date).fill_empty_points()
+        elif chart_type == "unique-ips":
+            chart_data = chart_qs.get_unique_ips_chart_data(start_date, end_date).fill_empty_points()
+        elif chart_type == "rss-unique-ips":
+            chart_js = (
+                PodcastRssRequestLog.objects
+                .filter(is_bot=False)
+                .exclude(user_agent="")
+                .filter_by_user(request.user)
+            )
+            chart_data = chart_js.get_unique_ips_chart_data(start_date, end_date).fill_empty_points()
+
+        if chart_data:
+            serializer = self.get_serializer(chart_data)
+            return Response(serializer.data)
+
+        raise ValidationError({"type": "Not a valid chart type."})
 
     @action(
         methods=["get"],
+        url_path="chart",
         detail=True,
         serializer_class=serializers.ChartSerializer,
         renderer_classes=[rest_framework.renderers.JSONRenderer, rest_framework.renderers.BrowsableAPIRenderer],
         authentication_classes=[SessionAuthentication],
         permission_classes=[IsAuthenticated],
     )
-    def episode_chart(self, request: Request, pk: str):
+    def detail_chart(self, request: Request, pk: str):
         from spodcat.logs.models import PodcastEpisodeAudioRequestLog
 
-        start_date = self.get_chart_start_date(request)
-        end_date = self.get_chart_end_date(request)
-        chart_data = (
+        chart_type = request.query_params["type"]
+        chart_qs = (
             PodcastEpisodeAudioRequestLog.objects
             .filter(is_bot=False, episode__podcast=pk)
             .filter_by_user(request.user)
-            .get_episode_chart_data(start_date, end_date)
         )
-        serializer = self.get_serializer(chart_data)
-        return Response(serializer.data)
+        chart_data: ChartData | None = None
+
+        if chart_type == "play-time":
+            start_date = self.get_chart_start_date(request)
+            end_date = self.get_chart_end_date(request)
+            chart_data = chart_qs.get_episode_play_count_chart_data(start_date, end_date)
+
+        if chart_data:
+            serializer = self.get_serializer(chart_data)
+            return Response(serializer.data)
+
+        raise ValidationError({"type": "Not a valid chart type."})
 
     def get_chart_end_date(self, request: Request):
         return (

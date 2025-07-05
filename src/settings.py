@@ -1,14 +1,21 @@
+import os
 from pathlib import Path
+
+from django.utils.translation import gettext_lazy as _
+
+from spodcat.utils import env_boolean
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 SRC_DIR = Path(__file__).resolve().parent
 BASE_DIR = SRC_DIR.parent
-
-SECRET_KEY = "x;'?49q5y^1h2@]_2}08:)&rkl)cd(be})/ewv;r:t'[^0"
-DEBUG = True
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+DEBUG = env_boolean("DEBUG")
 ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]"]
 INTERNAL_IPS = "127.0.0.1"
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
+DJANGO_DB = os.environ.get("DJANGO_DB", ENVIRONMENT)
+ADMINS = [(os.environ.get("ADMIN_NAME", "Admin"), os.environ.get("ADMIN_EMAIL", "root@localhost"))]
 
 
 # Application definition
@@ -77,11 +84,19 @@ WSGI_APPLICATION = "wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES: dict[str, dict] = {
-    "default": {
+    "local": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     },
+    "production": {
+        "ENGINE": os.environ.get("PROD_SQL_ENGINE"),
+        "NAME": os.environ.get("PROD_SQL_DB"),
+        "PASSWORD": os.environ.get("PROD_SQL_PASSWORD"),
+        "HOST": os.environ.get("PROD_SQL_HOST"),
+        "USER": os.environ.get("PROD_SQL_USER"),
+    },
 }
+DATABASES["default"] = DATABASES[DJANGO_DB].copy()
 
 
 # Internationalization
@@ -92,6 +107,10 @@ TIME_ZONE = "Europe/Stockholm"
 USE_I18N = True
 USE_TZ = True
 LOCALE_PATHS = [SRC_DIR / "spodcat/locale"]
+LANGUAGES = [
+    ("en", _("English")),
+    ("sv", _("Swedish")),
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -99,7 +118,25 @@ LOCALE_PATHS = [SRC_DIR / "spodcat/locale"]
 # https://django-storages.readthedocs.io/en/latest/backends/azure.html
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
-MEDIA_URL = "media/"
+STATICFILES_DIRS = []
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
+
+AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", "musikensmakt")
+AZURE_ACCOUNT_KEY = os.environ.get("AZURE_FILES_KEY")
+AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", "spodcat-backend")
+AZURE_LOCATION = ENVIRONMENT
+AZURE_SUBSCRIPTION_ID = os.environ.get("AZURE_SUBSCRIPTION_ID")
+AZURE_RESOURCE_GROUP = os.environ.get("AZURE_RESOURCE_GROUP")
+AZURE_TENANT_ID = os.environ.get("AZURE_TENANT_ID")
+AZURE_CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
+AZURE_CLIENT_SECRET = os.environ.get("AZURE_CLIENT_SECRET")
+
+STORAGES = {
+    "default": {"BACKEND": "storages.backends.azure_storage.AzureStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "local": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+}
 
 
 # Default primary key field type
@@ -109,7 +146,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Django REST Framework
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
     "TEST_REQUEST_RENDERER_CLASSES": (
         "rest_framework_json_api.renderers.JSONRenderer",
     ),

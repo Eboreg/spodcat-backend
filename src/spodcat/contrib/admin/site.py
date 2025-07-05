@@ -1,8 +1,10 @@
+from functools import update_wrapper
+
 from django.apps import apps
 from django.contrib import admin
 from django.db.models import Q
 from django.http import HttpRequest
-from django.urls import path
+from django.urls import path, reverse_lazy
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
 
@@ -25,8 +27,17 @@ class AdminSite(admin.AdminSite):
         return super().index(request, extra_context)
 
     def get_urls(self):
+        def wrap(view, cacheable=False):
+            def wrapper(*args, **kwargs):
+                return self.admin_view(view, cacheable)(*args, **kwargs)
+
+            setattr(wrapper, "admin_site", self)
+            setattr(wrapper, "login_url", reverse_lazy("admin:login", current_app=self.name))
+
+            return update_wrapper(wrapper, view)
+
         return super().get_urls() + [
-            path("charts/", self.charts, name="charts"),
+            path("charts/", wrap(self.charts), name="charts"),
         ]
 
     def charts(self, request: HttpRequest):

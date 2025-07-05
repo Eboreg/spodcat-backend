@@ -4,4 +4,12 @@ declare global {
     };
 }
 
-export {};
+export interface ChartApiResponse {
+    datasets: {
+        label: string;
+        data: {
+            x: number;
+            y: number;
+        }[];
+    }[];
+}

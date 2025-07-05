@@ -17,7 +17,10 @@ from spodcat.logs.ip_check import (
     get_geoip2_city,
     get_ip_address_category,
 )
-from spodcat.logs.querysets import PodcastEpisodeAudioRequestLogQuerySet
+from spodcat.logs.querysets import (
+    PodcastEpisodeAudioRequestLogQuerySet,
+    PodcastRssRequestLogQuerySet,
+)
 from spodcat.logs.user_agent import (
     DeviceCategory,
     UserAgentData,
@@ -29,7 +32,10 @@ from spodcat.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
-    from spodcat.logs.querysets import PodcastEpisodeAudioRequestLogManager
+    from spodcat.logs.querysets import (
+        PodcastEpisodeAudioRequestLogManager,
+        PodcastRssRequestLogManager,
+    )
     from spodcat.models import Episode, Podcast, PodcastContent
 
 
@@ -42,9 +48,6 @@ class ReferrerCategory(models.TextChoices):
 
 
 class UserAgent(ModelMixin, models.Model):
-    user_agent = models.CharField(max_length=400, primary_key=True, verbose_name=_("user agent"))
-    name = models.CharField(max_length=100, verbose_name=_("name"))
-    type = models.CharField(max_length=10, choices=UserAgentType.choices, db_index=True, verbose_name=_("type"))
     device_category = models.CharField(
         max_length=20,
         null=True,
@@ -53,6 +56,9 @@ class UserAgent(ModelMixin, models.Model):
         verbose_name=_("device category"),
     )
     device_name = models.CharField(max_length=40, blank=True, default="", verbose_name=_("device name"))
+    name = models.CharField(max_length=100, verbose_name=_("name"))
+    type = models.CharField(max_length=10, choices=UserAgentType.choices, db_index=True, verbose_name=_("type"))
+    user_agent = models.CharField(max_length=400, primary_key=True, verbose_name=_("user agent"))
 
     class Meta:
         verbose_name = _("user agent")
@@ -76,11 +82,11 @@ class UserAgent(ModelMixin, models.Model):
 
 
 class GeoIP(ModelMixin, models.Model):
-    ip = models.GenericIPAddressField(primary_key=True, verbose_name=_("IP"))
     city = models.CharField(max_length=100, verbose_name=_("city"))
-    region = models.CharField(max_length=100, verbose_name=_("region"))
     country = models.CharField(max_length=10, verbose_name=_("country"))
+    ip = models.GenericIPAddressField(primary_key=True, verbose_name=_("IP"))
     org = models.CharField(max_length=100, verbose_name=_("org"))
+    region = models.CharField(max_length=100, verbose_name=_("region"))
 
     class Meta:
         verbose_name = _("GeoIP")
@@ -109,17 +115,26 @@ class GeoIP(ModelMixin, models.Model):
 
 
 class RequestLog(ModelMixin, models.Model):
-    is_bot = models.BooleanField(default=False, db_index=True, verbose_name=_("is bot"))
-    path_info = TruncatedCharField(max_length=200, blank=True, default="", verbose_name=_("path"))
-    user_agent = models.CharField(max_length=400, blank=True, default="", verbose_name=_("user agent"))
-    user_agent_data: "UserAgent | None" = models.ForeignKey(
-        "spodcat_logs.UserAgent",
+    created = models.DateTimeField(db_index=True, verbose_name=_("created"))
+    geoip: "GeoIP | None" = models.ForeignKey(
+        "spodcat_logs.GeoIP",
         on_delete=models.SET_NULL,
         null=True,
         default=None,
         related_name="+",
-        verbose_name=_("user agent data"),
+        verbose_name=_("GeoIP"),
     )
+    is_bot = models.BooleanField(default=False, db_index=True, verbose_name=_("is bot"))
+    path_info = TruncatedCharField(max_length=200, blank=True, default="", verbose_name=_("path"))
+    referrer = TruncatedCharField(max_length=150, blank=True, default="", verbose_name=_("referrer"))
+    referrer_category = models.CharField(
+        max_length=10,
+        null=True,
+        default=None,
+        choices=ReferrerCategory.choices,
+        verbose_name=_("referrer category"),
+    )
+    referrer_name = models.CharField(max_length=50, blank=True, default="", verbose_name=_("referrer name"))
     remote_addr = models.GenericIPAddressField(
         null=True,
         db_index=True,
@@ -133,23 +148,15 @@ class RequestLog(ModelMixin, models.Model):
         verbose_name=_("remote address category"),
     )
     remote_host = models.CharField(max_length=100, blank=True, default="", verbose_name=_("remote host"))
-    geoip: "GeoIP | None" = models.ForeignKey(
-        "spodcat_logs.GeoIP",
+    user_agent = models.CharField(max_length=400, blank=True, default="", verbose_name=_("user agent"))
+    user_agent_data: "UserAgent | None" = models.ForeignKey(
+        "spodcat_logs.UserAgent",
         on_delete=models.SET_NULL,
         null=True,
         default=None,
         related_name="+",
-        verbose_name=_("GeoIP"),
+        verbose_name=_("user agent data"),
     )
-    referrer = TruncatedCharField(max_length=150, blank=True, default="", verbose_name=_("referrer"))
-    referrer_category = models.CharField(
-        max_length=10,
-        null=True,
-        default=None,
-        choices=ReferrerCategory.choices,
-        verbose_name=_("referrer category"),
-    )
-    referrer_name = models.CharField(max_length=50, blank=True, default="", verbose_name=_("referrer name"))
 
     class Meta:
         verbose_name = _("request log")
@@ -248,7 +255,6 @@ class RequestLog(ModelMixin, models.Model):
 
 
 class PodcastRequestLog(RequestLog):
-    created = models.DateTimeField(db_index=True, verbose_name=_("created"))
     podcast: "Podcast" = models.ForeignKey(
         "spodcat.Podcast",
         on_delete=models.CASCADE,
@@ -262,7 +268,6 @@ class PodcastRequestLog(RequestLog):
 
 
 class PodcastContentRequestLog(RequestLog):
-    created = models.DateTimeField(db_index=True, verbose_name=_("created"))
     content: "PodcastContent" = models.ForeignKey(
         "spodcat.PodcastContent",
         on_delete=models.CASCADE,
@@ -276,7 +281,6 @@ class PodcastContentRequestLog(RequestLog):
 
 
 class PodcastEpisodeAudioRequestLog(RequestLog):
-    created = models.DateTimeField(db_index=True, verbose_name=_("created"))
     duration_ms = models.IntegerField(verbose_name=_("duration"))
     episode: "Episode | None" = models.ForeignKey(
         "spodcat.Episode",
@@ -336,10 +340,11 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
 
 
 class PodcastRssRequestLog(RequestLog):
-    created = models.DateTimeField(db_index=True, verbose_name=_("created"))
     podcast: "Podcast" = models.ForeignKey(
         "spodcat.Podcast",
         on_delete=models.CASCADE,
         related_name="rss_requests",
         verbose_name=_("podcast"),
     )
+
+    objects: "PodcastRssRequestLogManager" = PodcastRssRequestLogQuerySet.as_manager()
