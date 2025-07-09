@@ -8,9 +8,9 @@ from spodcat.serve_media import serve_media
 urlpatterns = [
     path("", include("spodcat.urls")),
     path("admin/", include("spodcat.contrib.admin.urls")),
+    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=serve_media),
+    *static(settings.STATIC_URL, document_root=settings.STATIC_ROOT),
 ]
-urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=serve_media))
-urlpatterns.extend(static(settings.STATIC_URL, document_root=settings.STATIC_ROOT))
 
 try:
     import debug_toolbar
