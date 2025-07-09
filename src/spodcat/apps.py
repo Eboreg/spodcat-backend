@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 class SpodcatConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "spodcat"
-    verbose_name = _("podcasts")
+    verbose_name = _("Podcasts")
 
     def ready(self):
         from spodcat import signals

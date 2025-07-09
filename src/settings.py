@@ -156,3 +156,12 @@ REST_FRAMEWORK = {
 
 MARTOR_ENABLE_LABEL = True
 AUTH_USER_MODEL = "test_env.User"
+
+
+SPODCAT = {
+    "FRONTEND_ROOT_URL": os.environ.get("FRONTEND_ROOT_URL"),
+    "BACKEND_HOST": os.environ.get("BACKEND_HOST"),
+    "FILEFIELDS": {
+        "FONTFACE_FILE": {"STORAGE": "local"},
+    },
+}

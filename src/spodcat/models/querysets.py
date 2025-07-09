@@ -58,8 +58,11 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
             "slug",
         )
 
+    def published(self):
+        return self.filter(published__lte=now().date())
+
     def listed(self):
-        return self.filter(is_draft=False, published__lte=now().date())
+        return self.published().filter(is_draft=False)
 
     def with_has_chapters(self):
         from spodcat.models import EpisodeChapter, EpisodeSong

@@ -1,3 +1,4 @@
+from typing import cast
 from uuid import UUID
 
 from django.apps import apps
@@ -11,6 +12,7 @@ from rest_framework_json_api import views
 from spodcat import serializers
 from spodcat.filters import IdListFilter
 from spodcat.models import PodcastContent
+from spodcat.models.querysets import PodcastContentQuerySet
 
 
 class PodcastContentFilter(IdListFilter):
@@ -35,7 +37,7 @@ class PodcastContentViewSet(views.ReadOnlyModelViewSet):
     serializer_class = serializers.PodcastContentSerializer
 
     def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
+        queryset = cast(PodcastContentQuerySet, super().filter_queryset(queryset))
         if self.action == "list":
             return queryset.listed()
         return queryset.published()
