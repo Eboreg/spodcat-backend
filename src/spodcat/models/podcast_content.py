@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Self
 from urllib.parse import urljoin
 
 from django.contrib import admin
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Case, Q, Value as V, When
 from django.db.models.functions import Now
@@ -35,7 +36,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     is_draft = models.BooleanField(verbose_name=_("draft"), default=False)
     name = models.CharField(max_length=100, verbose_name=_("name"))
-    podcast: "Podcast" = models.ForeignKey(
+    podcast = models.ForeignKey["Podcast"](
         "spodcat.Podcast",
         on_delete=models.PROTECT,
         related_name="contents",
@@ -44,7 +45,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     published = models.DateField(default=today, verbose_name=_("published"))
     slug = models.SlugField(max_length=100, verbose_name=_("slug"))
 
-    objects: "PodcastContentManager[Self]" = PodcastContentQuerySet.as_manager()
+    objects: "PodcastContentManager[Self]" = PodcastContentQuerySet[Self].as_manager()
 
     class Meta:
         ordering = ["-published"]
@@ -72,7 +73,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     @property
     # pylint: disable=no-member
     def frontend_url(self) -> str:
-        instance_class = self.get_real_instance_class()
+        instance_class = self.get_real_instance_class() or self.__class__
 
         if self.is_draft:
             return urljoin(
@@ -92,7 +93,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         return slugify(self.name)
 
     def generate_slug(self) -> str:
-        existing = [e.slug for e in self._meta.model.objects.filter(podcast=self.podcast)]
+        existing = [e.slug for e in self.__class__.objects.filter(podcast=self.podcast)]
         existing += ["draft"]
         base_slug = self._get_base_slug()
         slug = base_slug
@@ -106,7 +107,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
 
     # pylint: disable=no-member
     def has_change_permission(self, request):
-        return (
+        return isinstance(request.user, AbstractUser) and (
             request.user.is_superuser or
             request.user == self.podcast.owner or
             request.user in self.podcast.authors.all()

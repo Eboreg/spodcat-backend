@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools"]
 
 [project]
-version = "0.3.19"
+version = "0.4.0"
 name = "spodcat-backend"
 authors = [
     {name = "Robert Huselius", email = "robert@huseli.us"},
@@ -12,20 +12,22 @@ description = ""
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
 dependencies = [
+    "country_list",
+    "django-polymorphic",
     "django",
-    "djangorestframework",
     "djangorestframework-jsonapi[django-polymorphic,django-filter]",
+    "djangorestframework",
+    "feedgen",                  # generating RSS feed
+    "feedparser",               # importing RSS feed
+    "geoip2",                   # used to get geo data for remote IPs
+    "iso639-lang",              # getting language choices for podcast
+    "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
+    "markdownify",              # convert HTML to Markdown when importing RSS feed
+    "martor",                   # Markdown editor for admin
     "pillow",                   # thumbnail generation
     "pydub",                    # generating dBFS arrays and normalising
-    "feedgen",                  # generating RSS feed
-    "iso639-lang",              # getting language choices for podcast
+    "python-dateutil",
     "python-slugify",           # generating slugs for podcast content
-    "django-polymorphic",
-    "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
-    "martor",                   # Markdown editor for admin
-    "feedparser",               # importing RSS feed
-    "markdownify",              # convert HTML to Markdown when importing RSS feed
-    "geoip2",                   # used to get geo data for remote IPs
 ]
 
 [project.optional-dependencies]
@@ -33,6 +35,8 @@ dev = [
     "django-debug-toolbar",
     "django-extensions",
     "django-storages[azure]",
+    "django-stubs",
+    "djangorestframework-stubs",
     "flake8",
     "ipdb",
     "ipython",
@@ -100,3 +104,8 @@ check_untyped_defs = true
 [[tool.mypy.overrides]]
 ignore_errors = true
 module = ["*.migrations.*"]
+
+[tool.pyright]
+exclude = ["**/__pycache__", "node_modules", "build", "**/migrations", "**/.*", ".venv"]
+typeCheckingMode = "basic"
+ignore = [".venv"]

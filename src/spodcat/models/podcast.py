@@ -4,13 +4,13 @@ import re
 import uuid
 from base64 import b64encode
 from io import BytesIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
-import feedparser
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.files.images import ImageFile
 from django.db import models
@@ -25,6 +25,7 @@ from spodcat.markdown import MarkdownExtension
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastQuerySet
 from spodcat.settings import spodcat_settings
+from spodcat.types import RssFeed
 from spodcat.utils import (
     delete_storage_file,
     downscale_image,
@@ -44,8 +45,7 @@ from .functions import (
 
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import AbstractUser
-    from django.db.models.manager import RelatedManager
+    from django.db.models.fields.related_descriptors import RelatedManager
 
     from spodcat.models import Category, FontFace, PodcastLink
     from spodcat.models.querysets import PodcastContentManager, PodcastManager
@@ -67,7 +67,7 @@ def podcast_slug_validator(value: str):
 class Podcast(ModelMixin, models.Model):
     FONT_SIZES = ["small", "normal", "large"]
 
-    authors: "models.ManyToManyField[AbstractUser]" = models.ManyToManyField(
+    authors: "models.ManyToManyField[AbstractUser, Any]" = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="podcasts",
         blank=True,
@@ -85,7 +85,7 @@ class Podcast(ModelMixin, models.Model):
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
-    categories: "models.ManyToManyField[Category]" = models.ManyToManyField(
+    categories: "models.ManyToManyField[Category, Any]" = models.ManyToManyField(
         "spodcat.Category",
         blank=True,
         verbose_name=_("categories"),
@@ -135,7 +135,7 @@ class Podcast(ModelMixin, models.Model):
         verbose_name=_("language"),
     )
     name = models.CharField(max_length=100, verbose_name=_("name"))
-    name_font_face: "FontFace | None" = models.ForeignKey(
+    name_font_face = models.ForeignKey["FontFace | None"](
         "spodcat.FontFace",
         related_name="+",
         on_delete=models.SET_NULL,
@@ -150,7 +150,7 @@ class Podcast(ModelMixin, models.Model):
         default="normal",
         verbose_name=_("name font size"),
     )
-    owner: "AbstractUser" = models.ForeignKey(
+    owner = models.ForeignKey["AbstractUser"](
         settings.AUTH_USER_MODEL,
         related_name="owned_podcasts",
         on_delete=models.PROTECT,
@@ -252,19 +252,20 @@ class Podcast(ModelMixin, models.Model):
         downscale_image(self.favicon, max_width=100, max_height=100, save=save)
 
     def has_change_permission(self, request):
+        assert isinstance(request.user, AbstractUser)
         return request.user.is_superuser or request.user == self.owner or request.user in self.authors.all()
 
-    def update_from_feed(self, feed: feedparser.FeedParserDict):
+    def update_from_feed(self, feed: RssFeed):
         from spodcat.models import Category
 
-        self.name = markdownify(feed.title)
+        self.name = markdownify(feed["title"])
 
         if "description" in feed:
-            self.description = markdownify(feed.description)
+            self.description = markdownify(feed["description"])
 
-        if "image" in feed and "href" in feed.image and feed.image.href:
-            logger.info("Importing cover image: %s", feed.image.href)
-            response = requests.get(feed.image.href, timeout=10)
+        if "image" in feed and "href" in feed["image"] and feed["image"]["href"]:
+            logger.info("Importing cover image: %s", feed["image"]["href"])
+            response = requests.get(feed["image"]["href"], timeout=10)
             if response.ok:
                 suffix = ""
                 content_type = response.headers.get("Content-Type", "")
@@ -280,13 +281,13 @@ class Podcast(ModelMixin, models.Model):
                 self.handle_uploaded_cover()
 
         if "language" in feed:
-            self.language = feed.language
+            self.language = feed["language"]
 
         self.save()
 
         if "tags" in feed:
-            tags = [t["term"] for t in feed.tags]
+            tags = [t["term"] for t in feed["tags"]]
             self.categories.add(*list(Category.objects.filter(Q(cat__in=tags) | Q(sub__in=tags))))
         if "authors" in feed:
-            users = get_user_model().objects.filter(email__in=[a["email"] for a in feed.authors if "email" in a])
-            self.authors.add(*list(users))
+            users = get_user_model().objects.filter(email__in=[a["email"] for a in feed["authors"] if "email" in a])
+            self.authors.add(*list(users)) # type: ignore

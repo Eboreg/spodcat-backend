@@ -11,7 +11,7 @@ from django.views.static import serve
 
 def serve_media(request, path, document_root=None, show_indexes=False):
     path = posixpath.normpath(path).lstrip("/")
-    fullpath = Path(safe_join(document_root, path))
+    fullpath = Path(safe_join(document_root, path)) if document_root else Path(path)
 
     if not fullpath.is_file():
         return HttpResponseNotFound()

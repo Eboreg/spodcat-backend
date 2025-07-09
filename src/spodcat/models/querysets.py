@@ -1,12 +1,13 @@
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
+from django.contrib.auth.models import AbstractUser
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from django.utils.timezone import localdate, now
 from polymorphic.query import PolymorphicQuerySet
 
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import AbstractUser, AnonymousUser
+    from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 
     from spodcat.models import Podcast, PodcastContent
 
@@ -14,8 +15,12 @@ if TYPE_CHECKING:
 
 
 class PodcastQuerySet(QuerySet["Podcast"]):
-    def filter_by_user(self, user: "AnonymousUser | AbstractUser"):
-        if user.is_superuser:
+    @classmethod
+    def as_manager(cls) -> "PodcastManager":
+        return cast("PodcastManager", super().as_manager())
+
+    def filter_by_user(self, user: "AnonymousUser | AbstractBaseUser"):
+        if isinstance(user, AbstractUser) and user.is_superuser:
             return self
         if user.is_authenticated:
             return self.filter(Q(owner=user) | Q(authors=user))
@@ -33,6 +38,10 @@ class PodcastQuerySet(QuerySet["Podcast"]):
 
 
 class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
+    @classmethod
+    def as_manager(cls) -> "PodcastContentManager":
+        return cast("PodcastContentManager", super().as_manager())
+
     def partial(self):
         return self.only(
             "Episode___audio_file",
@@ -49,11 +58,8 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
             "slug",
         )
 
-    def published(self):
-        return self.filter(published__lte=now().date())
-
     def listed(self):
-        return self.published().filter(is_draft=False)
+        return self.filter(is_draft=False, published__lte=now().date())
 
     def with_has_chapters(self):
         from spodcat.models import EpisodeChapter, EpisodeSong
@@ -74,7 +80,7 @@ if TYPE_CHECKING:
     from polymorphic.managers import PolymorphicManager
 
     class PodcastContentManager(PolymorphicManager[_T], PodcastContentQuerySet[_T]):
-        ...
+        def filter(self, *args: Any, **kwargs: Any) -> PodcastContentQuerySet[_T]: ...
 
     class PodcastManager(Manager[Podcast], PodcastQuerySet):
         ...

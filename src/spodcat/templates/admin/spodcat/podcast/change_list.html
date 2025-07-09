@@ -5,9 +5,7 @@
 {% if logs_app_installed %}
 <div class="change-list-legend">
     <p>{% translate "<code>VIEWS</code> = number of times the podcast's index page has been requested." %}</p>
-    <p>{% translate "<code>VIEWS RECURSIVE</code> = number of views for the podcast's index page plus any of its episode/post detail pages." %}</p>
     <p>{% translate "<code>PLAYS</code> = number of times the podcast episodes' audio files have been downloaded <em>by a non-bot client</em> (as far as we're able to tell). May be a fraction because of partial downloads (common when streaming)." %}</p>
-    <p>{% translate "<code>PLAYERS</code> = number of unique IP addresses that have downloaded the podcast episodes' audio files (bots excluded)." %}</p>
 </div>
 {% endif %}
 {{ block.super }}

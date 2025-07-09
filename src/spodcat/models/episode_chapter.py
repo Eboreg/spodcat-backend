@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -33,7 +33,7 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
     )
     url = models.URLField(null=True, default=None, blank=True, verbose_name=_("URL"))
 
-    episode: "Episode"
+    episode: models.ForeignKey["Episode"]
 
     class Meta:
         ordering = ["start_time"]
@@ -44,19 +44,19 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
         return self.title
 
     # pylint: disable=no-member
-    def to_dict(self) -> ChapterDict:
+    def to_dict(self):
         # https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/examples/chapters/jsonChapters.md
-        return filter_values_not_null({
+        return cast(ChapterDict, filter_values_not_null({
             "endTime": self.end_time,
             "img": self.image.url if self.image else None,
             "startTime": self.start_time,
             "title": self.formatted_title,
             "url": self.url,
-        })
+        }))
 
 
 class EpisodeChapter(AbstractEpisodeChapter):
-    episode: "Episode" = models.ForeignKey(
+    episode = models.ForeignKey["Episode"](
         "spodcat.Episode",
         on_delete=models.CASCADE,
         related_name="chapters",

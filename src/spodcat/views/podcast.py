@@ -1,9 +1,7 @@
 import logging
-from datetime import date, timedelta
 from typing import cast
 from urllib.parse import urljoin
 
-import rest_framework.renderers
 from django.apps import apps
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
@@ -12,17 +10,13 @@ from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
-from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
 
 from spodcat import serializers
-from spodcat.logs.chart_data import ChartData
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
@@ -56,90 +50,6 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
     }
     queryset = Podcast.objects.order_by_last_content(reverse=True)
     serializer_class = serializers.PodcastSerializer
-
-    @action(
-        methods=["get"],
-        detail=False,
-        serializer_class=serializers.ChartSerializer,
-        renderer_classes=[rest_framework.renderers.JSONRenderer, rest_framework.renderers.BrowsableAPIRenderer],
-        authentication_classes=[SessionAuthentication],
-        permission_classes=[IsAuthenticated],
-    )
-    def chart(self, request: Request):
-        from spodcat.logs.models import (
-            PodcastEpisodeAudioRequestLog,
-            PodcastRssRequestLog,
-        )
-
-        chart_type = request.query_params["type"]
-        chart_qs = PodcastEpisodeAudioRequestLog.objects.filter(is_bot=False).filter_by_user(request.user)
-        chart_data: ChartData | None = None
-        start_date = self.get_chart_start_date(request)
-        end_date = self.get_chart_end_date(request)
-
-        if chart_type == "play-time":
-            chart_data = chart_qs.get_podcast_play_count_chart_data(start_date, end_date).fill_empty_points()
-        elif chart_type == "unique-ips":
-            chart_data = chart_qs.get_unique_ips_chart_data(start_date, end_date).fill_empty_points()
-        elif chart_type == "rss-unique-ips":
-            chart_js = (
-                PodcastRssRequestLog.objects
-                .filter(is_bot=False)
-                .exclude(user_agent="")
-                .filter_by_user(request.user)
-            )
-            chart_data = chart_js.get_unique_ips_chart_data(start_date, end_date).fill_empty_points()
-
-        if chart_data:
-            serializer = self.get_serializer(chart_data)
-            return Response(serializer.data)
-
-        raise ValidationError({"type": "Not a valid chart type."})
-
-    @action(
-        methods=["get"],
-        url_path="chart",
-        detail=True,
-        serializer_class=serializers.ChartSerializer,
-        renderer_classes=[rest_framework.renderers.JSONRenderer, rest_framework.renderers.BrowsableAPIRenderer],
-        authentication_classes=[SessionAuthentication],
-        permission_classes=[IsAuthenticated],
-    )
-    def detail_chart(self, request: Request, pk: str):
-        from spodcat.logs.models import PodcastEpisodeAudioRequestLog
-
-        chart_type = request.query_params["type"]
-        chart_qs = (
-            PodcastEpisodeAudioRequestLog.objects
-            .filter(is_bot=False, episode__podcast=pk)
-            .filter_by_user(request.user)
-        )
-        chart_data: ChartData | None = None
-
-        if chart_type == "play-time":
-            start_date = self.get_chart_start_date(request)
-            end_date = self.get_chart_end_date(request)
-            chart_data = chart_qs.get_episode_play_count_chart_data(start_date, end_date)
-
-        if chart_data:
-            serializer = self.get_serializer(chart_data)
-            return Response(serializer.data)
-
-        raise ValidationError({"type": "Not a valid chart type."})
-
-    def get_chart_end_date(self, request: Request):
-        return (
-            date.fromisoformat(request.query_params["end"])
-            if "end" in request.query_params
-            else date.today()
-        )
-
-    def get_chart_start_date(self, request: Request):
-        return (
-            date.fromisoformat(request.query_params["start"])
-            if "start" in request.query_params
-            else date.today() - timedelta(days=30)
-        )
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
@@ -203,7 +113,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
 
         for episode in episode_qs:
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
-            if episode.has_chapters:
+            if episode.has_chapters: # type: ignore
                 fe.podcast2.podcast_chapters(
                     spodcat_settings.get_absolute_backend_url("spodcat:episode-chapters", args=(episode.id,))
                 )
@@ -222,7 +132,8 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
             fe.podcast.itunes_duration(round(episode.duration_seconds))
             if episode.image:
                 fe.podcast.itunes_image(episode.image.url)
-                fe.podcast2.podcast_image(episode.image.url, episode.image_width)
+                if episode.image_width:
+                    fe.podcast2.podcast_image(episode.image.url, episode.image_width)
             if episode.audio_file:
                 fe.enclosure(
                     url=episode.audio_file.url,
@@ -239,7 +150,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
 
         if request.query_params.get("html"):
             return TemplateResponse(
-                request=request,
+                request=request._request, # pylint: disable=protected-access
                 template="spodcat/rss.html",
                 context={"rss": rss.decode()},
             )

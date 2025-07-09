@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 def markdown_image_upload(request: HttpRequest):
     image = request.FILES.get("markdown-image-upload")
 
-    if image:
+    if image and image.name:
         path = os.path.join("uploads", image.name)
         new_path = default_storage.save(path, image)
         return JsonResponse({

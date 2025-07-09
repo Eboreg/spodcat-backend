@@ -2,7 +2,7 @@ import datetime
 import math
 import os
 from io import BytesIO
-from typing import BinaryIO, Generator
+from typing import TYPE_CHECKING
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
@@ -11,86 +11,9 @@ from PIL import Image
 from pydub import AudioSegment
 
 
-class Month:
-    date: datetime.date
-    timestamp_ms: int
-
-    def __init__(self, year: int | None = None, month: int | None = None):
-        if year is None or month is None:
-            today = datetime.date.today()
-            year = today.year
-            month = today.month
-        self.date = datetime.date(year=year, month=month, day=1)
-        self.timestamp_ms = date_to_timestamp_ms(self.date)
-
-    def __repr__(self):
-        return f"Month({self.date.year}-{self.date.month:02d})"
-
-    def __add__(self, other):
-        if isinstance(other, int):
-            date = self.date
-            for _ in range(other):
-                if date.month == 12:
-                    date = datetime.date(year=date.year + 1, month=1, day=1)
-                else:
-                    date = datetime.date(year=date.year, month=date.month + 1, day=1)
-            return Month.from_date(date)
-        return NotImplemented
-
-    def __lt__(self, other):
-        if isinstance(other, Month):
-            if self.date.year < other.date.year:
-                return True
-            if self.date.year == other.date.year and self.date.month < other.date.month:
-                return True
-            return False
-        return NotImplemented
-
-    def __eq__(self, other):
-        if isinstance(other, Month):
-            return other.date.year == self.date.year and other.date.month == self.date.month
-        return NotImplemented
-
-    def __sub__(self, other):
-        if isinstance(other, int):
-            date = self.date
-            for _ in range(other):
-                if date.month == 1:
-                    date = datetime.date(year=date.year - 1, month=12, day=1)
-                else:
-                    date = datetime.date(year=date.year, month=date.month - 1, day=1)
-            return Month.from_date(date)
-
-        if isinstance(other, Month):
-            if other == self:
-                return 0
-            smallest = other if other < self else self
-            largest = other if other > self else self
-            months = 0
-            while True:
-                largest -= 1
-                months += 1
-                if largest == smallest:
-                    return months
-
-        return NotImplemented
-
-    def range(self, steps) -> "Generator[Month]":
-        for i in range(steps):
-            yield self + i
-
-    def range_until(self, other: "Month", inclusive: bool = True):
-        if other > self:
-            for i in range(other - self):
-                yield self + i
-            if inclusive:
-                yield other
-        elif other == self and inclusive:
-            yield self
-
-    @classmethod
-    def from_date(cls, date: datetime.date):
-        return cls(year=date.year, month=date.month)
+if TYPE_CHECKING:
+    from tempfile import _TemporaryFileWrapper
+    from typing import BinaryIO, Generator
 
 
 def date_to_datetime(date: datetime.date) -> datetime.datetime:
@@ -105,7 +28,7 @@ def date_to_timestamp_ms(date: datetime.date) -> int:
 
 
 def delete_storage_file(file: FieldFile):
-    if file:
+    if file and file.name:
         file.storage.delete(name=file.name)
 
 
@@ -118,6 +41,7 @@ def downscale_image(image: ImageFieldFile, max_width: int, max_height: int, save
             im.thumbnail((int(im.width * ratio), int(im.height * ratio)))
             im.save(buf, format=im.format)
 
+        assert image.name
         image.save(name=image.name, content=ImageFile(file=buf), save=save)
 
 
@@ -132,6 +56,7 @@ def filter_values_not_null(d: dict) -> dict:
 
 
 def generate_thumbnail(from_field: ImageFieldFile, to_field: ImageFieldFile, size: int, save: bool = False):
+    assert from_field.name
     stem, suffix = os.path.splitext(os.path.basename(from_field.name))
     thumbnail_filename = f"{stem}-thumbnail{suffix}"
     buf = BytesIO()
@@ -146,7 +71,7 @@ def generate_thumbnail(from_field: ImageFieldFile, to_field: ImageFieldFile, siz
     return mimetype
 
 
-def get_audio_file_dbfs_array(file: BinaryIO, format_name: str) -> list[float]:
+def get_audio_file_dbfs_array(file: "BinaryIO | _TemporaryFileWrapper[bytes]", format_name: str) -> list[float]:
     audio = AudioSegment.from_file(file, format_name)
     return get_audio_segment_dbfs_array(audio)
 
@@ -173,5 +98,7 @@ def split_audio_segment(whole: AudioSegment, parts: int) -> "Generator[AudioSegm
     n = math.ceil(len(whole) / parts)
 
     while i < len(whole):
-        yield whole[i:i + n]
+        part = whole[i:i + n]
+        assert isinstance(part, AudioSegment)
+        yield part
         i += n

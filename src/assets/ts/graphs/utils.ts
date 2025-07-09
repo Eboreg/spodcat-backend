@@ -1,10 +1,3 @@
-function checkStartDate(date: Date): Date {
-    const earliestDate = getEarliestDate();
-
-    if (earliestDate.getTime() > date.getTime()) return earliestDate;
-    return date;
-}
-
 function getOrSetDate(inputName: string, fallback: Date): Date {
     const input = document.querySelector(`input[name=${inputName}]`);
 
@@ -13,10 +6,6 @@ function getOrSetDate(inputName: string, fallback: Date): Date {
         return input.valueAsDate;
     }
     return fallback;
-}
-
-export function getContext() {
-    return JSON.parse(document.getElementById("context")?.textContent || "{}");
 }
 
 export function getEarliestDate(): Date {
@@ -32,7 +21,7 @@ export function getPlayTimeEndDate(): Date {
 
 export function getPlayTimeStartDate(): Date {
     const now = new Date();
-    const startDate = checkStartDate(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 30)));
+    const startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 30));
 
     return getOrSetDate("daily-plays-start-date", startDate);
 }

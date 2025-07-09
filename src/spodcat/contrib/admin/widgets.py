@@ -88,5 +88,5 @@ class ArtistAutocompleteWidget(AutocompleteSelectMultiple):
         selected_choices = {str(v) for v in value if str(v) not in EMPTY_VALUES}
         subgroup = []
         for idx, artist in enumerate([a for a in self.choices if str(a.id) in value]):
-            subgroup.append(self.create_option(name, artist.id, artist.name, selected_choices, idx))
+            subgroup.append(self.create_option(name, artist.id, artist.name, bool(selected_choices), idx))
         return [(None, subgroup, 0)]

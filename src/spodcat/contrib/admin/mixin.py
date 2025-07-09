@@ -1,6 +1,5 @@
 from typing import Any
 
-from django.contrib.admin import AdminSite
 from django.db.models import Model
 from django.forms import TimeInput
 from django.urls import reverse
@@ -8,6 +7,7 @@ from django.utils.html import format_html
 from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
 
+from spodcat.contrib.admin.site import AdminSite
 from spodcat.contrib.admin.widgets import AdminMartorWidget
 from spodcat.model_fields import TimestampField
 from spodcat.model_mixin import ModelMixin
@@ -24,10 +24,7 @@ class AdminMixin:
         css = {"all": ["spodcat/css/admin.css"]}
         js = ["spodcat/js/admin.js"]
 
-    def get_change_link(self, obj: Model | None, text: str | None = None, **params):
-        if obj is None:
-            return None
-
+    def get_change_link(self, obj: Model, text: str | None = None, **params):
         if text is None:
             text = str(obj)
 
@@ -41,7 +38,13 @@ class AdminMixin:
         )
 
     def get_change_url(self, obj: Model, **params):
-        meta = obj.get_real_instance_class()._meta if isinstance(obj, PolymorphicModel) else obj._meta
+        meta = obj._meta
+
+        if isinstance(obj, PolymorphicModel):
+            klass = obj.get_real_instance_class()
+            if klass:
+                meta = klass._meta
+
         return reverse(f"admin:{meta.app_label}_{meta.model_name}_change", args=(obj.pk,), query=params)
 
     def get_changelist_link(self, model: type[Model], text: Any, **params):

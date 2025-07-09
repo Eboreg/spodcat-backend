@@ -18,7 +18,9 @@ from spodcat.logs.ip_check import (
     get_ip_address_category,
 )
 from spodcat.logs.querysets import (
+    PodcastContentRequestLogQuerySet,
     PodcastEpisodeAudioRequestLogQuerySet,
+    PodcastRequestLogQuerySet,
     PodcastRssRequestLogQuerySet,
 )
 from spodcat.logs.user_agent import (
@@ -33,7 +35,9 @@ from spodcat.model_mixin import ModelMixin
 
 if TYPE_CHECKING:
     from spodcat.logs.querysets import (
+        PodcastContentRequestLogManager,
         PodcastEpisodeAudioRequestLogManager,
+        PodcastRequestLogManager,
         PodcastRssRequestLogManager,
     )
     from spodcat.models import Episode, Podcast, PodcastContent
@@ -116,7 +120,7 @@ class GeoIP(ModelMixin, models.Model):
 
 class RequestLog(ModelMixin, models.Model):
     created = models.DateTimeField(db_index=True, verbose_name=_("created"))
-    geoip: "GeoIP | None" = models.ForeignKey(
+    geoip = models.ForeignKey["GeoIP | None"](
         "spodcat_logs.GeoIP",
         on_delete=models.SET_NULL,
         null=True,
@@ -149,7 +153,7 @@ class RequestLog(ModelMixin, models.Model):
     )
     remote_host = models.CharField(max_length=100, blank=True, default="", verbose_name=_("remote host"))
     user_agent = models.CharField(max_length=400, blank=True, default="", verbose_name=_("user agent"))
-    user_agent_data: "UserAgent | None" = models.ForeignKey(
+    user_agent_data = models.ForeignKey["UserAgent | None"](
         "spodcat_logs.UserAgent",
         on_delete=models.SET_NULL,
         null=True,
@@ -255,12 +259,14 @@ class RequestLog(ModelMixin, models.Model):
 
 
 class PodcastRequestLog(RequestLog):
-    podcast: "Podcast" = models.ForeignKey(
+    podcast = models.ForeignKey["Podcast"](
         "spodcat.Podcast",
         on_delete=models.CASCADE,
         related_name="requests",
         verbose_name=_("podcast"),
     )
+
+    objects: "PodcastRequestLogManager" = PodcastRequestLogQuerySet.as_manager()
 
     class Meta:
         verbose_name = _("podcast page request log")
@@ -268,12 +274,14 @@ class PodcastRequestLog(RequestLog):
 
 
 class PodcastContentRequestLog(RequestLog):
-    content: "PodcastContent" = models.ForeignKey(
+    content = models.ForeignKey["PodcastContent"](
         "spodcat.PodcastContent",
         on_delete=models.CASCADE,
         related_name="requests",
         verbose_name=_("podcast content"),
     )
+
+    objects: "PodcastContentRequestLogManager" = PodcastContentRequestLogQuerySet.as_manager()
 
     class Meta:
         verbose_name = _("podcast content page request log")
@@ -282,7 +290,7 @@ class PodcastContentRequestLog(RequestLog):
 
 class PodcastEpisodeAudioRequestLog(RequestLog):
     duration_ms = models.IntegerField(verbose_name=_("duration"))
-    episode: "Episode | None" = models.ForeignKey(
+    episode = models.ForeignKey["Episode"](
         "spodcat.Episode",
         on_delete=models.CASCADE,
         related_name="audio_requests",
@@ -340,7 +348,7 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
 
 
 class PodcastRssRequestLog(RequestLog):
-    podcast: "Podcast" = models.ForeignKey(
+    podcast = models.ForeignKey["Podcast"](
         "spodcat.Podcast",
         on_delete=models.CASCADE,
         related_name="rss_requests",

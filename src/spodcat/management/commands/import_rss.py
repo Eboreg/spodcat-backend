@@ -1,9 +1,11 @@
 import logging
+from typing import cast
 
 import feedparser
 from django.core.management import BaseCommand
 
 from spodcat.models import Episode, Podcast
+from spodcat.types import Rss
 
 
 def bool_input(prompt: str, default: bool = True) -> bool:
@@ -36,7 +38,7 @@ class Command(BaseCommand):
                 self.stdout.write("Nothing more to do, then.")
                 return
 
-        d = feedparser.parse(options["url"])
+        d = cast(Rss, feedparser.parse(options["url"]))
 
         if not (podcast and not update):
             if not podcast:
@@ -45,35 +47,35 @@ class Command(BaseCommand):
                 podcast = Podcast(slug=slug)
             elif update and not interactive:
                 self.stdout.write(f"Podcast {slug} already exists - updating")
-            podcast.update_from_feed(d.feed)
+            podcast.update_from_feed(d["feed"])
         elif not interactive:
             self.stdout.write(f"Podcast {slug} already exists - not updating")
 
-        entries = d.get("entries", [])
+        entries = d.get("entries") or []
         self.stdout.write(f"{len(entries)} entries (episodes) found in feed.")
 
         for entry in entries:
             episode: Episode | None = None
 
             try:
-                number = int(entry.itunes_episode)
+                number = int(entry["itunes_episode"]) if "itunes_episode" in entry else None
             except Exception:
                 number = None
             try:
-                season = int(entry.itunes_season)
+                season = int(entry["itunes_season"]) if "itunes_season" in entry else None
             except Exception:
                 season = None
 
             if number is not None:
                 episode = Episode.objects.filter(podcast=podcast, number=number, season=season).first()
             else:
-                episode = Episode.objects.filter(podcast=podcast, name=entry.title).first()
+                episode = Episode.objects.filter(podcast=podcast, name=entry["title"]).first()
 
             self.stdout.write(f"season = {season}")
             if interactive:
                 if episode:
                     update = bool_input(f"Episode '{episode}' already exists. Update it?")
-                elif not bool_input(f"Episode '{entry.title}' does not exist. Create it?"):
+                elif not bool_input(f"Episode '{entry['title']}' does not exist. Create it?"):
                     continue
 
             if episode and not update:
@@ -83,9 +85,9 @@ class Command(BaseCommand):
 
             if not episode:
                 if not interactive:
-                    self.stdout.write(f"Episode '{entry.title}' does not exist - creating")
+                    self.stdout.write(f"Episode '{entry['title']}' does not exist - creating")
                 episode = Episode(podcast=podcast)
             elif not interactive:
-                self.stdout.write(f"Episode '{entry.title}' already exists - updating")
+                self.stdout.write(f"Episode '{entry['title']}' already exists - updating")
 
             episode.update_from_feed(entry)

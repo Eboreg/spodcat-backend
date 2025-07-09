@@ -36,7 +36,7 @@ class Challenge(ModelMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     term1 = models.PositiveSmallIntegerField(default=generate_term)
     term2 = models.PositiveSmallIntegerField(default=generate_term)
-    podcast: "Podcast" = models.ForeignKey("spodcat.Podcast", on_delete=models.CASCADE, related_name="+")
+    podcast = models.ForeignKey["Podcast"]("spodcat.Podcast", on_delete=models.CASCADE, related_name="+")
 
     class Meta:
         verbose_name = _("challenge")

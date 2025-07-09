@@ -4,7 +4,7 @@ declare global {
     };
 }
 
-export interface ChartApiResponse {
+export interface GraphApiResponse {
     datasets: {
         label: string;
         data: {
@@ -13,3 +13,5 @@ export interface ChartApiResponse {
         }[];
     }[];
 }
+
+export type TimePeriod = "day" | "week" | "month" | "year";

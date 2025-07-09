@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-05 19:00+0200\n"
-"PO-Revision-Date: 2025-07-05 19:01+0200\n"
+"POT-Creation-Date: 2025-07-09 03:37+0200\n"
+"PO-Revision-Date: 2025-07-09 03:37+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: sv\n"
@@ -18,99 +18,95 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.2.2\n"
 
-#: src/settings.py:111
+#: src/settings.py:112
 msgid "English"
 msgstr ""
 
-#: src/settings.py:112
+#: src/settings.py:113
 msgid "Swedish"
 msgstr ""
 
-#: src/spodcat/admin.py:61 src/spodcat/models/podcast.py:74
+#: src/spodcat/admin.py:71 src/spodcat/models/podcast.py:74
 msgid "authors"
 msgstr ""
 
-#: src/spodcat/admin.py:78
+#: src/spodcat/admin.py:88
 msgid "The slug was changed."
 msgstr ""
 
-#: src/spodcat/admin.py:109
+#: src/spodcat/admin.py:112 src/spodcat/admin.py:366 src/spodcat/admin.py:565
+#: src/spodcat/admin.py:654
+msgid "Frontend"
+msgstr ""
+
+#: src/spodcat/admin.py:117
 msgid "Comments"
 msgstr ""
 
-#: src/spodcat/admin.py:110
+#: src/spodcat/admin.py:118
 msgid "Graphics"
 msgstr ""
 
-#: src/spodcat/admin.py:175 src/spodcat/models/podcast.py:157
+#: src/spodcat/admin.py:167 src/spodcat/models/podcast.py:157
 msgid "owner"
 msgstr ""
 
-#: src/spodcat/admin.py:179 src/spodcat/admin.py:412
+#: src/spodcat/admin.py:171 src/spodcat/admin.py:433
 msgid "plays"
 msgstr ""
 
-#: src/spodcat/admin.py:199 src/spodcat/admin.py:426
-msgid "players"
+#: src/spodcat/admin.py:221 src/spodcat/admin.py:280 src/spodcat/admin.py:502
+#: src/spodcat/admin.py:545
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:9
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:9
+msgid "Statistics"
 msgstr ""
 
-#: src/spodcat/admin.py:236
-msgid "views recursive"
-msgstr ""
-
-#: src/spodcat/admin.py:240 src/spodcat/admin.py:281
+#: src/spodcat/admin.py:287 src/spodcat/admin.py:328
 msgid "views"
 msgstr ""
 
-#: src/spodcat/admin.py:294
-msgid "visitors"
-msgstr ""
-
-#: src/spodcat/admin.py:346 src/spodcat/admin.py:490
-msgid "Link"
-msgstr ""
-
-#: src/spodcat/admin.py:408 src/spodcat/models/episode.py:94
+#: src/spodcat/admin.py:429 src/spodcat/models/episode.py:94
 msgid "number"
 msgstr ""
 
-#: src/spodcat/admin.py:430 src/spodcat/logs/admin.py:83
+#: src/spodcat/admin.py:447 src/spodcat/logs/admin.py:83
 #: src/spodcat/logs/admin.py:114 src/spodcat/logs/admin.py:156
-#: src/spodcat/logs/models.py:262 src/spodcat/logs/models.py:347
-#: src/spodcat/models/podcast.py:186 src/spodcat/models/podcast_content.py:42
+#: src/spodcat/logs/models.py:266 src/spodcat/logs/models.py:355
+#: src/spodcat/models/podcast.py:186 src/spodcat/models/podcast_content.py:43
 #: src/spodcat/models/podcast_link.py:47
 msgid "podcast"
 msgstr ""
 
-#: src/spodcat/admin.py:518 src/spodcat/admin_inlines.py:16
+#: src/spodcat/admin.py:592 src/spodcat/admin_inlines.py:16
 msgid "songs"
 msgstr ""
 
-#: src/spodcat/admin.py:531 src/spodcat/models/artist.py:17
-#: src/spodcat/models/episode_song.py:19
+#: src/spodcat/admin.py:605 src/spodcat/models/artist.py:18
+#: src/spodcat/models/episode_song.py:20
 msgid "artists"
 msgstr ""
 
-#: src/spodcat/admin.py:535 src/spodcat/logs/admin.py:139
-#: src/spodcat/logs/models.py:289 src/spodcat/models/episode.py:101
+#: src/spodcat/admin.py:609 src/spodcat/logs/admin.py:139
+#: src/spodcat/logs/models.py:297 src/spodcat/models/episode.py:101
 #: src/spodcat/models/episode_chapter.py:63
-#: src/spodcat/models/episode_song.py:26
+#: src/spodcat/models/episode_song.py:27
 msgid "episode"
 msgstr ""
 
-#: src/spodcat/admin.py:557 src/spodcat/models/episode_chapter.py:23
+#: src/spodcat/admin.py:631 src/spodcat/models/episode_chapter.py:23
 msgid "start time"
 msgstr ""
 
-#: src/spodcat/admin.py:562
+#: src/spodcat/admin.py:636
 msgid "Approve comments"
 msgstr ""
 
-#: src/spodcat/admin.py:574 src/spodcat/logs/admin.py:107
+#: src/spodcat/admin.py:648 src/spodcat/logs/admin.py:107
 msgid "content"
 msgstr ""
 
-#: src/spodcat/admin.py:588 src/spodcat/models/comment.py:25
+#: src/spodcat/admin.py:663 src/spodcat/models/comment.py:26
 msgid "text"
 msgstr ""
 
@@ -120,12 +116,6 @@ msgstr ""
 
 #: src/spodcat/apps.py:8 src/spodcat/models/podcast.py:187
 msgid "podcasts"
-msgstr ""
-
-#: src/spodcat/contrib/admin/site.py:48
-#: src/spodcat/templates/admin/charts.html:28
-#: src/spodcat/templates/admin/index.html:10
-msgid "Charts"
 msgstr ""
 
 #: src/spodcat/contrib/admin/views.py:24
@@ -154,6 +144,8 @@ msgid "Org"
 msgstr ""
 
 #: src/spodcat/logs/admin.py:31
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:82
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:100
 msgid "Name"
 msgstr ""
 
@@ -182,148 +174,148 @@ msgstr ""
 msgid "logs"
 msgstr ""
 
-#: src/spodcat/logs/models.py:56
+#: src/spodcat/logs/models.py:60
 msgid "device category"
 msgstr ""
 
-#: src/spodcat/logs/models.py:58
+#: src/spodcat/logs/models.py:62
 msgid "device name"
 msgstr ""
 
-#: src/spodcat/logs/models.py:59 src/spodcat/models/artist.py:10
-#: src/spodcat/models/comment.py:18 src/spodcat/models/font_face.py:22
-#: src/spodcat/models/podcast.py:137 src/spodcat/models/podcast_content.py:37
+#: src/spodcat/logs/models.py:63 src/spodcat/models/artist.py:11
+#: src/spodcat/models/comment.py:19 src/spodcat/models/font_face.py:22
+#: src/spodcat/models/podcast.py:137 src/spodcat/models/podcast_content.py:38
 msgid "name"
 msgstr ""
 
-#: src/spodcat/logs/models.py:60
+#: src/spodcat/logs/models.py:64
 msgid "type"
 msgstr ""
 
-#: src/spodcat/logs/models.py:61 src/spodcat/logs/models.py:64
-#: src/spodcat/logs/models.py:151
+#: src/spodcat/logs/models.py:65 src/spodcat/logs/models.py:68
+#: src/spodcat/logs/models.py:155
 msgid "user agent"
 msgstr ""
 
-#: src/spodcat/logs/models.py:65
+#: src/spodcat/logs/models.py:69
 msgid "user agents"
 msgstr ""
 
-#: src/spodcat/logs/models.py:85
+#: src/spodcat/logs/models.py:89
 msgid "city"
 msgstr ""
 
-#: src/spodcat/logs/models.py:86
+#: src/spodcat/logs/models.py:90
 msgid "country"
 msgstr ""
 
-#: src/spodcat/logs/models.py:87
+#: src/spodcat/logs/models.py:91
 msgid "IP"
 msgstr ""
 
-#: src/spodcat/logs/models.py:88
+#: src/spodcat/logs/models.py:92
 msgid "org"
 msgstr ""
 
-#: src/spodcat/logs/models.py:89
+#: src/spodcat/logs/models.py:93
 msgid "region"
 msgstr ""
 
-#: src/spodcat/logs/models.py:92 src/spodcat/logs/models.py:125
+#: src/spodcat/logs/models.py:96 src/spodcat/logs/models.py:129
 msgid "GeoIP"
 msgstr ""
 
-#: src/spodcat/logs/models.py:93
+#: src/spodcat/logs/models.py:97
 msgid "GeoIP:s"
 msgstr ""
 
-#: src/spodcat/logs/models.py:118 src/spodcat/models/comment.py:16
-#: src/spodcat/models/podcast_content.py:33
+#: src/spodcat/logs/models.py:122 src/spodcat/models/comment.py:17
+#: src/spodcat/models/podcast_content.py:34
 msgid "created"
 msgstr ""
 
-#: src/spodcat/logs/models.py:127
+#: src/spodcat/logs/models.py:131
 msgid "is bot"
 msgstr ""
 
-#: src/spodcat/logs/models.py:128
+#: src/spodcat/logs/models.py:132
 msgid "path"
 msgstr ""
 
-#: src/spodcat/logs/models.py:129
+#: src/spodcat/logs/models.py:133
 msgid "referrer"
 msgstr ""
 
-#: src/spodcat/logs/models.py:135
+#: src/spodcat/logs/models.py:139
 msgid "referrer category"
 msgstr ""
 
-#: src/spodcat/logs/models.py:137
+#: src/spodcat/logs/models.py:141
 msgid "referrer name"
 msgstr ""
 
-#: src/spodcat/logs/models.py:142
+#: src/spodcat/logs/models.py:146
 msgid "remote address"
 msgstr ""
 
-#: src/spodcat/logs/models.py:148
+#: src/spodcat/logs/models.py:152
 msgid "remote address category"
 msgstr ""
 
-#: src/spodcat/logs/models.py:150
+#: src/spodcat/logs/models.py:154
 msgid "remote host"
 msgstr ""
 
-#: src/spodcat/logs/models.py:158
+#: src/spodcat/logs/models.py:162
 msgid "user agent data"
 msgstr ""
 
-#: src/spodcat/logs/models.py:162
+#: src/spodcat/logs/models.py:166
 msgid "request log"
 msgstr ""
 
-#: src/spodcat/logs/models.py:163
+#: src/spodcat/logs/models.py:167
 msgid "request logs"
 msgstr ""
 
-#: src/spodcat/logs/models.py:266
+#: src/spodcat/logs/models.py:272
 msgid "podcast page request log"
 msgstr ""
 
-#: src/spodcat/logs/models.py:267
+#: src/spodcat/logs/models.py:273
 msgid "podcast page request logs"
 msgstr ""
 
-#: src/spodcat/logs/models.py:275 src/spodcat/models/comment.py:23
-#: src/spodcat/models/podcast_content.py:56
+#: src/spodcat/logs/models.py:281 src/spodcat/models/comment.py:24
+#: src/spodcat/models/podcast_content.py:57
 msgid "podcast content"
 msgstr ""
 
-#: src/spodcat/logs/models.py:279
+#: src/spodcat/logs/models.py:287
 msgid "podcast content page request log"
 msgstr ""
 
-#: src/spodcat/logs/models.py:280
+#: src/spodcat/logs/models.py:288
 msgid "podcast content page request logs"
 msgstr ""
 
-#: src/spodcat/logs/models.py:284 src/spodcat/models/episode.py:70
+#: src/spodcat/logs/models.py:292 src/spodcat/models/episode.py:70
 msgid "duration"
 msgstr ""
 
-#: src/spodcat/logs/models.py:291
+#: src/spodcat/logs/models.py:299
 msgid "response body size"
 msgstr ""
 
-#: src/spodcat/logs/models.py:292
+#: src/spodcat/logs/models.py:300
 msgid "status code"
 msgstr ""
 
-#: src/spodcat/logs/models.py:297
+#: src/spodcat/logs/models.py:305
 msgid "podcast episode audio request log"
 msgstr ""
 
-#: src/spodcat/logs/models.py:298
+#: src/spodcat/logs/models.py:306
 msgid "podcast episode audio request logs"
 msgstr ""
 
@@ -367,7 +359,7 @@ msgstr ""
 msgid "Library"
 msgstr ""
 
-#: src/spodcat/models/artist.py:16
+#: src/spodcat/models/artist.py:17
 msgid "artist"
 msgstr ""
 
@@ -432,15 +424,15 @@ msgstr ""
 msgid "%(term1)s plus %(term2)s"
 msgstr "%(term1)s plus %(term2)s"
 
-#: src/spodcat/models/comment.py:17
+#: src/spodcat/models/comment.py:18
 msgid "is approved"
 msgstr ""
 
-#: src/spodcat/models/comment.py:29 src/spodcat/models/episode_song.py:21
+#: src/spodcat/models/comment.py:30 src/spodcat/models/episode_song.py:22
 msgid "comment"
 msgstr ""
 
-#: src/spodcat/models/comment.py:30
+#: src/spodcat/models/comment.py:31
 msgid "comments"
 msgstr ""
 
@@ -479,7 +471,7 @@ msgid ""
 msgstr ""
 
 #: src/spodcat/models/episode_chapter.py:22
-#: src/spodcat/models/episode_song.py:28
+#: src/spodcat/models/episode_song.py:29
 msgid "title"
 msgstr ""
 
@@ -500,11 +492,11 @@ msgstr ""
 msgid "episode chapters"
 msgstr ""
 
-#: src/spodcat/models/episode_song.py:33
+#: src/spodcat/models/episode_song.py:34
 msgid "episode song"
 msgstr ""
 
-#: src/spodcat/models/episode_song.py:34
+#: src/spodcat/models/episode_song.py:35
 msgid "episode songs"
 msgstr ""
 
@@ -551,7 +543,7 @@ msgstr ""
 msgid "cover"
 msgstr ""
 
-#: src/spodcat/models/podcast.py:117 src/spodcat/models/podcast_content.py:34
+#: src/spodcat/models/podcast.py:117 src/spodcat/models/podcast_content.py:35
 msgid "description"
 msgstr ""
 
@@ -583,7 +575,7 @@ msgstr ""
 msgid "Will be used in URLs."
 msgstr ""
 
-#: src/spodcat/models/podcast.py:164 src/spodcat/models/podcast_content.py:45
+#: src/spodcat/models/podcast.py:164 src/spodcat/models/podcast_content.py:46
 msgid "slug"
 msgstr ""
 
@@ -601,19 +593,19 @@ msgid ""
 "podcast-namespace/tags/guid"
 msgstr ""
 
-#: src/spodcat/models/podcast_content.py:36
+#: src/spodcat/models/podcast_content.py:37
 msgid "draft"
 msgstr ""
 
-#: src/spodcat/models/podcast_content.py:44
+#: src/spodcat/models/podcast_content.py:45
 msgid "published"
 msgstr ""
 
-#: src/spodcat/models/podcast_content.py:57
+#: src/spodcat/models/podcast_content.py:58
 msgid "podcast contents"
 msgstr ""
 
-#: src/spodcat/models/podcast_content.py:117
+#: src/spodcat/models/podcast_content.py:118
 msgid "visible"
 msgstr ""
 
@@ -728,61 +720,7 @@ msgstr "Svaret är inte korrekt."
 msgid "This podcast does not support comments"
 msgstr "Denna podcast stöder inte kommentarer"
 
-#: src/spodcat/templates/admin/charts.html:10
-msgid "Daily play count per episode"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:11
-msgid "Daily episode play count per podcast"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:12
-msgid "Unique listeners"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:13
-msgid "Unique subscribers"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:27
-#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:19
-msgid "Home"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:36
-msgid "Approx. number of unique listeners and subscribers"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:38
-msgid ""
-"More precisely, these measure the number of unique and non-bot (or rather: "
-"not-confirmed-to-be-bot) IP addresses. The number of actual, physical "
-"<em>people</em> is unknown but definitely smaller."
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:56
-msgid "Daily play count charts"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:58
-msgid ""
-"These measure the number of episode downloads per day by non-bot users. The "
-"numbers may be fractional because of partial downloads."
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:65
-msgid "Start"
-msgstr ""
-
-#: src/spodcat/templates/admin/charts.html:66
-msgid "End"
-msgstr ""
-
-#: src/spodcat/templates/admin/index.html:11
-msgid "Yes, here they are"
-msgstr ""
-
-#: src/spodcat/templates/admin/index.html:16
+#: src/spodcat/templates/admin/index.html:10
 msgid "Comments awaiting approval"
 msgstr ""
 
@@ -794,21 +732,82 @@ msgstr ""
 
 #: src/spodcat/templates/admin/spodcat/episode/change_list.html:8
 msgid ""
-"<code>VISITORS</code> = number of unique IP addresses that have visited the "
-"episode's detail page."
-msgstr ""
-
-#: src/spodcat/templates/admin/spodcat/episode/change_list.html:9
-msgid ""
 "<code>PLAYS</code> = number of times the episode's audio file has been "
 "downloaded <em>by a non-bot client</em> (as far as we're able to tell). May "
 "be fractional because of partial downloads (common when streaming)."
 msgstr ""
 
-#: src/spodcat/templates/admin/spodcat/episode/change_list.html:10
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:6
+#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:13
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:6
+msgid "Home"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:18
+msgid "Episode"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:21
+msgid "All time plays"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:25
+msgid "Plays during first week"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:29
+msgid "All time unique players"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:33
+msgid "Unique players during first week"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:39
+msgid "Page views (and unique visitors)"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:42
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:50
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:66
+msgid "Total"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:55
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:115
+msgid "Listener countries"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:67
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:127
+msgid "Listener applications"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:79
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:139
+msgid "Listener devices"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:95
+msgid "Play count"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:96
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:155
 msgid ""
-"<code>PLAYERS</code> = number of unique IP addresses that have downloaded "
-"the episode's audio file (bots excluded)."
+"This measures the number of episode downloads per day by non-bot users. The "
+"numbers may be fractional because of partial downloads."
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:102
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:173
+msgid "Unique listeners"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/episode/stats.html:103
+msgid ""
+"This measures the number of unique and non-bot IP addresses. The number of "
+"actual, physical <em>people</em> is unknown but definitely smaller."
 msgstr ""
 
 #: src/spodcat/templates/admin/spodcat/podcast/change_list.html:7
@@ -819,45 +818,101 @@ msgstr ""
 
 #: src/spodcat/templates/admin/spodcat/podcast/change_list.html:8
 msgid ""
-"<code>VIEWS RECURSIVE</code> = number of views for the podcast's index page "
-"plus any of its episode/post detail pages."
-msgstr ""
-
-#: src/spodcat/templates/admin/spodcat/podcast/change_list.html:9
-msgid ""
 "<code>PLAYS</code> = number of times the podcast episodes' audio files have "
 "been downloaded <em>by a non-bot client</em> (as far as we're able to tell). "
 "May be a fraction because of partial downloads (common when streaming)."
 msgstr ""
 
-#: src/spodcat/templates/admin/spodcat/podcast/change_list.html:10
-msgid ""
-"<code>PLAYERS</code> = number of unique IP addresses that have downloaded "
-"the podcast episodes' audio files (bots excluded)."
-msgstr ""
-
-#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:23
+#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:16
 #: src/spodcat/templates/admin/spodcat/podcast/submit_line.html:8
 msgid "Change slug"
 msgstr ""
 
-#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:33
+#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:26
 msgid "Please correct the error(s) below."
 msgstr ""
 
-#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:37
+#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:30
 msgid ""
 "Please note that changing the slug will change all public URLs for the "
 "podcast, its episodes, etc."
 msgstr ""
 
-#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:45
+#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:38
 #, python-format
 msgid "Current value: %(value)s"
 msgstr ""
 
-#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:48
+#: src/spodcat/templates/admin/spodcat/podcast/change_slug.html:41
 msgid "Save"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:18
+msgid "Episodes"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:21
+msgid "Published episodes"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:25
+msgid "Total length"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:29
+msgid "Shortest"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:33
+msgid "Longest"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:37
+msgid "Average length"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:41
+msgid "Median length"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:47
+msgid "Home page views (and unique visitors)"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:63
+msgid "Episode/post page views (and unique visitors)"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:79
+msgid "All time most played episodes"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:83
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:101
+msgid "Plays/Unique IPs"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:97
+msgid "Most played episodes during first week of release"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:154
+msgid "Play count per episode"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:163
+msgid "Approx. number of unique listeners and subscribers"
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:166
+msgid ""
+"More precisely, these measure the number of unique and non-bot (or rather: "
+"not-confirmed-to-be-bot) IP addresses. The number of actual, physical "
+"<em>people</em> is unknown but definitely smaller."
+msgstr ""
+
+#: src/spodcat/templates/admin/spodcat/podcast/stats.html:176
+msgid "Unique subscribers"
 msgstr ""
 
 #: src/spodcat/templates/admin/spodcat/post/change_list.html:7
@@ -869,3 +924,40 @@ msgid ""
 "<code>VISITORS</code> = number of unique IP addresses that have visited the "
 "post."
 msgstr ""
+
+#: src/spodcat/templates/admin/stats/graph.html:14
+msgid "Period"
+msgstr ""
+
+#: src/spodcat/templates/admin/stats/graph.html:16
+msgid "Days"
+msgstr ""
+
+#: src/spodcat/templates/admin/stats/graph.html:17
+msgid "Weeks"
+msgstr ""
+
+#: src/spodcat/templates/admin/stats/graph.html:18
+msgid "Months"
+msgstr ""
+
+#: src/spodcat/templates/admin/stats/graph.html:19
+msgid "Years"
+msgstr ""
+
+#: src/spodcat/templates/admin/stats/graph.html:21
+msgid "Reset"
+msgstr ""
+
+#: src/spodcat/templates/admin/stats/stats_table_links.html:2
+msgid "Show more"
+msgstr ""
+
+#: src/spodcat/templates/admin/stats/stats_table_links.html:3
+msgid "Show less"
+msgstr ""
+
+#: src/spodcat/templatetags/spodcat.py:23
+#, python-format
+msgid "%(days)d days, %(time)s"
+msgstr "%(days)d dygn, %(time)s"

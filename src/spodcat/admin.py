@@ -1,30 +1,40 @@
 import logging
 import os
 import random
+import statistics
 import tempfile
-from datetime import timedelta
-from functools import update_wrapper
+from datetime import date, timedelta
 from threading import Thread
-from typing import Any
 
+from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.utils import unquote
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import PermissionDenied
-from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.db.models import Count, F, FloatField, OuterRef, Q, Subquery, Sum
+from django.db.models import (
+    Avg,
+    Count,
+    F,
+    FloatField,
+    Max,
+    Min,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+)
 from django.db.models.functions import Cast
 from django.forms import ClearableFileInput, ModelChoiceField
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.urls import reverse
+from django.urls import path, reverse
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from pydub import AudioSegment
 
 from spodcat.admin_inlines import (
     ArtistSongInline,
@@ -69,7 +79,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
             raise PermissionDenied
 
         if obj is None:
-            return self._get_obj_does_not_exist_redirect(request, self.opts, object_id)
+            return self._get_obj_does_not_exist_redirect(request, self.opts, object_id) # type: ignore
 
         if request.method == "POST":
             form = PodcastChangeSlugForm(request.POST, instance=obj)
@@ -93,15 +103,13 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
         return TemplateResponse(
             request=request,
-            template=f"admin/{self.opts.app_label}/{self.opts.model_name}/change_slug.html",
-            context={
-                "opts": self.opts,
-                "form": form,
-            },
+            template="admin/spodcat/podcast/change_slug.html",
+            context={"opts": self.opts, "form": form, **self.admin_site.each_context(request)},
         )
 
+    @admin.display(description="")
     def frontend_link(self, obj: Podcast):
-        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">{obj.frontend_url}</a>')
+        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
@@ -117,9 +125,6 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
         return fieldsets
 
-    def get_detail_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("authors").select_related("owner", "name_font_face")
-
     def get_list_display(self, request):
         if apps.is_installed("spodcat.logs"):
             return [
@@ -128,55 +133,42 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                 "owner_link",
                 "author_links",
                 "view_count",
-                "total_view_count",
                 "play_count",
-                "player_count",
                 "frontend_link",
+                "stats_link",
             ]
         return ["name", "slug", "owner_link", "author_links", "frontend_link"]
 
-    def get_object(self, request, object_id, from_field=None):
-        queryset = self.get_detail_queryset(request)
-        return queryset.filter(slug=object_id).first()
-
     def get_queryset(self, request):
-        qs = self.get_detail_queryset(request)
+        qs = super().get_queryset(request).prefetch_related("authors").select_related("owner", "name_font_face")
 
         if apps.is_installed("spodcat.logs"):
-            return (
-                qs
-                .alias(content_view_count=Count("contents__requests", distinct=True))
-                .annotate(
-                    view_count=Count("requests", distinct=True),
-                    total_view_count=F("content_view_count") + F("view_count"),
-                )
-            )
+            return qs.annotate(view_count=Count("requests", distinct=True))
 
         return qs
 
     def get_urls(self):
-        from django.urls import path
-
-        def wrap(view):
-            def wrapper(*args, **kwargs):
-                return self.admin_site.admin_view(view)(*args, **kwargs)
-
-            setattr(wrapper, "model_admin", self)
-            return update_wrapper(wrapper, view)
-
-        return [
+        urls = [
             path(
                 "<path:object_id>/change_slug/",
-                wrap(self.change_slug_view),
+                self.admin_site.admin_view(self.change_slug_view),
                 name=f"{self.opts.app_label}_{self.opts.model_name}_change_slug",
             ),
-        ] + super().get_urls()
+        ]
+        if apps.is_installed("spodcat.logs"):
+            urls.append(path(
+                "<path:object_id>/stats/",
+                self.admin_site.admin_view(self.stats_view),
+                name=f"{self.opts.app_label}_{self.opts.model_name}_stats",
+            ))
+
+        return urls + super().get_urls()
 
     @admin.display(description=_("owner"))
     def owner_link(self, obj: Podcast):
         return self.get_change_link(obj.owner)
 
-    @admin.display(description=_("plays"), ordering="play_count")
+    @admin.display(description=_("plays"))
     def play_count(self, obj):
         from spodcat.logs.models import PodcastEpisodeAudioRequestLog
 
@@ -196,22 +188,11 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
             is_bot__exact=0,
         )
 
-    @admin.display(description=_("players"), ordering="player_count")
-    def player_count(self, obj):
-        from spodcat.logs.models import PodcastEpisodeAudioRequestLog
-
-        player_count = (
-            PodcastEpisodeAudioRequestLog.objects
-            .filter(is_bot=False, response_body_size__gt=0, episode__podcast=obj)
-            .aggregate(player_count=Count("remote_addr", distinct=True))
-        )["player_count"]
-
-        return player_count
-
     def save_form(self, request, form, change):
         instance: Podcast = super().save_form(request, form, change)
 
         if not change:
+            assert isinstance(request.user, AbstractUser)
             instance.authors.add(request.user)
             instance.owner = request.user
         if "cover" in form.changed_data:
@@ -233,9 +214,75 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
         return instance
 
-    @admin.display(description=_("views recursive"), ordering="total_view_count")
-    def total_view_count(self, obj):
-        return obj.total_view_count
+    @admin.display(description="")
+    def stats_link(self, obj: Podcast):
+        meta = obj._meta
+        url = reverse(f"admin:{meta.app_label}_{meta.model_name}_stats", args=(obj.pk,))
+        return mark_safe(f'<a href="{url}">' + _("Statistics") + "</a>")
+
+    def stats_view(self, request: HttpRequest, object_id):
+        from spodcat.logs.models import (
+            PodcastContentRequestLog,
+            PodcastEpisodeAudioRequestLog,
+            PodcastRequestLog,
+        )
+
+        obj = self.get_object(request, unquote(object_id))
+        audio_request_log_qs = PodcastEpisodeAudioRequestLog.objects.filter(episode__podcast=obj, is_bot=False)
+        home_page_views = PodcastRequestLog.objects.filter(podcast=obj).get_monthly_views()
+        content_page_views = PodcastContentRequestLog.objects.filter(content__podcast=obj).get_monthly_views()
+        episode_durations = (
+            Episode.objects
+            .filter(podcast=obj)
+            .listed()
+            .aggregate(
+                total=Sum("duration_seconds"),
+                max=Max("duration_seconds"),
+                min=Min("duration_seconds"),
+                avg=Avg("duration_seconds"),
+            )
+        )
+        episode_durations["median"] = statistics.median(
+            Episode.objects.filter(podcast=obj).listed().values_list("duration_seconds", flat=True)
+        )
+        top_episodes_all_time = audio_request_log_qs.get_most_played().filter(plays__gte=0.05)
+
+        return TemplateResponse(
+            request=request,
+            template="admin/spodcat/podcast/stats.html",
+            context={
+                "opts": self.opts,
+                "episode_opts": Episode._meta,
+                "object": obj,
+                "home_page_views": home_page_views,
+                "home_page_views_total": home_page_views.aggregate(total=Sum("views"))["total"],
+                "home_page_visitors_total": (
+                    PodcastRequestLog.objects
+                    .filter(podcast=obj)
+                    .aggregate(visitors=Count("remote_addr", distinct=True))
+                )["visitors"],
+                "content_page_views": content_page_views,
+                "content_page_views_total": content_page_views.aggregate(total=Sum("views"))["total"],
+                "content_page_visitors_total": (
+                    PodcastContentRequestLog.objects
+                    .filter(content__podcast=obj)
+                    .aggregate(visitors=Count("remote_addr", distinct=True))
+                )["visitors"],
+                "published_episodes": Episode.objects.filter(podcast=obj).listed().count(),
+                "episode_durations": episode_durations,
+                "top_episodes_all_time": top_episodes_all_time,
+                "top_episode_first_week": top_episodes_all_time.filter(
+                    created__lte=F("episode__published") + timedelta(days=7)
+                ),
+                "top_countries": audio_request_log_qs.get_ip_count_query(ccode=F("geoip__country")),
+                "top_apps": audio_request_log_qs.get_ip_count_query(app_name=F("user_agent_data__name")),
+                "top_devices": audio_request_log_qs.get_ip_count_query(device_name=F("user_agent_data__device_name")),
+                "title": _("Statistics"),
+                "subtitle": str(obj),
+                "media": self.media,
+                **self.admin_site.each_context(request),
+            },
+        )
 
     @admin.display(description=_("views"), ordering="view_count")
     def view_count(self, obj):
@@ -258,7 +305,11 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("podcast")
-        if isinstance(field, ModelChoiceField) and not request.user.is_superuser:
+        if (
+            isinstance(field, ModelChoiceField) and
+            field.queryset and
+            (not isinstance(request.user, AbstractUser) or not request.user.is_superuser)
+        ):
             field.queryset = field.queryset.filter(Q(authors=request.user) | Q(owner=request.user)).distinct()
         return Form
 
@@ -270,11 +321,7 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
         )
 
         if apps.is_installed("spodcat.logs"):
-            return (
-                qs
-                .annotate(view_count=Count("requests", distinct=True))
-                .annotate(visitor_count=Count("requests__remote_addr", distinct=True))
-            )
+            return qs.annotate(view_count=Count("requests", distinct=True))
 
         return qs
 
@@ -290,10 +337,6 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
             text=obj.view_count,
             content__id__exact=obj.pk,
         )
-
-    @admin.display(description=_("visitors"), ordering="visitor_count")
-    def visitor_count(self, obj):
-        return obj.visitor_count
 
 
 @admin.register(Episode)
@@ -315,35 +358,12 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     readonly_fields = ["audio_content_type", "audio_file_length", "slug", "duration", "id"]
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
 
-    def apply_gain(self, instance: Episode, audio: AudioSegment, stem: str, tags: Any, save: bool = True) -> bool:
-        max_dbfs = audio.max_dBFS
-
-        if max_dbfs < 0:
-            dbfs = audio.dBFS
-            if dbfs < -14:
-                gain = min(-max_dbfs, -dbfs - 14)
-                logger.info("Applying %f dBFS gain to %s", gain, instance)
-                audio = audio.apply_gain(gain)
-
-                with audio.export(stem + ".mp3", format="mp3", bitrate="192k", tags=tags) as new_file:
-                    delete_storage_file(instance.audio_file)
-                    instance.audio_file.save(name=stem + ".mp3", content=File(new_file), save=False)
-                    new_file.seek(0)
-                    instance.audio_content_type = "audio/mpeg"
-                    instance.audio_file_length = len(new_file.read())
-
-                if save:
-                    instance.save(update_fields=["audio_file", "audio_content_type", "audio_file_length"])
-
-                return True
-
-        return False
-
     def duration(self, obj: Episode):
         return timedelta(seconds=int(obj.duration_seconds))
 
+    @admin.display(description="")
     def frontend_link(self, obj: Episode):
-        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Link") + "</a>")
+        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
     def get_list_display(self, request):
         if apps.is_installed("spodcat.logs"):
@@ -355,10 +375,9 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                 "podcast_link",
                 "published",
                 "view_count",
-                "visitor_count",
                 "play_count",
-                "player_count",
                 "frontend_link",
+                "stats_link",
             ]
         return [
             "name",
@@ -382,25 +401,27 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                         .filter(is_bot=False)
                         .get_play_count_query(episode=OuterRef("pk"))
                     ),
-                    player_count=Count(
-                        "audio_requests__remote_addr",
-                        distinct=True,
-                        filter=Q(audio_requests__is_bot=False, audio_requests__response_body_size__gt=0),
-                    ),
                 )
             )
 
         return super().get_queryset(request)
+
+    def get_urls(self):
+        urls = []
+        if apps.is_installed("spodcat.logs"):
+            urls.append(path(
+                "<path:object_id>/stats/",
+                self.admin_site.admin_view(self.stats_view),
+                name=f"{self.opts.app_label}_{self.opts.model_name}_stats",
+            ))
+
+        return urls + super().get_urls()
 
     def handle_audio_file_async(self, instance: Episode, temp_file: tempfile._TemporaryFileWrapper):
         logger.info("handle_audio_file_async starting for %s, temp_file=%s", instance, temp_file)
 
         try:
             instance.get_dbfs_and_duration(temp_file=temp_file)
-            # Skipping the applying of gain, but here is how to use it:
-            # temp_stem, _ = os.path.splitext(temp_file.name)
-            # if self.apply_gain(instance=instance, audio=audio, stem=temp_stem, tags=info.get("TAG"), save=False):
-            #     update_fields.extend(["audio_file", "audio_content_type", "audio_file_length"])
             logger.info("handle_audio_file_async finished for %s", instance)
         except Exception as e:
             logger.error("handle_audio_file_async error", exc_info=e)
@@ -409,7 +430,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
     def number_string(self, obj: Episode):
         return obj.number_string
 
-    @admin.display(description=_("plays"), ordering="play_count")
+    @admin.display(description=_("plays"), ordering=F("play_count").asc(nulls_first=True))
     def play_count(self, obj):
         from spodcat.logs.models import PodcastEpisodeAudioRequestLog
 
@@ -422,10 +443,6 @@ class EpisodeAdmin(BasePodcastContentAdmin):
             episode__podcastcontent_ptr__exact=obj.pk,
             is_bot__exact=0,
         )
-
-    @admin.display(description=_("players"), ordering="player_count")
-    def player_count(self, obj):
-        return obj.player_count
 
     @admin.display(description=_("podcast"), ordering="podcast")
     def podcast_link(self, obj: Episode):
@@ -443,7 +460,8 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                 delete_storage_file(form.initial["audio_file"])
             if form.cleaned_data["audio_file"]:
                 audio_file: UploadedFile = form.cleaned_data["audio_file"]
-                instance.audio_content_type = audio_file.content_type
+                if audio_file.content_type:
+                    instance.audio_content_type = audio_file.content_type
                 instance.audio_file_length = audio_file.size
             else:
                 instance.duration_seconds = 0.0
@@ -459,6 +477,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
         if "audio_file" in form.changed_data and form.cleaned_data["audio_file"]:
             audio_file: UploadedFile = form.cleaned_data["audio_file"]
+            assert audio_file.name
             _, extension = os.path.splitext(os.path.basename(audio_file.name))
 
             # Cannot send the UploadedFile itself, because it may be closed
@@ -476,6 +495,61 @@ class EpisodeAdmin(BasePodcastContentAdmin):
                 kwargs={"instance": obj, "temp_file": temp_file},
             ).start()
 
+    @admin.display(description="")
+    def stats_link(self, obj: Episode):
+        meta = obj._meta
+        url = reverse(f"admin:{meta.app_label}_{meta.model_name}_stats", args=(obj.pk,))
+        return mark_safe(f'<a href="{url}">' + _("Statistics") + "</a>")
+
+    def stats_view(self, request: HttpRequest, object_id):
+        from spodcat.logs.models import (
+            PodcastContentRequestLog,
+            PodcastEpisodeAudioRequestLog,
+        )
+
+        obj = self.get_object(request, unquote(object_id))
+        audio_request_log_qs = PodcastEpisodeAudioRequestLog.objects.filter(episode=obj, is_bot=False)
+        page_views = PodcastContentRequestLog.objects.filter(content=obj).get_monthly_views()
+        plays_qs = audio_request_log_qs.filter(response_body_size__gt=0).with_quota_fetched()
+        players_qs = audio_request_log_qs.filter(response_body_size__gt=0)
+
+        return TemplateResponse(
+            request=request,
+            template="admin/spodcat/episode/stats.html",
+            context={
+                "opts": self.opts,
+                "episode_opts": Episode._meta,
+                "object": obj,
+                "page_views": page_views,
+                "page_views_total": page_views.aggregate(total=Sum("views"))["total"],
+                "page_visitors_total": (
+                    PodcastContentRequestLog.objects
+                    .filter(content=obj)
+                    .aggregate(visitors=Count("remote_addr", distinct=True))
+                )["visitors"],
+                "plays_all_time": plays_qs.aggregate(plays=Sum("quota_fetched"))["plays"],
+                "plays_first_week": (
+                    plays_qs
+                    .filter(created__lte=F("episode__published") + timedelta(days=7))
+                    .aggregate(plays=Sum("quota_fetched"))
+                )["plays"],
+                "players_all_time": players_qs.aggregate(players=Count("remote_addr", distinct=True))["players"],
+                "players_first_week": (
+                    players_qs
+                    .filter(created__lte=F("episode__published") + timedelta(days=7))
+                    .aggregate(players=Count("remote_addr", distinct=True))
+                )["players"],
+                "top_countries": audio_request_log_qs.get_ip_count_query(ccode=F("geoip__country")),
+                "top_apps": audio_request_log_qs.get_ip_count_query(app_name=F("user_agent_data__name")),
+                "top_devices": audio_request_log_qs.get_ip_count_query(device_name=F("user_agent_data__device_name")),
+                "title": _("Statistics"),
+                "subtitle": str(obj),
+                "media": self.media,
+                "graph_start_date": date.today() - relativedelta(months=1),
+                **self.admin_site.each_context(request),
+            },
+        )
+
 
 @admin.register(Post)
 class PostAdmin(BasePodcastContentAdmin):
@@ -486,8 +560,9 @@ class PostAdmin(BasePodcastContentAdmin):
         "description",
     ]
 
+    @admin.display(description="")
     def frontend_link(self, obj: Post):
-        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Link") + "</a>")
+        return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
     def get_list_display(self, request):
         if apps.is_installed("spodcat.logs"):
@@ -498,7 +573,6 @@ class PostAdmin(BasePodcastContentAdmin):
                 "podcast",
                 "published",
                 "view_count",
-                "visitor_count",
                 "frontend_link",
             ]
         return ["name", "is_visible", "is_draft", "podcast", "published", "frontend_link"]
@@ -539,7 +613,7 @@ class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
     def get_form(self, request, obj=None, change=False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("episode")
-        if isinstance(field, ModelChoiceField):
+        if isinstance(field, ModelChoiceField) and field.queryset:
             field.queryset = (
                 field.queryset
                 .filter(Q(podcast__authors=request.user) | Q(podcast__owner=request.user))
@@ -575,8 +649,9 @@ class CommentAdmin(AdminMixin, admin.ModelAdmin):
     def content_link(self, obj: Comment):
         return self.get_change_link(obj.podcast_content)
 
+    @admin.display(description="")
     def frontend_link(self, obj: Comment):
-        return mark_safe(f'<a href="{obj.podcast_content.frontend_url}" target="_blank">Link</a>')
+        return mark_safe(f'<a href="{obj.podcast_content.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
     def get_queryset(self, request):
         return (
@@ -619,7 +694,7 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
         "Homosexualitet",
     ]
 
-    def change_view(self, request, object_id, form_url="", extra_context=None):
+    def change_view(self, request, object_id, form_url="", extra_context: dict | None  = None):
         extra_context = extra_context or {}
         extra_context["sample_text"] = random.choice(self.sample_texts)
         return super().change_view(request, object_id, form_url, extra_context)
@@ -641,7 +716,8 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
         if "file" in form.changed_data:
             if "file" in form.cleaned_data:
                 font_file: UploadedFile = form.cleaned_data["file"]
-                instance.format = FontFace.guess_format(font_file.name, content_type=font_file.content_type)
+                if font_file.content_type and font_file.name:
+                    instance.format = FontFace.guess_format(font_file.name, content_type=font_file.content_type)
 
             if "file" in form.initial:
                 delete_storage_file(form.initial["file"])

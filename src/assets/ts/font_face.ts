@@ -42,7 +42,7 @@ export function initPodcastNameFontSample() {
 
         if (sizeSelect instanceof HTMLSelectElement) {
             const changeFontSize = () => {
-                const size = sizeSelect.options.item(sizeSelect.selectedIndex).value;
+                const size = sizeSelect.value;
 
                 if (size == "small") sample.style.fontSize = "35px";
                 else if (size == "normal") sample.style.fontSize = "50px";

@@ -6,13 +6,14 @@ from spodcat.utils import seconds_to_timestamp
 class ArtistMultipleChoiceField(forms.ModelMultipleChoiceField):
     def __init__(self, queryset, **kwargs):
         super().__init__(queryset, **kwargs)
-        self._choices = list(queryset)
+        if queryset:
+            self._choices = list(queryset.all())
 
     def clean(self, value):
         value = self.prepare_value(value)
         new_value = []
         for pk in value:
-            if isinstance(pk, str) and pk.startswith("NEW--"):
+            if self.queryset and isinstance(pk, str) and pk.startswith("NEW--"):
                 name = pk[5:]
                 artist = self.queryset.filter(name__iexact=name).first()
                 if not artist:

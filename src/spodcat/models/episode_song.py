@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -12,14 +13,14 @@ if TYPE_CHECKING:
 
 
 class EpisodeSong(AbstractEpisodeChapter):
-    artists: "models.ManyToManyField[Artist]" = models.ManyToManyField(
+    artists: "models.ManyToManyField[Artist, Any]" = models.ManyToManyField(
         "spodcat.Artist",
         related_name="songs",
         blank=True,
         verbose_name=_("artists"),
     )
     comment = models.CharField(max_length=100, null=True, default=None, blank=True, verbose_name=_("comment"))
-    episode: "Episode" = models.ForeignKey(
+    episode = models.ForeignKey["Episode"](
         "spodcat.Episode",
         on_delete=models.CASCADE,
         related_name="songs",
@@ -48,7 +49,7 @@ class EpisodeSong(AbstractEpisodeChapter):
 
     # pylint: disable=no-member
     def has_change_permission(self, request):
-        return (
+        return isinstance(request.user, AbstractUser) and (
             request.user.is_superuser or
             request.user == self.episode.podcast.owner or
             request.user in self.episode.podcast.authors.all()

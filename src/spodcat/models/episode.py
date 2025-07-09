@@ -8,7 +8,6 @@ from io import BytesIO
 from time import struct_time
 from typing import TYPE_CHECKING
 
-import feedparser
 import requests
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -21,6 +20,7 @@ from pydub import AudioSegment
 from pydub.utils import mediainfo
 from slugify import slugify
 
+from spodcat.types import RssEntry
 from spodcat.utils import (
     delete_storage_file,
     generate_thumbnail,
@@ -40,7 +40,7 @@ from .podcast_content import PodcastContent
 
 
 if TYPE_CHECKING:
-    from django.db.models.manager import RelatedManager
+    from django.db.models.fields.related_descriptors import RelatedManager
 
     from .episode_chapter import EpisodeChapter
     from .episode_song import EpisodeSong
@@ -196,36 +196,36 @@ class Episode(PodcastContent):
         if save:
             self.save()
 
-    def update_from_feed(self, entry: feedparser.FeedParserDict):
+    def update_from_feed(self, entry: RssEntry):
         try:
-            self.number = int(entry.itunes_episode)
+            self.number = int(entry["itunes_episode"]) if "itunes_episode" in entry else None
         except Exception:
             pass
 
         try:
-            self.season = int(entry.itunes_season)
+            self.season = int(entry["itunes_season"]) if "itunes_season" in entry else None
         except Exception:
             pass
 
-        self.name = markdownify(entry.title)
+        self.name = markdownify(entry["title"])
 
         if "description" in entry:
-            self.description = markdownify(entry.description)
+            self.description = markdownify(entry["description"])
 
-        if "published_parsed" in entry and isinstance(entry.published_parsed, struct_time):
+        if "published_parsed" in entry and isinstance(entry["published_parsed"], struct_time):
             self.published = datetime.datetime(
-                year=entry.published_parsed.tm_year,
-                month=entry.published_parsed.tm_mon,
-                day=entry.published_parsed.tm_mday,
-                hour=entry.published_parsed.tm_hour,
-                minute=entry.published_parsed.tm_min,
-                second=entry.published_parsed.tm_sec,
+                year=entry["published_parsed"].tm_year,
+                month=entry["published_parsed"].tm_mon,
+                day=entry["published_parsed"].tm_mday,
+                hour=entry["published_parsed"].tm_hour,
+                minute=entry["published_parsed"].tm_min,
+                second=entry["published_parsed"].tm_sec,
                 tzinfo=datetime.timezone.utc,
             )
 
-        if "itunes_duration" in entry and entry.itunes_duration:
-            if isinstance(entry.itunes_duration, str) and ":" in entry.itunes_duration:
-                parts = entry.itunes_duration.split(":")
+        if "itunes_duration" in entry and entry["itunes_duration"]:
+            if isinstance(entry["itunes_duration"], str) and ":" in entry["itunes_duration"]:
+                parts = entry["itunes_duration"].split(":")
                 duration_seconds = float(parts[-1])
                 if len(parts) > 1:
                     duration_seconds += float(parts[-2]) * 60
@@ -234,13 +234,13 @@ class Episode(PodcastContent):
                 self.duration_seconds = duration_seconds
             else:
                 try:
-                    self.duration_seconds = float(entry.itunes_duration)
+                    self.duration_seconds = float(entry["itunes_duration"])
                 except ValueError:
                     pass
 
-        if "image" in entry and "href" in entry.image and entry.image.href:
-            logger.info("Importing episode image: %s", entry.image.href)
-            response = requests.get(entry.image.href, timeout=10)
+        if "image" in entry and "href" in entry["image"] and entry["image"]["href"]:
+            logger.info("Importing episode image: %s", entry["image"]["href"])
+            response = requests.get(entry["image"]["href"], timeout=10)
             if response.ok:
                 suffix = ""
                 content_type = response.headers.get("Content-Type", "")
@@ -256,10 +256,10 @@ class Episode(PodcastContent):
                 self.handle_uploaded_image()
 
         if "links" in entry:
-            link = getitem0_nullable(entry.links, lambda l: l.get("rel", "") == "enclosure")
+            link = getitem0_nullable(entry["links"], lambda l: l.get("rel", "") == "enclosure")
             if link and "href" in link:
-                logger.info("Fetching audio file: %s", link.href)
-                response = requests.get(link.href, timeout=60)
+                logger.info("Fetching audio file: %s", link["href"])
+                response = requests.get(link["href"], timeout=60)
                 if response.ok:
                     delete_storage_file(self.audio_file)
                     self.audio_content_type = response.headers.get("Content-Type", "")

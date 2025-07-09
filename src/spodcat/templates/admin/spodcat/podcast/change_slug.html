@@ -1,12 +1,6 @@
 {% extends "admin/base_site.html" %}
 {% load admin_urls static i18n %}
 
-{% block extrahead %}
-{{ block.super }}
-<script src="{% url 'admin:jsi18n' %}"></script>
-{{ media }}
-{% endblock %}
-
 {% block extrastyle %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static "admin/css/forms.css" %}">
@@ -17,9 +11,8 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% translate "Home" %}</a>
-&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
 &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-&rsaquo; <a href="{% url opts|admin_urlname:'change' form.instance.pk|admin_urlquote %}">{{ form.instance|truncatewords:"18" }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'change' form.instance.pk|admin_urlquote %}">{{ form.instance }}</a>
 &rsaquo; {% translate "Change slug" %}
 </div>
 {% endblock %}

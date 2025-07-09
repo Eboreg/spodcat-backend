@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -22,7 +23,7 @@ class Artist(ModelMixin, models.Model):
     def has_change_permission(self, request):
         from spodcat.models import Podcast
 
-        return request.user.is_superuser or not (
+        return (isinstance(request.user, AbstractUser) and request.user.is_superuser) or not (
             Podcast.objects
             .filter(contents__episode__songs__artists=self)
             .exclude(Q(authors=request.user) | Q(owner=request.user))

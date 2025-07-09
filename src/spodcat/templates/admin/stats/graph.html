@@ -1,0 +1,35 @@
+{% load i18n %}
+
+<div class="graph-container">
+    <div class="graph-header">
+        <h3>{{ title }}</h3>
+        {% if date_inputs %}
+            <div class="horizontal">
+                <input type="date" class="start-date">
+                <span> – </span>
+                <input type="date" class="end-date">
+            </div>
+        {% endif %}
+        <div class="horizontal">
+            <span>{% translate "Period" %}: </span>
+            <select name="time-period" class="time-period">
+                <option value="day"{% if period == "day" %} selected{% endif %}>{% translate "Days" %}</option>
+                <option value="week"{% if period == "week" %} selected{% endif %}>{% translate "Weeks" %}</option>
+                <option value="month"{% if period == "month" %} selected{% endif %}>{% translate "Months" %}</option>
+                <option value="year"{% if period == "year" %} selected{% endif %}>{% translate "Years" %}</option>
+            </select>
+            <a href="#" class="reset-link">{% translate "Reset" %}</a>
+        </div>
+    </div>
+    {% if subtitle %}<div class="graph-subheader">{{ subtitle }}</div>{% endif %}
+    <div class="graph">
+        <canvas
+            class="{{ class }}"
+            data-period="{{ period }}"
+            {% if podcast %}data-podcast="{{ podcast }}"{% endif %}
+            {% if episode %}data-episode="{{ episode }}"{% endif %}
+            {% if chart_type %}data-chart-type="{{ chart_type }}"{% endif %}
+            {% if start_date %}data-start-date="{{ start_date|date:"Y-m-d" }}"{% endif %}
+        ></canvas>
+    </div>
+</div>

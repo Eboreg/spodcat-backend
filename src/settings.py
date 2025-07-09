@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "spodcat",
     "spodcat.logs",
     "spodcat.contrib.admin",
+    "test_env",
 ]
 
 MIDDLEWARE = [
@@ -154,3 +155,4 @@ REST_FRAMEWORK = {
 
 
 MARTOR_ENABLE_LABEL = True
+AUTH_USER_MODEL = "test_env.User"

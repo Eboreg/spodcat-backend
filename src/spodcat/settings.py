@@ -58,9 +58,11 @@ class SpodcatSettings:
 
     @property
     def user_settings(self):
-        if self._user_settings is None:
-            self._user_settings = getattr(settings, "SPODCAT", {})
-        return self._user_settings
+        user_settings = self._user_settings
+        if user_settings is None:
+            user_settings = getattr(settings, "SPODCAT", {})
+            self._user_settings = user_settings
+        return user_settings
 
     def __getattr__(self, attr):
         try:

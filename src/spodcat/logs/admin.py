@@ -29,8 +29,8 @@ class UserAgentWidget(ReadOnlyInlineModelWidget):
     def get_instance_dict(self, instance: UserAgent):
         return {
             _("Name"): instance.name,
-            _("Type"): instance.get_type_display(),
-            _("Device category"): instance.get_device_category_display(),
+            _("Type"): instance.get_type_display(), # type: ignore
+            _("Device category"): instance.get_device_category_display(), # type: ignore
             _("Device name"): instance.device_name,
         }
 
@@ -146,7 +146,7 @@ class PodcastEpisodeAudioRequestLogAdmin(LogAdmin):
         return (
             super().get_queryset(request)
             .select_related("episode__podcast", "user_agent_data")
-            .with_percent_fetched()
+            .with_percent_fetched() # type: ignore
         )
 
     @admin.display(description=_("% fetched"), ordering="percent_fetched")

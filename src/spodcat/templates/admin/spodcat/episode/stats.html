@@ -1,0 +1,111 @@
+{% extends "admin/stats/base.html" %}
+{% load admin_urls static i18n spodcat %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate "Home" %}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">{{ object }}</a>
+&rsaquo; {% translate "Statistics" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" class="stats">
+    <div class="stats-section">
+        <div class="stats-table-container">
+            <div class="stats-table-wrapper">
+                <h3>{% translate "Episode" %}</h3>
+                <div class="stats-table">
+                    <div class="row">
+                        <div class="key">{% translate "All time plays" %}</div>
+                        <div class="value">{{ plays_all_time|default_if_none:"0"|floatformat }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="key">{% translate "Plays during first week" %}</div>
+                        <div class="value">{{ plays_first_week|default_if_none:"0"|floatformat }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="key">{% translate "All time unique players" %}</div>
+                        <div class="value">{{ players_all_time|default_if_none:"0"|floatformat }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="key">{% translate "Unique players during first week" %}</div>
+                        <div class="value">{{ players_first_week|default_if_none:"0"|floatformat }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-table-wrapper">
+                <h3>{% translate "Page views (and unique visitors)" %}</h3>
+                <div class="stats-table collapsible collapsed">
+                    <div class="row">
+                        <div class="key"><strong>{% translate "Total" %}</strong></div>
+                        <div class="value"><strong>{{ page_views_total }} ({{ page_visitors_total }})</strong></div>
+                    </div>
+                    {% for view in page_views %}
+                    <div class="row">
+                        <div class="key">{{ view|month }}</div>
+                        <div class="value">{{ view.views }} ({{ view.visitors }})</div>
+                    </div>
+                    {% endfor %}
+                    {% include "admin/stats/stats_table_links.html" %}
+                </div>
+            </div>
+            <div class="stats-table-wrapper">
+                <h3>{% translate "Listener countries" %}</h3>
+                <div class="stats-table collapsible collapsed">
+                    {% for country in top_countries %}
+                    <div class="row">
+                        <div class="key">{{ country.ccode|country_code }}</div>
+                        <div class="value">{{ country.ip_count }}</div>
+                    </div>
+                    {% endfor %}
+                    {% include "admin/stats/stats_table_links.html" %}
+                </div>
+            </div>
+            <div class="stats-table-wrapper">
+                <h3>{% translate "Listener applications" %}</h3>
+                <div class="stats-table collapsible collapsed">
+                    {% for app in top_apps %}
+                    <div class="row">
+                        <div class="key">{{ app.app_name }}</div>
+                        <div class="value">{{ app.ip_count }}</div>
+                    </div>
+                    {% endfor %}
+                    {% include "admin/stats/stats_table_links.html" %}
+                </div>
+            </div>
+            <div class="stats-table-wrapper">
+                <h3>{% translate "Listener devices" %}</h3>
+                <div class="stats-table collapsible collapsed">
+                    {% for device in top_devices %}
+                    <div class="row">
+                        <div class="key">{{ device.device_name }}</div>
+                        <div class="value">{{ device.ip_count }}</div>
+                    </div>
+                    {% endfor %}
+                    {% include "admin/stats/stats_table_links.html" %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <div class="horizontal">
+            {% translate "Play count" as title %}
+            {% blocktranslate trimmed asvar subtitle %}
+            This measures the number of episode downloads per day by non-bot users. The numbers may be fractional
+            because of partial downloads.
+            {% endblocktranslate %}
+            {% include "admin/stats/graph.html" with class="episode-plays-graph" title=title subtitle=subtitle episode=object.pk chart_type="line" period="day" date_inputs=True start_date=graph_start_date only %}
+
+            {% translate "Unique listeners" as title %}
+            {% blocktranslate trimmed asvar subtitle %}
+            This measures the number of unique and non-bot IP addresses. The number of actual, physical
+            <em>people</em> is unknown but definitely smaller.
+            {% endblocktranslate %}
+            {% include "admin/stats/graph.html" with class="unique-ips-graph" title=title subtitle=subtitle episode=object.pk period="day" date_inputs=True start_date=graph_start_date only %}
+        </div>
+    </div>
+</div>
+{% endblock %}

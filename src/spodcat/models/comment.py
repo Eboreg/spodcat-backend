@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from markdown import markdown
@@ -16,7 +17,7 @@ class Comment(ModelMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True, verbose_name=_("created"))
     is_approved = models.BooleanField(default=False, verbose_name=_("is approved"))
     name = models.CharField(max_length=50, verbose_name=_("name"))
-    podcast_content: "PodcastContent" = models.ForeignKey(
+    podcast_content = models.ForeignKey["PodcastContent"](
         "spodcat.PodcastContent",
         on_delete=models.CASCADE,
         related_name="comments",
@@ -35,7 +36,7 @@ class Comment(ModelMixin, models.Model):
 
     # pylint: disable=no-member
     def has_change_permission(self, request):
-        return (
+        return isinstance(request.user, AbstractUser) and (
             request.user.is_superuser or
             request.user == self.podcast_content.podcast.owner or
             request.user in self.podcast_content.podcast.authors.all()
