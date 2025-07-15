@@ -107,13 +107,15 @@ class GeoIP(ModelMixin, models.Model):
             geoip2_city = get_geoip2_city(ip)
             if geoip2_city:
                 geoip2_asn = get_geoip2_asn(ip)
-                return cls.objects.create(
+                return cls.objects.update_or_create(
                     ip=ip,
-                    city=geoip2_city.city.name or "",
-                    region=(geoip2_city.subdivisions[0].name or "") if geoip2_city.subdivisions else "",
-                    country=geoip2_city.country.iso_code or "",
-                    org=(geoip2_asn.autonomous_system_organization or "") if geoip2_asn else "",
-                )
+                    defaults={
+                        "city": geoip2_city.city.name or "",
+                        "region": (geoip2_city.subdivisions[0].name or "") if geoip2_city.subdivisions else "",
+                        "country": geoip2_city.country.iso_code or "",
+                        "org": (geoip2_asn.autonomous_system_organization or "") if geoip2_asn else "",
+                    },
+                )[0]
 
         return None
 

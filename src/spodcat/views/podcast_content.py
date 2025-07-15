@@ -13,6 +13,7 @@ from spodcat import serializers
 from spodcat.filters import IdListFilter
 from spodcat.models import PodcastContent
 from spodcat.models.querysets import PodcastContentQuerySet
+from spodcat.views.mixins import LogRequestMixin
 
 
 class PodcastContentFilter(IdListFilter):
@@ -29,7 +30,7 @@ class PodcastContentFilter(IdListFilter):
         return queryset.filter(podcast__slug=value)
 
 
-class PodcastContentViewSet(views.ReadOnlyModelViewSet):
+class PodcastContentViewSet(LogRequestMixin, views.ReadOnlyModelViewSet):
     queryset = PodcastContent.objects.all()
     select_for_includes = {
         "podcast": ["podcast"],
@@ -48,7 +49,6 @@ class PodcastContentViewSet(views.ReadOnlyModelViewSet):
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastContentRequestLog
-
-            PodcastContentRequestLog.create_from_request(request=request, content=instance)
+            self.log_request(request, PodcastContentRequestLog, content=instance)
 
         return Response()

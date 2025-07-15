@@ -21,6 +21,7 @@ from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
 from spodcat.utils import date_to_datetime
+from spodcat.views.mixins import LogRequestMixin
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class PodcastFeedEntry(FeedEntry):
     podcast2: Podcast2EntryExtension
 
 
-class PodcastViewSet(views.ReadOnlyModelViewSet):
+class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet):
     prefetch_for_includes = {
         "authors": ["authors"],
         "categories": ["categories"],
@@ -57,8 +58,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRequestLog
-
-            PodcastRequestLog.create_from_request(request=request, podcast=instance)
+            self.log_request(request, PodcastRequestLog, podcast=instance)
 
         return Response()
 
@@ -75,8 +75,7 @@ class PodcastViewSet(views.ReadOnlyModelViewSet):
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRssRequestLog
-
-            PodcastRssRequestLog.create_from_request(request=request, podcast=podcast)
+            self.log_request(request, PodcastRssRequestLog, podcast=podcast)
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
