@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools"]
 
 [project]
-version = "0.5.0"
+version = "0.5.1"
 name = "spodcat-backend"
 authors = [
     {name = "Robert Huselius", email = "robert@huseli.us"},
@@ -17,17 +17,17 @@ dependencies = [
     "django",
     "djangorestframework-jsonapi[django-polymorphic,django-filter]",
     "djangorestframework",
-    "feedgen",                  # generating RSS feed
-    "feedparser",               # importing RSS feed
-    "geoip2",                   # used to get geo data for remote IPs
-    "iso639-lang",              # getting language choices for podcast
+    "feedgen",
+    "feedparser",
+    "geoip2",
+    "iso639-lang",
     "klaatu-django@https://github.com/Eboreg/klaatu-django/archive/refs/heads/master.zip",
-    "markdownify",              # convert HTML to Markdown when importing RSS feed
-    "martor",                   # Markdown editor for admin
-    "pillow",                   # thumbnail generation
-    "pydub",                    # generating dBFS arrays and normalising
+    "markdownify",
+    "martor",
+    "pillow",
+    "pydub",
     "python-dateutil",
-    "python-slugify",           # generating slugs for podcast content
+    "python-slugify",
 ]
 
 [project.optional-dependencies]

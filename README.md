@@ -1,5 +1,9 @@
 # Spodcat
 
+This is the backend part of my podcast platform. It's designed to go along with [the frontend part](https://github.com/Eboreg/spodcat-frontend). It's built on Django REST Framework with a JSON:API implementation, but more on that later. The admin interface is just the regular Django admin with some minor tweakage. My own specific implementation is available in [this repo](https://github.com/Eboreg/podd-huseli-us-backend) and is also live [here](https://podd.huseli.us).
+
+It's mainly made for my own specific purposes. Lately I have been making some effort to generalise stuff, in order to facilitate some potential wider use. But there's probably lots more that needs to be done to that end.
+
 ## Spodcat configuration
 
 Spodcat is configured using a `SPODCAT` dict in your Django settings module. These are the available settings:
@@ -129,3 +133,22 @@ urlpatterns = [
 ]
 ```
 (You don't need to include `django.contrib.admin.site.urls` if you use `spodcat.contrib.admin.urls`.)
+
+## Used software
+
+* [Django](https://www.djangoproject.com/)
+* [Django REST Framework](https://www.django-rest-framework.org/)
+* [Django REST Framework JSON:API](https://django-rest-framework-json-api.readthedocs.io/)
+* [django-polymorphic](https://django-polymorphic.readthedocs.io/)
+* [country_list](https://github.com/bulv1ne/country_list/) (for making country codes more human readable in admin)
+* [python-feedgen](https://feedgen.kiesow.be/) (for generating RSS feeds)
+* [Feedparser](https://feedparser.readthedocs.io/) (for importing external RSS feeds)
+* [Maxmind GeoIP2 Python API](https://github.com/maxmind/GeoIP2-python) (getting geo data for remote IPs, for logging purposes)
+* [iso639-lang](https://github.com/LBeaudoux/iso639) (getting possible language choices for podcasts)
+* [klaatu-django](https://github.com/Eboreg/klaatu-django) (my own collection of useful bits & bobs)
+* [Markdownify](https://github.com/matthewwithanm/python-markdownify) (convert HTML to Markdown when importing RSS feeds)
+* [Martor](https://github.com/agusmakmun/django-markdown-editor) (Markdown editor for admin)
+* [Pillow](https://pillow.readthedocs.io/) (for automatic image thumbnail generation)
+* [Pydub](https://pydub.com/) (to generate dBFS arrays for audio visualization in frontend)
+* [Dateutil](https://dateutil.readthedocs.io/) (for generating statistics graphs in admin)
+* [Python Slugify](https://github.com/un33k/python-slugify) (generating slugs for podcast episodes/posts)
