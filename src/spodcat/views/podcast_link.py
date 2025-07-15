@@ -5,7 +5,7 @@ from spodcat.filters import IdListFilter
 from spodcat.models import PodcastLink
 
 
-class PodcastLinkViewSet(views.ReadOnlyModelViewSet):
+class PodcastLinkViewSet(views.ReadOnlyModelViewSet[PodcastLink]):
     filterset_class = IdListFilter
     queryset = PodcastLink.objects.all()
     select_for_includes = {

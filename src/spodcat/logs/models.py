@@ -291,7 +291,7 @@ class PodcastContentRequestLog(RequestLog):
 
 
 class PodcastEpisodeAudioRequestLog(RequestLog):
-    duration_ms = models.IntegerField(verbose_name=_("duration"))
+    duration_ms = models.IntegerField(verbose_name=_("duration"), null=True, default=None)
     episode = models.ForeignKey["Episode"](
         "spodcat.Episode",
         on_delete=models.CASCADE,

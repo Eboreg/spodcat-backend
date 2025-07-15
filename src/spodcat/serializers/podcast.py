@@ -9,7 +9,7 @@ from spodcat.models import Podcast, PodcastContent, PodcastLink
 from .podcast_content import PartialPodcastContentSerializer
 
 
-class PodcastSerializer(serializers.ModelSerializer):
+class PodcastSerializer(serializers.ModelSerializer[Podcast]):
     contents = PolymorphicResourceRelatedField(
         PartialPodcastContentSerializer,
         queryset=PodcastContent.objects,
@@ -28,7 +28,7 @@ class PodcastSerializer(serializers.ModelSerializer):
     }
 
     class Meta:
-        exclude = ["authors", "owner"]
+        exclude = ["authors", "owner", "custom_guid"]
         model = Podcast
 
     def get_description_html(self, obj: Podcast) -> str:

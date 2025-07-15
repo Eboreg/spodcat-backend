@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools"]
 
 [project]
-version = "0.4.2"
+version = "0.5.0"
 name = "spodcat-backend"
 authors = [
     {name = "Robert Huselius", email = "robert@huseli.us"},
@@ -109,3 +109,5 @@ module = ["*.migrations.*"]
 exclude = ["**/__pycache__", "node_modules", "build", "**/migrations", "**/.*", ".venv"]
 typeCheckingMode = "basic"
 ignore = [".venv"]
+stubPath = "typings"
+include = ["src"]

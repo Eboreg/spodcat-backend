@@ -11,7 +11,7 @@ class PostFilter(PodcastContentFilter):
     post = filters.CharFilter(method="filter_content")
 
 
-class PostViewSet(PodcastContentViewSet):
+class PostViewSet(PodcastContentViewSet[Post]):
     filterset_class = PostFilter
     prefetch_for_includes = {
         "podcast.contents": [

@@ -1,0 +1,73 @@
+from typing import Sequence, TypeVar
+
+from django.db.models import Model
+from rest_framework import generics, viewsets
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from rest_framework_json_api.serializers import (
+    ResourceIdentifierObjectSerializer,
+)
+
+
+_MT_co = TypeVar("_MT_co", bound=Model, covariant=True)
+
+
+class PreloadIncludesMixin:
+    def get_select_related(self, include) -> Sequence[str] | None: ...
+
+    def get_prefetch_related(self, include) -> Sequence[str] | None: ...
+
+
+class AutoPrefetchMixin: ...
+
+
+class RelatedMixin:
+    def retrieve_related(self, request: Request, *args, **kwargs) -> Response: ...
+
+    def get_related_serializer(self, instance, **kwargs) -> BaseSerializer: ...
+
+    def get_related_serializer_class(self) -> type[BaseSerializer]: ...
+
+    def get_related_field_name(self) -> str: ...
+
+    def get_related_instance(self): ...
+
+
+class ModelViewSet(AutoPrefetchMixin, PreloadIncludesMixin, RelatedMixin, viewsets.ModelViewSet[_MT_co]): ...
+
+
+class ReadOnlyModelViewSet(AutoPrefetchMixin, PreloadIncludesMixin, RelatedMixin, viewsets.ReadOnlyModelViewSet[_MT_co]): ...
+
+
+class RelationshipView(generics.GenericAPIView[_MT_co]):
+    serializer_class = ResourceIdentifierObjectSerializer
+    self_link_view_name: str | None
+    related_link_view_name: str | None
+    field_name_mapping: dict
+
+    def get_url(self, name, view_name, kwargs, request) -> str | None: ...
+
+    def get_links(self) -> dict[str, str]: ...
+
+    def get(self, request, *args, **kwargs): ...
+
+    def remove_relationships(self, instance_manager, field): ...
+
+    def patch(self, request, *args, **kwargs): ...
+
+    def post(self, request, *args, **kwargs): ...
+
+    def delete(self, request, *args, **kwargs): ...
+
+    def get_related_instance(self) -> Model: ...
+
+    def get_related_field_name(self) -> str: ...
+
+    def _instantiate_serializer(self, instance) -> BaseSerializer: ...
+
+    def get_resource_name(self): ...
+
+    def set_resource_name(self, value): ...
+
+    resource_name = property(get_resource_name, set_resource_name)

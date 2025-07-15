@@ -164,4 +164,5 @@ SPODCAT = {
     "FILEFIELDS": {
         "FONTFACE_FILE": {"STORAGE": "local"},
     },
+    "USE_INTERNAL_AUDIO_REDIRECT": True,
 }

@@ -1,14 +1,18 @@
 import datetime
 import math
 import os
+import re
 from io import BytesIO
 from typing import TYPE_CHECKING
 
 from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
+from django.http import HttpRequest
+from django.http.response import HttpResponseBase
 from django.utils.timezone import get_current_timezone, make_aware
 from PIL import Image
 from pydub import AudioSegment
+from rest_framework.request import Request
 
 
 if TYPE_CHECKING:
@@ -51,6 +55,15 @@ def env_boolean(key: str, default: bool = False):
     return default
 
 
+def extract_range_request_header(request: Request | HttpRequest) -> tuple[int, int] | None:
+    range_match = re.match(r"^bytes=(\d*)-(\d*)$", request.headers.get("Range", ""))
+
+    if range_match and range_match.group(1) and range_match.group(2):
+        return int(range_match.group(1)), int(range_match.group(2))
+
+    return None
+
+
 def filter_values_not_null(d: dict) -> dict:
     return {k: v for k, v in d.items() if v is not None}
 
@@ -91,6 +104,11 @@ def seconds_to_timestamp(value: int):
     minutes = int(value / 60 % 60)
     seconds = int(value % 60 % 60)
     return f"{hours}:{minutes:02d}:{seconds:02d}"
+
+
+def set_range_response_headers(response: HttpResponseBase, range_start: int, range_end: int, total_size: int):
+    response["Content-Range"] = f"bytes {range_start}-{range_end}/{total_size}"
+    response["Content-Length"] = range_end - range_start
 
 
 def split_audio_segment(whole: AudioSegment, parts: int) -> "Generator[AudioSegment]":

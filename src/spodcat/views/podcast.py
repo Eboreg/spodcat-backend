@@ -37,7 +37,7 @@ class PodcastFeedEntry(FeedEntry):
     podcast2: Podcast2EntryExtension
 
 
-class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet):
+class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
     prefetch_for_includes = {
         "authors": ["authors"],
         "categories": ["categories"],
@@ -133,9 +133,10 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet):
                 fe.podcast.itunes_image(episode.image.url)
                 if episode.image_width:
                     fe.podcast2.podcast_image(episode.image.url, episode.image_width)
-            if episode.audio_file:
+            audio_file_url = episode.get_audio_file_url()
+            if audio_file_url:
                 fe.enclosure(
-                    url=episode.audio_file.url,
+                    url=audio_file_url,
                     type=episode.audio_content_type,
                     length=episode.audio_file_length,
                 )

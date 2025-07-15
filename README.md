@@ -4,12 +4,38 @@
 
 Spodcat is configured using a `SPODCAT` dict in your Django settings module. These are the available settings:
 
-* `FRONTEND_ROOT_URL`: Mainly used for RSS feed generation and some places in the admin. Default: `http://localhost:4200/`
-* `BACKEND_HOST`: Used (along with `BACKEND_ROOT`, see below) for generating RSS feed URLs which are sent to the frontend, as well as some stuff in the admin. Default: `http://localhost:8000/`
-* `BACKEND_ROOT`: Set this is your backend installation is not at the URL root. Default: empty string
-* `FILEFIELDS`: Described below.
+### `FRONTEND_ROOT_URL`
 
-`FILEFIELDS` contains settings for various `FileField`s on different models, and govern where uploaded files will be stored and by which storage engine.
+Mainly used for RSS feed generation and some places in the admin. Default: `http://localhost:4200/`.
+
+### `BACKEND_HOST`
+
+Used (along with `BACKEND_ROOT`, see below) for generating RSS feed URLs which are sent to the frontend, as well as some stuff in the admin. Default: `http://localhost:8000/`.
+
+### `BACKEND_ROOT`
+
+Set this is your backend installation is not at the URL root. Default: empty string.
+
+### `USE_INTERNAL_AUDIO_REDIRECT`
+
+If `True`, the episode API responses and RSS feeds will use the internal view `spodcat:episode-audio` (resolving to something like `https://example.com/episodes/<episode-id>/audio/`) for episode URLs instead of linking directly to whatever `episode.audio_file.url` returns. This view will then save a `PodcastEpisodeAudioRequestLog` entry (provided the `spodcat.logs` app is installed) and return a 302 (temporary) redirect to `episode.audio_file.url`.
+
+Possible use cases for this:
+
+* Your storage provider cannot reliably provide permanent, canonical episode URLs for some reason
+* You want to save `PodcastEpisodeAudioRequestLog` logs but your storage provider doesn't let you access request logs
+
+Note that the `spodcat:episode-audio` view has no way to log partial episode downloads, and will log every request as if it's for the entire audio file.
+
+### `USE_INTERNAL_AUDIO_PROXY`
+
+Like `USE_INTERNAL_AUDIO_REDIRECT` but more involved and with many potential downsides. Basically, when set to `True` it will make the `spodcat:episode-audio` view act as a full on proxy instead of just redirecting, i.e. it will fetch the audio file contents from your storage provider and serve them directly. You probably only want to use this if you store episode audio locally on the backend server, or if you _really_ want to be able to log partial episode downloads but your storage provider doesn't let you access request logs. With remote storage backends, it will probably add a bunch of overhead and generally make things a little worse for everyone.
+
+Takes priority over `USE_INTERNAL_AUDIO_REDIRECT` if `True`.
+
+### `FILEFIELDS`
+
+Contains settings for various `FileField`s on different models, and govern where uploaded files will be stored and by which storage engine.
 
 ```python
 SPODCAT = {

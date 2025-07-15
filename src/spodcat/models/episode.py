@@ -20,6 +20,7 @@ from pydub import AudioSegment
 from pydub.utils import mediainfo
 from slugify import slugify
 
+from spodcat.settings import spodcat_settings
 from spodcat.types import RssEntry
 from spodcat.utils import (
     delete_storage_file,
@@ -153,6 +154,14 @@ class Episode(PodcastContent):
         name += slugify(self.name, max_length=50)
 
         return name
+
+    # pylint: disable=no-member
+    def get_audio_file_url(self):
+        if spodcat_settings.USE_INTERNAL_AUDIO_PROXY or spodcat_settings.USE_INTERNAL_AUDIO_REDIRECT:
+            return spodcat_settings.get_absolute_backend_url("spodcat:episode-audio", kwargs={"pk": self.pk})
+        if self.audio_file:
+            return self.audio_file.url
+        return None
 
     # pylint: disable=no-member,consider-using-with
     def get_dbfs_and_duration(self, temp_file: tempfile._TemporaryFileWrapper | None = None):

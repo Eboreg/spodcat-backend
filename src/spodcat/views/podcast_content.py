@@ -1,4 +1,4 @@
-from typing import cast
+from typing import TypeVar, cast
 from uuid import UUID
 
 from django.apps import apps
@@ -9,11 +9,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
 
-from spodcat import serializers
 from spodcat.filters import IdListFilter
 from spodcat.models import PodcastContent
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.views.mixins import LogRequestMixin
+
+
+_MT_co = TypeVar("_MT_co", bound=PodcastContent, covariant=True)
 
 
 class PodcastContentFilter(IdListFilter):
@@ -30,12 +32,10 @@ class PodcastContentFilter(IdListFilter):
         return queryset.filter(podcast__slug=value)
 
 
-class PodcastContentViewSet(LogRequestMixin, views.ReadOnlyModelViewSet):
-    queryset = PodcastContent.objects.all()
+class PodcastContentViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[_MT_co]):
     select_for_includes = {
         "podcast": ["podcast"],
     }
-    serializer_class = serializers.PodcastContentSerializer
 
     def filter_queryset(self, queryset):
         queryset = cast(PodcastContentQuerySet, super().filter_queryset(queryset))

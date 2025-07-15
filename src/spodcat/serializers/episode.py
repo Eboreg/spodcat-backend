@@ -9,7 +9,7 @@ from spodcat.models import Comment, Episode, EpisodeSong
 from .episode_song import EpisodeSongSerializer
 
 
-class EpisodeSerializer(serializers.ModelSerializer):
+class EpisodeSerializer(serializers.ModelSerializer[Episode]):
     audio_url = serializers.SerializerMethodField()
     comments = ResourceRelatedField(queryset=Comment.objects, many=True)
     description_html = serializers.SerializerMethodField()
@@ -27,11 +27,11 @@ class EpisodeSerializer(serializers.ModelSerializer):
     }
 
     class Meta:
-        exclude = ["polymorphic_ctype"]
+        exclude = ["polymorphic_ctype", "is_draft", "audio_file", "audio_file_length"]
         model = Episode
 
     def get_audio_url(self, obj: Episode):
-        return obj.audio_file.url if obj.audio_file else None
+        return obj.get_audio_file_url()
 
     def get_description_html(self, obj: Episode):
         return obj.description_html

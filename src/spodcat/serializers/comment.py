@@ -15,7 +15,7 @@ from .podcast_content import PodcastContentSerializer
 logger = logging.getLogger(__name__)
 
 
-class CommentSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer[Comment]):
     challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects, write_only=True)
     challenge_answer = serializers.IntegerField(write_only=True)
     is_approved = serializers.BooleanField(read_only=True)

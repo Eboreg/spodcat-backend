@@ -3,7 +3,7 @@ from rest_framework_json_api import serializers
 from spodcat.models import EpisodeSong
 
 
-class EpisodeSongSerializer(serializers.ModelSerializer):
+class EpisodeSongSerializer(serializers.ModelSerializer[EpisodeSong]):
     included_serializers = {
         "artists": "spodcat.serializers.ArtistSerializer",
     }

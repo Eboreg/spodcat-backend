@@ -9,6 +9,6 @@ from spodcat import serializers
 from spodcat.models import Challenge
 
 
-class ChallengeViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):
+class ChallengeViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet[Challenge]):
     queryset = Challenge.objects.select_related("podcast")
     serializer_class = serializers.ChallengeSerializer
