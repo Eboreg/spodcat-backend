@@ -39,12 +39,11 @@ class PodcastFeedEntry(FeedEntry):
 
 class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
     prefetch_for_includes = {
-        "authors": ["authors"],
-        "categories": ["categories"],
-        "contents": [
+        "__all__": [
+            "links",
+            "categories",
             Prefetch("contents", queryset=PodcastContent.objects.partial().listed().with_has_songs()),
-        ],
-        "links": ["links"],
+        ]
     }
     select_for_includes = {
         "__all__": ["name_font_face"],
