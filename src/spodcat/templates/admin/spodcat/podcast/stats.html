@@ -41,6 +41,10 @@
                         <div class="key">{% translate "Median length" %}</div>
                         <div class="value">{{ episode_durations.median|duration_seconds }}</div>
                     </div>
+                    <div class="row">
+                        <div class="key">{% translate "Avg. release interval" %}</div>
+                        <div class="value">{{ episode_interval|timedelta }}</div>
+                    </div>
                 </div>
             </div>
             <div class="stats-table-wrapper">

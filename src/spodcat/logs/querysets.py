@@ -141,7 +141,7 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
             .annotate(y=Sum(F("quota_fetched")))
             .exclude(y=0.0)
             .values("name", "slug", "date", "y")
-            .order_by("slug", "date")
+            .order_by("slug", "date", "-y")
         )
         return PeriodicalGraphData(qs, period, earliest_date)
 

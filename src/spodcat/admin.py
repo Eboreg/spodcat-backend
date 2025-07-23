@@ -232,21 +232,22 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         audio_request_log_qs = PodcastEpisodeAudioRequestLog.objects.filter(episode__podcast=obj, is_bot=False)
         home_page_views = PodcastRequestLog.objects.filter(podcast=obj).get_monthly_views()
         content_page_views = PodcastContentRequestLog.objects.filter(content__podcast=obj).get_monthly_views()
-        episode_durations = (
-            Episode.objects
-            .filter(podcast=obj)
-            .listed()
-            .aggregate(
-                total=Sum("duration_seconds"),
-                max=Max("duration_seconds"),
-                min=Min("duration_seconds"),
-                avg=Avg("duration_seconds"),
-            )
+        episode_qs = Episode.objects.filter(podcast=obj).listed()
+        episode_dates = episode_qs.aggregate(first=Min("published"), last=Max("published"))
+        episode_count = episode_qs.count()
+        episode_durations = episode_qs.aggregate(
+            total=Sum("duration_seconds"),
+            max=Max("duration_seconds"),
+            min=Min("duration_seconds"),
+            avg=Avg("duration_seconds"),
         )
-        episode_durations["median"] = statistics.median(
-            Episode.objects.filter(podcast=obj).listed().values_list("duration_seconds", flat=True)
-        )
+        episode_durations["median"] = statistics.median(episode_qs.values_list("duration_seconds", flat=True))
         top_episodes_all_time = audio_request_log_qs.get_most_played().filter(plays__gte=0.05)
+
+        if episode_dates["first"] and episode_dates["last"] and episode_count > 1:
+            episode_interval = (episode_dates["last"] - episode_dates["first"]) / (episode_count - 1)
+        else:
+            episode_interval = None
 
         return TemplateResponse(
             request=request,
@@ -271,6 +272,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                 )["visitors"],
                 "published_episodes": Episode.objects.filter(podcast=obj).listed().count(),
                 "episode_durations": episode_durations,
+                "episode_interval": episode_interval,
                 "top_episodes_all_time": top_episodes_all_time,
                 "top_episode_first_week": top_episodes_all_time.filter(
                     created__lte=F("episode__published") + timedelta(days=7)
