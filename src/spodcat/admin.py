@@ -40,6 +40,7 @@ from spodcat.admin_inlines import (
     ArtistSongInline,
     EpisodeChapterInline,
     EpisodeSongInline,
+    PodcastContentVideoInline,
     PodcastLinkInline,
 )
 from spodcat.contrib.admin.filters import ArtistSongCountFilter
@@ -325,6 +326,12 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
 
         return qs
 
+    def get_readonly_fields(self, request: HttpRequest, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        if obj is None:
+            return ["slug", *fields]
+        return fields
+
     @admin.display(description=_("views"), ordering="view_count")
     def view_count(self, obj):
         from spodcat.logs.models import PodcastContentRequestLog
@@ -353,9 +360,9 @@ class EpisodeAdmin(BasePodcastContentAdmin):
         "audio_content_type",
         "audio_file_length",
     ]
-    inlines = [EpisodeSongInline, EpisodeChapterInline]
+    inlines = [EpisodeSongInline, EpisodeChapterInline, PodcastContentVideoInline]
     list_filter = ["is_draft", "published", "podcast"]
-    readonly_fields = ["audio_content_type", "audio_file_length", "slug", "duration", "id"]
+    readonly_fields = ["audio_content_type", "audio_file_length", "duration", "id"]
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
 
     def duration(self, obj: Episode):
@@ -559,6 +566,7 @@ class PostAdmin(BasePodcastContentAdmin):
         ("is_draft", "published"),
         "description",
     ]
+    inlines = [PodcastContentVideoInline]
 
     @admin.display(description="")
     def frontend_link(self, obj: Post):

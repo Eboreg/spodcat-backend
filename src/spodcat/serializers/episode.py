@@ -5,6 +5,7 @@ from rest_framework_json_api.relations import (
 )
 
 from spodcat.models import Comment, Episode, EpisodeSong
+from spodcat.models.video import Video
 
 from .episode_song import EpisodeSongSerializer
 
@@ -19,11 +20,13 @@ class EpisodeSerializer(serializers.ModelSerializer[Episode]):
         queryset=EpisodeSong.objects,
         many=True,
     )
+    videos = ResourceRelatedField(queryset=Video.objects, many=True)
 
     included_serializers = {
         "comments": "spodcat.serializers.CommentSerializer",
         "podcast": "spodcat.serializers.PodcastSerializer",
         "songs": "spodcat.serializers.EpisodeSongSerializer",
+        "videos": "spodcat.serializers.VideoSerializer",
     }
 
     class Meta:

@@ -10,6 +10,7 @@ from .podcast import Podcast
 from .podcast_content import PodcastContent
 from .podcast_link import PodcastLink
 from .post import Post
+from .video import Video
 
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "PodcastContent",
     "PodcastLink",
     "Post",
+    "Video",
 ]

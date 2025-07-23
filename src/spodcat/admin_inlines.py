@@ -4,7 +4,9 @@ from django.utils.translation import gettext_lazy as _
 from spodcat.contrib.admin.mixin import AdminMixin
 from spodcat.contrib.admin.widgets import ArtistAutocompleteWidget
 from spodcat.form_fields import ArtistMultipleChoiceField
+from spodcat.forms import PodcastContentVideoAdminForm
 from spodcat.models import Artist, EpisodeChapter, EpisodeSong, PodcastLink
+from spodcat.models.video import Video
 
 
 class ArtistSongInline(AdminMixin, admin.TabularInline):
@@ -58,6 +60,12 @@ class EpisodeChapterInline(AdminMixin, admin.TabularInline):
     model = EpisodeChapter
     extra = 1
     fields = ["episode", "start_time", "end_time", "title", "url", "image"]
+
+
+class PodcastContentVideoInline(AdminMixin, admin.TabularInline):
+    model = Video
+    extra = 1
+    form = PodcastContentVideoAdminForm
 
 
 class PodcastLinkInline(AdminMixin, admin.TabularInline):

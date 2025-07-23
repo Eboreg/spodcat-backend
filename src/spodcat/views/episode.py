@@ -36,7 +36,7 @@ class EpisodeViewSet(PodcastContentViewSet[Episode]):
         ],
         "songs": ["songs__artists"],
         "songs.artists": ["songs__artists"],
-        "__all__": ["songs", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
+        "__all__": ["videos", "songs", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
     }
     queryset = Episode.objects.with_has_songs()
     serializer_class = serializers.EpisodeSerializer

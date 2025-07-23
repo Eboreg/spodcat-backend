@@ -20,7 +20,7 @@ class PostViewSet(PodcastContentViewSet[Post]):
                 queryset=PodcastContent.objects.partial().listed().with_has_songs(),
             ),
         ],
-        "__all__": [Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
+        "__all__": ["videos", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
     }
     queryset = Post.objects.all()
     serializer_class = serializers.PostSerializer
