@@ -12,6 +12,7 @@ export interface GraphApiResponse {
             y: number;
         }[];
     }[];
+    earliestDate?: string;
 }
 
 export type TimePeriod = "day" | "week" | "month" | "year";

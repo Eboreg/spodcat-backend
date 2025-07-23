@@ -37,8 +37,14 @@ function initChartJs() {
     Chart.defaults.borderColor = "#bb886644";
     Chart.defaults.datasets.line.fill = "start";
     Chart.defaults.animation = false;
+    Chart.defaults.datasets.bar.barPercentage = 1;
+    Chart.defaults.datasets.bar.borderRadius = 3;
+    Chart.defaults.datasets.bar.borderWidth = 2;
+    Chart.defaults.datasets.bar.categoryPercentage = 1;
     Chart.defaults.datasets.line.normalized = true;
-    Chart.defaults.datasets.line.tension = 0;
+    Chart.defaults.datasets.line.tension = 0.15;
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.parsing = false;
     Chart.defaults.scales.linear.ticks.maxRotation = 0;
     Chart.defaults.scales.time.time.isoWeekday = true;
     Chart.defaults.scales.time.time.tooltipFormat = "y-MM-dd";

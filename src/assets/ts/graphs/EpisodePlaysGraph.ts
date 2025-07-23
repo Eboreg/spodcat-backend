@@ -1,6 +1,7 @@
 import { Chart, type ChartType } from "chart.js";
 import { AbstractGraph } from "./abstract";
 import { getPlayTimeEndDate, getPlayTimeStartDate } from "./utils";
+import type { GraphApiResponse } from "../types";
 
 export default class EpisodePlaysGraph extends AbstractGraph {
     graphType: string = "episode-plays";
@@ -9,8 +10,7 @@ export default class EpisodePlaysGraph extends AbstractGraph {
         return [getPlayTimeStartDate(), getPlayTimeEndDate()];
     }
 
-    async renderChart(): Promise<Chart> {
-        const json = await this.getApiResponse();
+    renderChart(json: GraphApiResponse): Chart {
         const chartType = (this.canvas.dataset.chartType || "bar") as ChartType;
 
         return new Chart(this.canvas, {
@@ -19,8 +19,6 @@ export default class EpisodePlaysGraph extends AbstractGraph {
                 datasets: json.datasets,
             },
             options: {
-                maintainAspectRatio: false,
-                parsing: false,
                 plugins: {
                     legend: {
                         display: false,
@@ -43,15 +41,6 @@ export default class EpisodePlaysGraph extends AbstractGraph {
                     y: {
                         beginAtZero: true,
                         stacked: true,
-                    },
-                },
-                datasets: {
-                    bar: {
-                        barPercentage: 1.0,
-                        categoryPercentage: 1.0,
-                    },
-                    line: {
-                        tension: 0.25,
                     },
                 },
             },

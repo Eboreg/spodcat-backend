@@ -1,5 +1,6 @@
 import { Chart } from "chart.js";
 import { AbstractGraph } from "./abstract";
+import type { GraphApiResponse } from "../types";
 
 export default class UniqueIpsGraph extends AbstractGraph {
     constructor(canvas: HTMLCanvasElement, graphType: string, startInput?: Element, endInput?: Element) {
@@ -16,17 +17,13 @@ export default class UniqueIpsGraph extends AbstractGraph {
         ];
     }
 
-    async renderChart(): Promise<Chart> {
-        const json = await this.getApiResponse();
-
+    renderChart(json: GraphApiResponse): Chart {
         return new Chart(this.canvas, {
             type: "line",
             data: {
                 datasets: json.datasets,
             },
             options: {
-                maintainAspectRatio: false,
-                parsing: false,
                 plugins: {
                     legend: {
                         display: this.canvas.dataset.podcast == undefined && this.canvas.dataset.episode == undefined,
@@ -38,6 +35,9 @@ export default class UniqueIpsGraph extends AbstractGraph {
                         type: "time",
                         stacked: true,
                         time: this.getTimeScaleTimeOptions(),
+                        ticks: {
+                            maxRotation: 0,
+                        },
                     },
                     y: {
                         beginAtZero: true,

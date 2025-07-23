@@ -61,25 +61,22 @@ class GraphData(AbstractGraphData):
 
 
 class PeriodicalGraphData(AbstractGraphData):
-    period_type: type[TimePeriod]
-    raw_data: Iterable[dict]
-    average: bool
-    grouped: bool
-
     def __init__(
         self,
         data: Iterable[dict],
         period_type: type[TimePeriod],
+        earliest_date: date,
         average: bool = False,
         grouped: bool = True,
     ):
+        self.earliest_date = earliest_date
         self.raw_data = data
         self.period_type = period_type
         self.average = average
         self.grouped = grouped
 
     def get_datasets(self, start_date: date, end_date: date) -> list[AbstractGraphData.DataSet]:
-        start = self.period_type(start_date)
+        start = self.period_type(start_date if start_date > self.earliest_date else self.earliest_date)
         end = self.period_type(end_date)
         datasets: list[AbstractGraphData.DataSet] = []
 

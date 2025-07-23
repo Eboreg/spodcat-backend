@@ -41,45 +41,54 @@ class GraphView(APIView):
         )
         period = self.get_graph_period_type(request)
 
-        graph_qs = (
-            PodcastEpisodeAudioRequestLog.objects
-            .filter(
-                is_bot=False,
-                created__date__gte=start_date,
-                created__date__lte=end_date,
-            )
-            .filter_by_user(request.user)
-        )
+        graph_qs = PodcastEpisodeAudioRequestLog.objects.filter(is_bot=False).filter_by_user(request.user)
         if episode_id:
             graph_qs = graph_qs.filter(episode=episode_id)
         elif podcast_id:
             graph_qs = graph_qs.filter(episode__podcast=podcast_id)
 
         if graph_type == "episode-plays":
-            graph_data = graph_qs.get_episode_play_count_graph_data(period=period or Day)
+            graph_data = graph_qs.get_episode_play_count_graph_data(
+                period=period or Day,
+                start_date=start_date,
+                end_date=end_date,
+            )
         elif graph_type == "podcast-plays":
-            graph_data = graph_qs.get_podcast_play_count_graph_data(period=period or Day, grouped=grouped)
+            graph_data = graph_qs.get_podcast_play_count_graph_data(
+                period=period or Day,
+                grouped=grouped,
+                start_date=start_date,
+                end_date=end_date,
+            )
         elif graph_type == "unique-ips":
-            graph_data = graph_qs.get_unique_ips_graph_data(period=period or Month, grouped=grouped, average=False)
+            graph_data = graph_qs.get_unique_ips_graph_data(
+                period=period or Month,
+                grouped=grouped,
+                average=False,
+                start_date=start_date,
+                end_date=end_date,
+            )
         elif graph_type == "rss-unique-ips":
             graph_qs = (
-                PodcastRssRequestLog.objects
-                .filter(
-                    is_bot=False,
-                    created__date__gte=start_date,
-                    created__date__lte=end_date,
-                )
-                .exclude(user_agent="")
-                .filter_by_user(request.user)
+                PodcastRssRequestLog.objects.filter(is_bot=False).exclude(user_agent="").filter_by_user(request.user)
             )
             if episode_id:
                 graph_qs = graph_qs.filter(podcast__contents=episode_id)
             elif podcast_id:
                 graph_qs = graph_qs.filter(podcast=podcast_id)
-            graph_data = graph_qs.get_unique_ips_graph_data(period=period or Month, grouped=grouped, average=True)
+            graph_data = graph_qs.get_unique_ips_graph_data(
+                period=period or Month,
+                grouped=grouped,
+                average=True,
+                start_date=start_date,
+                end_date=end_date,
+            )
 
         if graph_data:
-            serializer = serializers.GraphSerializer({"datasets": graph_data.get_datasets(start_date, end_date)})
+            serializer = serializers.GraphSerializer({
+                "datasets": graph_data.get_datasets(start_date, end_date),
+                "earliestDate": graph_data.earliest_date,
+            })
             return Response(serializer.data)
 
         raise ValidationError({"type": "Not a valid graph type."})

@@ -117,7 +117,16 @@ export abstract class AbstractGraph {
 
     async render() {
         this.chart?.destroy();
-        this.chart = await this.renderChart();
+
+        const json = await this.getApiResponse();
+
+        if (json.earliestDate && this.startInput) {
+            const earliestDate = new Date(json.earliestDate);
+
+            this.startInput.min = json.earliestDate;
+            if (this.startInput.valueAsDate < earliestDate) this.startInput.valueAsDate = earliestDate;
+        }
+        this.chart = this.renderChart(json);
     }
 
     reset(event: Event) {
@@ -133,5 +142,5 @@ export abstract class AbstractGraph {
 
     abstract getDefaultDates(): [Date, Date];
 
-    abstract renderChart(): Promise<Chart>;
+    abstract renderChart(json: GraphApiResponse): Chart;
 }

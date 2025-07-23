@@ -16,3 +16,4 @@ class GraphDatasetSerializer(serializers.Serializer):
 # pylint: disable=abstract-method
 class GraphSerializer(serializers.Serializer):
     datasets = GraphDatasetSerializer(many=True)
+    earliestDate = serializers.DateField()

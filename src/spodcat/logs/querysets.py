@@ -1,5 +1,6 @@
 import functools
 import operator
+from datetime import date
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.contrib.auth.models import AbstractUser
@@ -8,6 +9,7 @@ from django.db.models import (
     Count,
     F,
     FloatField,
+    Min,
     Q,
     QuerySet,
     Sum,
@@ -49,7 +51,14 @@ class BaseRequestLogQuerySet(QuerySet["_Model_co", "_Row_co"]):
             .order_by("-year", "-month")
         )
 
-    def get_unique_ips_graph_data(self, period: type[TimePeriod], grouped: bool, average: bool):
+    def get_unique_ips_graph_data(
+        self,
+        period: type[TimePeriod],
+        grouped: bool,
+        average: bool,
+        start_date: date,
+        end_date: date,
+    ):
         values = {"date": F("created__date")}
 
         if not average:
@@ -60,8 +69,10 @@ class BaseRequestLogQuerySet(QuerySet["_Model_co", "_Row_co"]):
             elif period is Month:
                 values = {"year": F("created__date__year"), "month": F("created__date__month")}
 
+        earliest_date = self.aggregate(earliest=Min("created__date"))["earliest"]
         qs = (
             self.order_by()
+            .filter(created__date__gte=start_date, created__date__lte=end_date)
             .values(
                 name=F(f"{self._podcast_field_prefix}__name"),
                 slug=F(f"{self._podcast_field_prefix}__slug"),
@@ -72,7 +83,7 @@ class BaseRequestLogQuerySet(QuerySet["_Model_co", "_Row_co"]):
             .order_by("slug", *values.keys())
         )
 
-        return PeriodicalGraphData(qs, period, average=average, grouped=grouped)
+        return PeriodicalGraphData(qs, period, earliest_date, average=average, grouped=grouped)
 
 
 class PodcastRequestLogQuerySet(BaseRequestLogQuerySet["PodcastRequestLog", "_Row_co"]):
@@ -120,9 +131,11 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
             return self
         return self.filter(Q(episode__podcast__owner=user) | Q(episode__podcast__authors=user))
 
-    def get_episode_play_count_graph_data(self, period: type[TimePeriod]):
+    def get_episode_play_count_graph_data(self, period: type[TimePeriod], start_date: date, end_date: date):
+        earliest_date = self.aggregate(earliest=Min("created__date"))["earliest"]
         qs = (
             self.order_by()
+            .filter(created__date__gte=start_date, created__date__lte=end_date)
             .values(name=F("episode__name"), slug=F("episode__slug"), date=F("created__date"))
             .with_quota_fetched_alias()
             .annotate(y=Sum(F("quota_fetched")))
@@ -130,7 +143,7 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
             .values("name", "slug", "date", "y")
             .order_by("slug", "date")
         )
-        return PeriodicalGraphData(qs, period)
+        return PeriodicalGraphData(qs, period, earliest_date)
 
     def get_most_played(self):
         return (
@@ -162,15 +175,23 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
             .order_by("-ip_count")
         )
 
-    def get_podcast_play_count_graph_data(self, period: type[TimePeriod], grouped: bool):
+    def get_podcast_play_count_graph_data(
+        self,
+        period: type[TimePeriod],
+        grouped: bool,
+        start_date: date,
+        end_date: date,
+    ):
         values = {"date": "created__date"}
         order_by = ["date"]
         if grouped:
             values.update({"name": "episode__podcast__name", "slug": "episode__podcast__slug"})
             order_by = ["slug", "name", "date"]
 
+        earliest_date = self.aggregate(earliest=Min("created__date"))["earliest"]
         qs = (
             self.order_by()
+            .filter(created__date__gte=start_date, created__date__lte=end_date)
             .values(**{k: F(v) for k, v in values.items()})
             .alias(plays=Cast(F("response_body_size"), FloatField()) / F("episode__audio_file_length"))
             .annotate(y=Sum(F("plays")))
@@ -178,7 +199,7 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
             .order_by(*order_by)
         )
 
-        return PeriodicalGraphData(qs, period, grouped=grouped)
+        return PeriodicalGraphData(qs, period, earliest_date, grouped=grouped)
 
     def with_quota_fetched(self):
         return self.annotate(
