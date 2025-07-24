@@ -5,3 +5,5 @@ recursive-include src/spodcat/locale *.po *.mo
 include src/spodcat/submodules/user-agents-v2/src/*.json
 include src/spodcat/submodules/GoodBots/iplists/*.ips
 include src/spodcat/data/*.mmdb
+prune src/test_env
+exclude src/*.py
