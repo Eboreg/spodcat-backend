@@ -22,5 +22,7 @@ class PostViewSet(PodcastContentViewSet[Post]):
         ],
         "__all__": ["videos", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
     }
-    queryset = Post.objects.all()
     serializer_class = serializers.PostSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        return Post.objects.all()

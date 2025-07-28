@@ -38,7 +38,6 @@ class EpisodeViewSet(PodcastContentViewSet[Episode]):
         "songs.artists": ["songs__artists"],
         "__all__": ["videos", "songs", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
     }
-    queryset = Episode.objects.with_has_songs()
     serializer_class = serializers.EpisodeSerializer
 
     @action(methods=["get"], detail=True)
@@ -111,3 +110,6 @@ class EpisodeViewSet(PodcastContentViewSet[Episode]):
             content_type="application/json+chapters",
             headers={"Content-Disposition": f"attachment; filename=\"{episode.id}.chapters.json\""},
         )
+
+    def get_queryset(self, *args, **kwargs):
+        return Episode.objects.with_has_songs()
