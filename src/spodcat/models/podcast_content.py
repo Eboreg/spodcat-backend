@@ -42,7 +42,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         related_name="contents",
         verbose_name=_("podcast"),
     )
-    published = models.DateField(default=today, verbose_name=_("published"))
+    published = models.DateTimeField(default=timezone.now, verbose_name=_("published"))
     slug = models.SlugField(max_length=100, verbose_name=_("slug"))
 
     objects: "PodcastContentManager[Self]" = PodcastContentQuerySet[Self].as_manager()
@@ -119,7 +119,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         ordering=Case(When(Q(is_draft=False, published__lte=Now()), then=V(1)), default=V(0)),
     )
     def is_visible(self) -> bool:
-        return self.published <= timezone.now().date() and not self.is_draft
+        return self.published <= timezone.now() and not self.is_draft
 
     def save(self, *args, **kwargs):
         if not self.slug:

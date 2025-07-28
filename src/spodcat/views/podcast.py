@@ -20,7 +20,6 @@ from spodcat import serializers
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
-from spodcat.utils import date_to_datetime
 from spodcat.views.mixins import LogRequestMixin
 
 
@@ -48,8 +47,10 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
     select_for_includes = {
         "__all__": ["name_font_face"],
     }
-    queryset = Podcast.objects.order_by_last_content(reverse=True)
     serializer_class = serializers.PodcastSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        return Podcast.objects.order_by_last_content(reverse=True)
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
@@ -88,7 +89,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
         fg.description(podcast.tagline or podcast.name)
         fg.podcast.itunes_type("episodic")
         if last_published:
-            fg.lastBuildDate(date_to_datetime(last_published))
+            fg.lastBuildDate(last_published)
         if podcast.cover:
             fg.podcast.itunes_image(podcast.cover.url)
             if podcast.cover_height and podcast.cover_width:
@@ -119,7 +120,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
             fe.content(episode.description_html, type="CDATA")
             fe.description(episode.description_text)
             fe.podcast.itunes_summary(episode.description_text)
-            fe.published(date_to_datetime(episode.published))
+            fe.published(episode.published)
             fe.podcast.itunes_season(episode.season)
             fe.podcast2.podcast_season(episode.season)
             if episode.number is not None and episode.number % 1 == 0:

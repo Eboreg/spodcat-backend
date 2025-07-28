@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.contrib.auth.models import AbstractUser
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
-from django.utils.timezone import localdate, now
+from django.utils.timezone import now
 from polymorphic.query import PolymorphicQuerySet
 
 
@@ -32,7 +32,7 @@ class PodcastQuerySet(QuerySet["Podcast"]):
         return self.alias(
             last_content=Max(
                 "contents__published",
-                filter=Q(contents__is_draft=False, contents__published__lte=localdate()),
+                filter=Q(contents__is_draft=False, contents__published__lte=now()),
             ),
         ).order_by(field_name, "name")
 
@@ -59,7 +59,7 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
         )
 
     def published(self):
-        return self.filter(published__lte=now().date())
+        return self.filter(published__lte=now())
 
     def listed(self):
         return self.published().filter(is_draft=False)
