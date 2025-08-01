@@ -48,9 +48,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
         "__all__": ["name_font_face"],
     }
     serializer_class = serializers.PodcastSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        return Podcast.objects.order_by_last_content(reverse=True)
+    queryset = Podcast.objects.order_by_last_content(reverse=True)
 
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):

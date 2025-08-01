@@ -14,6 +14,4 @@ class ChallengeViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, 
         "__all__": ["podcast"],
     }
     serializer_class = serializers.ChallengeSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        return Challenge.objects.all()
+    queryset = Challenge.objects.all()
