@@ -2,8 +2,9 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.contrib.auth.models import AbstractUser
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
-from django.utils.timezone import now
 from polymorphic.query import PolymorphicQuerySet
+
+from spodcat.utils import round_to_whole_hour
 
 
 if TYPE_CHECKING:
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
 
     from spodcat.models import Podcast, PodcastContent
 
-    _T = TypeVar("_T", bound=PodcastContent)
+    _PCT = TypeVar("_PCT", bound=PodcastContent)
 
 
 class PodcastQuerySet(QuerySet["Podcast"]):
@@ -32,12 +33,12 @@ class PodcastQuerySet(QuerySet["Podcast"]):
         return self.alias(
             last_content=Max(
                 "contents__published",
-                filter=Q(contents__is_draft=False, contents__published__lte=now()),
+                filter=Q(contents__is_draft=False, contents__published__lte=round_to_whole_hour()),
             ),
         ).order_by(field_name, "name")
 
 
-class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
+class PodcastContentQuerySet(PolymorphicQuerySet["_PCT"]):
     @classmethod
     def as_manager(cls) -> "PodcastContentManager":
         return cast("PodcastContentManager", super().as_manager())
@@ -59,7 +60,7 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_T"]):
         )
 
     def published(self):
-        return self.filter(published__lte=now())
+        return self.filter(published__lte=round_to_whole_hour())
 
     def listed(self):
         return self.published().filter(is_draft=False)
@@ -82,8 +83,8 @@ if TYPE_CHECKING:
     from django.db.models.manager import Manager
     from polymorphic.managers import PolymorphicManager
 
-    class PodcastContentManager(PolymorphicManager[_T], PodcastContentQuerySet[_T]):
-        def filter(self, *args: Any, **kwargs: Any) -> PodcastContentQuerySet[_T]: ...
+    class PodcastContentManager(PolymorphicManager[_PCT], PodcastContentQuerySet[_PCT]):
+        def filter(self, *args: Any, **kwargs: Any) -> PodcastContentQuerySet[_PCT]: ...
 
     class PodcastManager(Manager[Podcast], PodcastQuerySet):
         ...

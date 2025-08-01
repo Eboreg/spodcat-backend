@@ -5,6 +5,7 @@ import statistics
 import tempfile
 from datetime import date, timedelta
 from threading import Thread
+from typing import Generic, TypeVar
 
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
@@ -55,10 +56,16 @@ from spodcat.models import (
     Podcast,
     Post,
 )
-from spodcat.utils import delete_storage_file, seconds_to_timestamp
+from spodcat.models.podcast_content import PodcastContent
+from spodcat.utils import (
+    delete_storage_file,
+    round_to_whole_hour,
+    seconds_to_timestamp,
+)
 
 
 logger = logging.getLogger(__name__)
+_PCT = TypeVar("_PCT", bound=PodcastContent)
 
 
 @admin.register(Podcast)
@@ -301,7 +308,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         )
 
 
-class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
+class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin, Generic[_PCT]):
     save_on_top = True
     search_fields = ["name", "description", "slug"]
 
@@ -334,6 +341,12 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
             return ["slug", *fields]
         return fields
 
+    def save_form(self, request, form, change):
+        instance: _PCT = super().save_form(request, form, change)
+        if "published" in form.changed_data:
+            instance.published = round_to_whole_hour(form.cleaned_data["published"])
+        return instance
+
     @admin.display(description=_("views"), ordering="view_count")
     def view_count(self, obj):
         from spodcat.logs.models import PodcastContentRequestLog
@@ -349,7 +362,7 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Episode)
-class EpisodeAdmin(BasePodcastContentAdmin):
+class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     fields = [
         ("id", "slug"),
         ("name", "podcast"),
@@ -561,7 +574,7 @@ class EpisodeAdmin(BasePodcastContentAdmin):
 
 
 @admin.register(Post)
-class PostAdmin(BasePodcastContentAdmin):
+class PostAdmin(BasePodcastContentAdmin[Post]):
     fields = [
         ("id", "slug"),
         ("name", "podcast"),

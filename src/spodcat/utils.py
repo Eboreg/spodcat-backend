@@ -9,7 +9,7 @@ from django.core.files.images import ImageFile
 from django.db.models.fields.files import FieldFile, ImageFieldFile
 from django.http import HttpRequest
 from django.http.response import HttpResponseBase
-from django.utils.timezone import get_current_timezone, make_aware
+from django.utils.timezone import get_current_timezone, make_aware, now
 from PIL import Image
 from pydub import AudioSegment
 from rest_framework.request import Request
@@ -97,6 +97,11 @@ def get_audio_segment_dbfs_array(audio: AudioSegment) -> list[float]:
     multiplier = 100 / max_dbfs
 
     return [dbfs * multiplier for dbfs in dbfs_values]
+
+
+def round_to_whole_hour(d: datetime.datetime | None = None) -> datetime.datetime:
+    d = d or now()
+    return datetime.datetime(year=d.year, month=d.month, day=d.day, hour=d.hour, tzinfo=d.tzinfo)
 
 
 def seconds_to_timestamp(value: int):

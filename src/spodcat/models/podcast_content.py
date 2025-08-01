@@ -19,15 +19,12 @@ from spodcat.markdown import MarkdownExtension
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.settings import spodcat_settings
+from spodcat.utils import round_to_whole_hour
 
 
 if TYPE_CHECKING:
     from spodcat.models import Podcast
     from spodcat.models.querysets import PodcastContentManager
-
-
-def today():
-    return timezone.now().date()
 
 
 class PodcastContent(ModelMixin, PolymorphicModel):
@@ -42,7 +39,11 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         related_name="contents",
         verbose_name=_("podcast"),
     )
-    published = models.DateTimeField(default=timezone.now, verbose_name=_("published"))
+    published = models.DateTimeField(
+        default=round_to_whole_hour,
+        verbose_name=_("published"),
+        help_text=_("Will be rounded down to the nearest whole hour."),
+    )
     slug = models.SlugField(max_length=100, verbose_name=_("slug"))
 
     objects: "PodcastContentManager[Self]" = PodcastContentQuerySet[Self].as_manager()
