@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from drf_spectacular.utils import extend_schema
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -18,6 +19,7 @@ class GraphView(APIView):
     authentication_classes=[SessionAuthentication]
     permission_classes=[IsAuthenticated]
 
+    @extend_schema(exclude=True)
     def get(self, request: Request, *args, **kwargs):
         from spodcat.logs.models import (
             PodcastEpisodeAudioRequestLog,

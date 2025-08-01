@@ -156,7 +156,7 @@ class Episode(PodcastContent):
         return name
 
     # pylint: disable=no-member
-    def get_audio_file_url(self):
+    def get_audio_file_url(self) -> str | None:
         if spodcat_settings.USE_INTERNAL_AUDIO_PROXY or spodcat_settings.USE_INTERNAL_AUDIO_REDIRECT:
             return spodcat_settings.get_absolute_backend_url("spodcat:episode-audio", kwargs={"pk": self.pk})
         if self.audio_file:

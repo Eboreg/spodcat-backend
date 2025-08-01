@@ -13,5 +13,5 @@ class ChallengeSerializer(serializers.ModelSerializer[Challenge]):
         fields = ["id", "challenge_string", "podcast"]
         model = Challenge
 
-    def get_challenge_string(self, obj: Challenge):
+    def get_challenge_string(self, obj: Challenge) -> str:
         return obj.challenge_string

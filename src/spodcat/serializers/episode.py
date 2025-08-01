@@ -33,13 +33,13 @@ class EpisodeSerializer(serializers.ModelSerializer[Episode]):
         exclude = ["polymorphic_ctype", "is_draft", "audio_file", "audio_file_length"]
         model = Episode
 
-    def get_audio_url(self, obj: Episode):
+    def get_audio_url(self, obj: Episode) -> str | None:
         return obj.get_audio_file_url()
 
-    def get_description_html(self, obj: Episode):
+    def get_description_html(self, obj: Episode) -> str:
         return obj.description_html
 
-    def get_has_songs(self, obj: Episode):
+    def get_has_songs(self, obj: Episode) -> bool:
         if hasattr(obj, "has_songs"):
             return getattr(obj, "has_songs")
         return obj.songs.exists()

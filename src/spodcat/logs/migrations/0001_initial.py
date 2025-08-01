@@ -2,8 +2,9 @@
 
 import django.db.models.deletion
 import klaatu_django.db
-import spodcat.model_mixin
 from django.db import migrations, models
+
+import spodcat.model_mixin
 
 
 class Migration(migrations.Migration):

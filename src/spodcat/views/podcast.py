@@ -6,6 +6,8 @@ from django.apps import apps
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from feedgen.entry import FeedEntry
 from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
@@ -50,6 +52,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
     serializer_class = serializers.PodcastSerializer
     queryset = Podcast.objects.order_by_last_content(reverse=True)
 
+    @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
         instance = self.get_object()
@@ -60,6 +63,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
 
         return Response()
 
+    @extend_schema(responses={(200, "application/xml"): OpenApiTypes.STR})
     @action(methods=["get"], detail=True)
     # pylint: disable=no-member
     def rss(self, request: Request, pk: str):

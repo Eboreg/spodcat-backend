@@ -7,6 +7,8 @@ from django.db.models.fields.files import FieldFile
 from django.http import FileResponse, HttpResponseRedirect
 from django.http.response import JsonResponse
 from django_filters import rest_framework as filters
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.request import Request
 
@@ -41,6 +43,7 @@ class EpisodeViewSet(PodcastContentViewSet[Episode]):
     serializer_class = serializers.EpisodeSerializer
     queryset = Episode.objects.with_has_songs()
 
+    @extend_schema(responses={(200, "audio/*"): OpenApiTypes.BINARY})
     @action(methods=["get"], detail=True)
     def audio(self, request: Request, pk: str):
         episode = self.get_object()
@@ -86,6 +89,7 @@ class EpisodeViewSet(PodcastContentViewSet[Episode]):
 
         return response
 
+    @extend_schema(responses={(200, "application/json+chapters"): OpenApiTypes.OBJECT})
     @action(methods=["get"], detail=True)
     def chapters(self, request: Request, pk: str):
         # https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/examples/chapters/jsonChapters.md

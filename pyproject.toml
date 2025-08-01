@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools"]
 
 [project]
-version = "0.6.7"
+version = "0.7.0"
 name = "spodcat-backend"
 authors = [
     {name = "Robert Huselius", email = "robert@huseli.us"},
@@ -26,6 +26,8 @@ dependencies = [
     "django",
     "djangorestframework-jsonapi[django-polymorphic,django-filter]",
     "djangorestframework",
+    "drf-spectacular",
+    "drf-spectacular-jsonapi",
     "feedgen",
     "feedparser",
     "geoip2",

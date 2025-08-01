@@ -9,13 +9,14 @@ from spodcat.utils import env_boolean
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 SRC_DIR = Path(__file__).resolve().parent
 BASE_DIR = SRC_DIR.parent
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-DEBUG = env_boolean("DEBUG")
-ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]"]
-INTERNAL_IPS = "127.0.0.1"
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
-DJANGO_DB = os.environ.get("DJANGO_DB", ENVIRONMENT)
+
 ADMINS = [(os.environ.get("ADMIN_NAME", "Admin"), os.environ.get("ADMIN_EMAIL", "root@localhost"))]
+ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]"]
+DEBUG = env_boolean("DEBUG")
+DJANGO_DB = os.environ.get("DJANGO_DB", ENVIRONMENT)
+INTERNAL_IPS = "127.0.0.1"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 
 # Application definition
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     "spodcat.logs",
     "spodcat.contrib.admin",
     "test_env",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -63,17 +65,17 @@ X_FRAME_OPTIONS = "SAMEORIGIN"
 
 TEMPLATES = [
     {
+        "APP_DIRS": True,
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
-        "APP_DIRS": True,
         "OPTIONS": {
-            "debug": DEBUG,
             "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
             ],
+            "debug": DEBUG,
         },
     },
 ]
@@ -91,9 +93,9 @@ DATABASES: dict[str, dict] = {
     },
     "production": {
         "ENGINE": os.environ.get("PROD_SQL_ENGINE"),
+        "HOST": os.environ.get("PROD_SQL_HOST"),
         "NAME": os.environ.get("PROD_SQL_DB"),
         "PASSWORD": os.environ.get("PROD_SQL_PASSWORD"),
-        "HOST": os.environ.get("PROD_SQL_HOST"),
         "USER": os.environ.get("PROD_SQL_USER"),
     },
 }
@@ -104,34 +106,34 @@ DATABASES["default"] = DATABASES[DJANGO_DB].copy()
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 # LANGUAGE_CODE = "en-us"
 LANGUAGE_CODE = "sv"
-TIME_ZONE = "Europe/Stockholm"
-USE_I18N = True
-USE_TZ = True
-LOCALE_PATHS = [SRC_DIR / "spodcat/locale"]
 LANGUAGES = [
     ("en", _("English")),
     ("sv", _("Swedish")),
 ]
+LOCALE_PATHS = [SRC_DIR / "spodcat/locale"]
+TIME_ZONE = "Europe/Stockholm"
+USE_I18N = True
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 # https://django-storages.readthedocs.io/en/latest/backends/azure.html
-STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "static"
-STATICFILES_DIRS = []
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
+STATIC_ROOT = BASE_DIR / "static"
+STATIC_URL = "static/"
+STATICFILES_DIRS = []
 
-AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", "musikensmakt")
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_FILES_KEY")
-AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", "spodcat-backend")
-AZURE_LOCATION = ENVIRONMENT
-AZURE_SUBSCRIPTION_ID = os.environ.get("AZURE_SUBSCRIPTION_ID")
-AZURE_RESOURCE_GROUP = os.environ.get("AZURE_RESOURCE_GROUP")
-AZURE_TENANT_ID = os.environ.get("AZURE_TENANT_ID")
+AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", "musikensmakt")
 AZURE_CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
 AZURE_CLIENT_SECRET = os.environ.get("AZURE_CLIENT_SECRET")
+AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", "spodcat-backend")
+AZURE_LOCATION = ENVIRONMENT
+AZURE_RESOURCE_GROUP = os.environ.get("AZURE_RESOURCE_GROUP")
+AZURE_SUBSCRIPTION_ID = os.environ.get("AZURE_SUBSCRIPTION_ID")
+AZURE_TENANT_ID = os.environ.get("AZURE_TENANT_ID")
 
 STORAGES = {
     "default": {"BACKEND": "storages.backends.azure_storage.AzureStorage"},
@@ -147,10 +149,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Django REST Framework
 REST_FRAMEWORK = {
+    "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
     "TEST_REQUEST_RENDERER_CLASSES": (
         "rest_framework_json_api.renderers.JSONRenderer",
     ),
-    "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
 }
 
 
@@ -159,10 +161,10 @@ AUTH_USER_MODEL = "test_env.User"
 
 
 SPODCAT = {
-    "FRONTEND_ROOT_URL": os.environ.get("FRONTEND_ROOT_URL"),
     "BACKEND_HOST": os.environ.get("BACKEND_HOST"),
     "FILEFIELDS": {
         "FONTFACE_FILE": {"STORAGE": "local"},
     },
+    "FRONTEND_ROOT_URL": os.environ.get("FRONTEND_ROOT_URL"),
     "USE_INTERNAL_AUDIO_REDIRECT": True,
 }

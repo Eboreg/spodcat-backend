@@ -26,7 +26,7 @@ class CommentSerializer(serializers.ModelSerializer[Comment]):
         fields = "__all__"
         model = Comment
 
-    def get_text_html(self, obj: Comment):
+    def get_text_html(self, obj: Comment) -> str:
         return obj.text_html
 
     def send_email(self, podcast_content: PodcastContent, to: str, commenter: str):

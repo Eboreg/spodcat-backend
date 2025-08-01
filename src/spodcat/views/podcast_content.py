@@ -4,6 +4,8 @@ from uuid import UUID
 from django.apps import apps
 from django.db.models import Q
 from django_filters import rest_framework as filters
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -43,6 +45,7 @@ class PodcastContentViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[_MT_co])
             return queryset.listed()
         return queryset.published()
 
+    @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
         instance = self.get_object()
