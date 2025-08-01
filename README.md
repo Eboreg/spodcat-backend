@@ -4,6 +4,81 @@ This is the backend part of my podcast platform. It's designed to go along with 
 
 It's mainly made for my own specific purposes. Lately I have been making some effort to generalise stuff, in order to facilitate some potential wider use. But there's probably lots more that needs to be done to that end.
 
+## Quick and dirty setup
+
+Just a very crude walkthrough. There are more details on some of the stuff later in this document. I will also skip everything that is just boilerplate Django setup (like how you always want to [set up a custom User model right from the start](https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#substituting-a-custom-user-model)), because that is ludicrously out of scope for this document.
+
+This assumes some kind of Linux machine with an web server and an SQL server of your choice.
+
+```shell
+~$ mkdir my-podcast-backend
+~$ cd my-podcast-backend
+~/my-podcast-backend$ python3 -m venv .venv
+~/my-podcast-backend$ source .venv/bin/activate
+(.venv) ~/my-podcast-backend$ pip install spodcat-backend
+(.venv) ~/my-podcast-backend$ django-admin startproject my_podcast .
+```
+
+Change this stuff in `~/my-podcast-backend/my_podcast/settings.py`:
+
+```python
+INSTALLED_APPS = [
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework_json_api",
+    "django_filters",
+    "martor",
+    "spodcat",
+    "spodcat.logs",
+    "spodcat.contrib.admin",
+]
+SPODCAT = {
+    "FRONTEND_ROOT_URL": "https://my-podcast.org",
+    "BACKEND_HOST": "https://backend.my-podcast.org",
+}
+```
+
+Do this to `~/my-podcast-backend/my_podcast/urls.py`:
+
+```python
+urlpatterns = [
+    path("", include("spodcat.urls")),
+    path("admin/", include("spodcat.contrib.admin.urls")),
+]
+```
+
+Create a `~/my-podcast-backend/uwsgi.ini` file that looks something like this:
+
+```ini
+[uwsgi]
+chdir = /home/nutte/my-podcast-backend
+module = my_podcast.wsgi:application
+master = true
+pidfile = /tmp/my-podcast-backend.pid
+socket = /tmp/my-podcast-backend.sock
+processes = 5
+vacuum = true
+home = /home/nutte/my-podcast-backend/.venv
+plugins = python3
+uid = 1000
+gid = 1000
+chmod-socket = 666
+harakiri = 240
+http-timeout = 240
+socket-timeout = 240
+enable-threads = true
+```
+
+Now make something run this UWSGI app (I use [the UWSGI Emperor](https://uwsgi-docs.readthedocs.io/en/latest/Emperor.html)), and get your web server to pass requests to this something.
+
+### Some tips
+
+Install a Redis server and [django-cachalot](https://django-cachalot.readthedocs.io/) to speed up responses. This way, most API and RSS requests won't require a single DB hit until the database is updated. I run my instance (both backend, frontend, and PostgreSQL database) on a Raspberry Pi 5, and RSS feed requests (which are _by far_ the most common ones) normally take between 160 and 300 milliseconds. (Of course, if you are planning on hosting _popular_ podcasts, you may want a bit more power.)
+
 ## Spodcat configuration
 
 Spodcat is configured using a `SPODCAT` dict in your Django settings module. These are the available settings:
