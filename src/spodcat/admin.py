@@ -127,9 +127,9 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         ]
 
         if obj:
-            fieldsets.append((None, {"fields": ["categories", "owner", "authors", "custom_guid"]}))
+            fieldsets.append((None, {"fields": ["categories", "owner", "authors", "custom_guid", "itunes_type"]}))
         else:
-            fieldsets.append((None, {"fields": ["categories", "custom_guid"]}))
+            fieldsets.append((None, {"fields": ["categories", "custom_guid", "itunes_type"]}))
 
         return fieldsets
 

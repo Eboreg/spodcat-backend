@@ -65,6 +65,10 @@ def podcast_slug_validator(value: str):
 
 
 class Podcast(ModelMixin, models.Model):
+    class ItunesType(models.TextChoices):
+        EPISODIC = "episodic"
+        SERIAL = "serial"
+
     FONT_SIZES = ["small", "normal", "large"]
 
     authors: "models.ManyToManyField[AbstractUser, Any]" = models.ManyToManyField(
@@ -174,6 +178,7 @@ class Podcast(ModelMixin, models.Model):
             "Ref: https://podcasting2.org/podcast-namespace/tags/guid"
         ),
     )
+    itunes_type = models.CharField(max_length=10, choices=ItunesType.choices, default=ItunesType.EPISODIC)
 
     contents: "PodcastContentManager"
     links: "RelatedManager[PodcastLink]"

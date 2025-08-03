@@ -1,10 +1,12 @@
+import itertools
 import logging
+from datetime import datetime
 from typing import cast
-from urllib.parse import urljoin
 
 from django.apps import apps
 from django.db.models import Max, Prefetch
 from django.http import HttpResponse
+from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -20,8 +22,8 @@ from rest_framework_json_api import views
 
 from spodcat import serializers
 from spodcat.models import Episode, Podcast, PodcastContent
+from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
-from spodcat.settings import spodcat_settings
 from spodcat.views.mixins import LogRequestMixin
 
 
@@ -65,19 +67,38 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
 
     @extend_schema(responses={(200, "application/xml"): OpenApiTypes.STR})
     @action(methods=["get"], detail=True)
-    # pylint: disable=no-member
     def rss(self, request: Request, pk: str):
-        queryset = self.get_queryset().prefetch_related("authors", "categories").select_related("owner")
+        # Both template and feedgen methods are available; going with feedgen
+        # for now since it's considerably faster in tests.
+        queryset = Podcast.objects.prefetch_related("authors", "categories").select_related("owner")
         podcast: Podcast = get_object_or_404(queryset, slug=pk)
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
-        categories = [c.to_dict() for c in podcast.categories.all()]
-        episode_qs = Episode.objects.filter(podcast=podcast).listed().with_has_chapters()
-        last_published = episode_qs.aggregate(last_published=Max("published"))["last_published"]
-        author_string = ", ".join([a["name"] for a in authors if a["name"]])
+        episode_qs = Episode.objects.filter(podcast=podcast).select_related("podcast").listed().with_has_chapters()
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRssRequestLog
             self.log_request(request, PodcastRssRequestLog, podcast=podcast)
+
+        return self.rss_feedgen(
+            request=request,
+            podcast=podcast,
+            episode_qs=episode_qs,
+            last_published=episode_qs.aggregate(last_published=Max("published"))["last_published"],
+            author_string=", ".join([a["name"] for a in authors if a["name"]]),
+            authors=authors,
+        )
+
+    # pylint: disable=no-member
+    def rss_feedgen(
+        self,
+        request: Request,
+        podcast: Podcast,
+        episode_qs: PodcastContentQuerySet[Episode],
+        last_published: datetime | None,
+        authors: list[dict],
+        author_string: str,
+    ):
+        categories = [c.to_dict() for c in podcast.categories.all()]
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
@@ -89,7 +110,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
             {"href": podcast.frontend_url, "rel": "alternate"},
         ])
         fg.description(podcast.tagline or podcast.name)
-        fg.podcast.itunes_type("episodic")
+        fg.podcast.itunes_type(podcast.itunes_type)
         if last_published:
             fg.lastBuildDate(last_published)
         if podcast.cover:
@@ -115,9 +136,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
         for episode in episode_qs:
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
             if episode.has_chapters: # type: ignore
-                fe.podcast2.podcast_chapters(
-                    spodcat_settings.get_absolute_backend_url("spodcat:episode-chapters", args=(episode.id,))
-                )
+                fe.podcast2.podcast_chapters(episode.chapters_url)
             fe.title(episode.name)
             fe.content(episode.description_html, type="CDATA")
             fe.description(episode.description_text)
@@ -125,11 +144,11 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
             fe.published(episode.published)
             fe.podcast.itunes_season(episode.season)
             fe.podcast2.podcast_season(episode.season)
-            if episode.number is not None and episode.number % 1 == 0:
-                fe.podcast.itunes_episode(episode.number)
+            if episode.whole_number is not None:
+                fe.podcast.itunes_episode(episode.whole_number)
             fe.podcast2.podcast_episode(episode.number)
             fe.podcast.itunes_episode_type("full")
-            fe.link(href=urljoin(spodcat_settings.FRONTEND_ROOT_URL, f"{podcast.slug}/episode/{episode.slug}"))
+            fe.link(href=episode.frontend_url)
             fe.podcast.itunes_duration(round(episode.duration_seconds))
             if episode.image:
                 fe.podcast.itunes_image(episode.image.url)
@@ -159,6 +178,42 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
 
         return HttpResponse(
             content=rss,
+            content_type="application/xml; charset=utf-8",
+            headers={
+                "Content-Disposition": f"inline; filename=\"{podcast.slug}.rss.xml\"",
+                "Access-Control-Allow-Origin": "*",
+            },
+        )
+
+    def rss_template(
+        self,
+        request: Request,
+        podcast: Podcast,
+        episode_qs: PodcastContentQuerySet[Episode],
+        last_published: datetime | None,
+        authors: list[dict],
+        author_string: str,
+    ):
+        context = {
+            "podcast": podcast,
+            "last_published": last_published,
+            "authors": authors,
+            "author_string": author_string,
+            "categories": itertools.groupby(podcast.categories.all(), lambda c: c.cat),
+            "episodes": episode_qs,
+        }
+
+        if request.query_params.get("html"):
+            return TemplateResponse(
+                request=request._request, # pylint: disable=protected-access
+                template="spodcat/rss.html",
+                context={"rss": get_template("spodcat/rss.xml").render(context=context)},
+            )
+
+        return TemplateResponse(
+            request=request._request, # pylint: disable=protected-access
+            template="spodcat/rss.xml",
+            context=context,
             content_type="application/xml; charset=utf-8",
             headers={
                 "Content-Disposition": f"inline; filename=\"{podcast.slug}.rss.xml\"",

@@ -103,6 +103,10 @@ class Episode(PodcastContent):
         verbose_name_plural = _("episodes")
 
     @property
+    def chapters_url(self) -> str:
+        return spodcat_settings.get_absolute_backend_url("spodcat:episode-chapters", args=(self.id,))
+
+    @property
     def number_string(self) -> str | None:
         if self.number is not None:
             try:
@@ -110,6 +114,13 @@ class Episode(PodcastContent):
             except Exception as e:
                 logger.error("Could not set locale", exc_info=e)
             return f"{self.number:n}"
+        return None
+
+    @property
+    def whole_number(self) -> int | None:
+        """Only returns episode number if it's not fractional."""
+        if self.number is not None and self.number % 1 == 0:
+            return int(self.number)
         return None
 
     def __str__(self):

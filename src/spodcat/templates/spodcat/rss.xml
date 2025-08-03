@@ -1,0 +1,76 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+  <channel>
+    <title>{{podcast.name}}</title>
+    <link>{{podcast.frontend_url}}</link>
+    <description>{{podcast.tagline|default:podcast.name}}</description>
+    <atom:link href="{{podcast.rss_url}}" rel="self" type="application/rss+xml"/>
+    <docs>http://www.rssboard.org/rss-specification</docs>
+    <generator>spodcat</generator>
+    {% if podcast.cover %}
+    <itunes:image href="{{ podcast.cover.url }}"/>
+    {% if podcast.cover_height and podcast.cover_width %}
+    <image>
+      <url>{{podcast.cover.url}}</url>
+      <title>{{podcast.name}}</title>
+      <link>{{podcast.frontend_url}}</link>
+      <width>{{podcast.cover_width}}</width>
+      <height>{{podcast.cover_height}}</height>
+    </image>
+    {% endif %}
+    {% if podcast.cover_width %}
+    <podcast:images srcset="{{podcast.cover.url}} {{podcast.cover_width}}w{% if podcast.cover_thumbnail and podcast.cover_thumbnail_width %}, {{podcast.cover_thumbnail.url}} {{podcast.cover_thumbnail_width}}w{% endif %}"/>
+    {% endif %}
+    {% endif %}
+    {% if podcast.language %}<language>sv</language>{% endif %}
+    {% if last_published %}<lastBuildDate>{{last_published|date:"r"}}</lastBuildDate>{% endif %}
+    {% if author_string %}<itunes:author>{{author_string}}</itunes:author>{% endif %}
+    {% for cat, subs in categories %}
+    <itunes:category text="{{cat}}">
+      {% for sub in subs %}{% if sub.sub %}<itunes:category text="{{sub.sub}}"/>{% endif %}{% endfor %}
+    </itunes:category>
+    {% endfor %}
+    {% if podcast.owner.email and podcast.owner.get_full_name %}
+    <itunes:owner>
+      <itunes:name>{{podcast.owner.get_full_name}}</itunes:name>
+      <itunes:email>{{podcast.owner.email}}</itunes:email>
+    </itunes:owner>
+    {% endif %}
+    <itunes:type>{{podcast.itunes_type}}</itunes:type>
+    <podcast:guid>{{podcast.guid}}</podcast:guid>
+
+    {% for episode in episodes %}
+    <item>
+      <title>{{episode.name}}</title>
+      <link>{{episode.frontend_url}}</link>
+      {% if episode.description_text %}
+      <description>{{episode.description_text}}</description>
+      <itunes:summary>{{episode.description_text}}</itunes:summary>
+      {% endif %}
+      {% if episode.description_html %}<content:encoded><![CDATA[{% autoescape off %}{{episode.description_html}}{% endautoescape %}]]></content:encoded>{% endif %}
+      {% for author in authors %}
+      {% if author.email and author.name %}<author>{{author.email}} ({{author.name}})</author>{% endif %}
+      {% endfor %}
+      <guid isPermaLink="false">{{episode.id}}</guid>
+      <enclosure url="{{ episode.get_audio_file_url }}" length="{{episode.audio_file_length}}" type="{{episode.audio_content_type}}"/>
+      <pubDate>{{episode.published|date:"r"}}</pubDate>
+      {% if author_string %}<itunes:author>{{author_string}}</itunes:author>{% endif %}
+      <itunes:duration>{{episode.duration_seconds|floatformat:"0"}}</itunes:duration>
+      {% if episode.number %}<podcast:episode>{{episode.number}}</podcast:episode>{% endif %}
+      {% if episode.whole_number %}<itunes:episode>{{episode.whole_number}}</itunes:episode>{% endif %}
+      {% if episode.season %}
+      <itunes:season>{{episode.season}}</itunes:season>
+      <podcast:season>{{episode.season}}</podcast:season>
+      {% endif %}
+      <itunes:episodeType>full</itunes:episodeType>
+      {% if episode.image %}
+      <itunes:image href="{{ episode.image.url }}"/>
+      {% if episode.image_width %}<podcast:images srcset="{{episode.image.url}} {{episode.image_width}}w"/>{% endif %}
+      {% endif %}
+      {% if episode.has_chapters %}
+      <podcast:chapters url="{{episode.chapters_url}}" type="application/json+chapters"/>
+      {% endif %}
+    </item>
+    {% endfor %}
+  </channel>
+</rss>
