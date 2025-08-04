@@ -50,7 +50,7 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_PCT"]):
             "Episode___image_thumbnail",
             "Episode___number",
             "Episode___podcastcontent_ptr_id",
-            "Episode___season2",
+            "Episode___season",
             "id",
             "name",
             "podcast",

@@ -94,7 +94,7 @@ class Episode(PodcastContent):
     image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     image_width = models.PositiveIntegerField(null=True, default=None)
     number = models.FloatField(null=True, default=None, blank=True, verbose_name=_("number"))
-    season2 = models.ForeignKey["Season"](
+    season = models.ForeignKey["Season"](
         "spodcat.Season",
         on_delete=models.RESTRICT,
         related_name="episodes",
@@ -165,8 +165,8 @@ class Episode(PodcastContent):
         numbers = []
         name = ""
 
-        if self.season2:
-            numbers.append(f"S{self.season2.number:02d}")
+        if self.season:
+            numbers.append(f"S{self.season.number:02d}")
         if self.number is not None:
             numbers.append(f"E{self.number:02d}")
         if numbers:
@@ -234,7 +234,7 @@ class Episode(PodcastContent):
         try:
             season_number = int(entry["itunes_season"]) if "itunes_season" in entry else None
             if season_number is not None:
-                self.season2 = Season.objects.get_or_create(number=season_number, podcast=self.podcast)[0]
+                self.season = Season.objects.get_or_create(number=season_number, podcast=self.podcast)[0]
         except Exception:
             pass
 

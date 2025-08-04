@@ -39,7 +39,7 @@ license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.8.0-pre.2"
+version = "0.8.0"
 
 [project.optional-dependencies]
 dev = [

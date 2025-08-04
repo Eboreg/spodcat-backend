@@ -76,7 +76,7 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
         episode_qs = (
             Episode.objects
             .filter(podcast=podcast)
-            .select_related("podcast", "season2")
+            .select_related("podcast", "season")
             .listed()
             .with_has_chapters()
         )
@@ -148,9 +148,9 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
             fe.description(episode.description_text)
             fe.podcast.itunes_summary(episode.description_text)
             fe.published(episode.published)
-            if episode.season2:
-                fe.podcast.itunes_season(episode.season2.number)
-                fe.podcast.itunes_season(episode.season2.number)
+            if episode.season:
+                fe.podcast.itunes_season(episode.season.number)
+                fe.podcast.itunes_season(episode.season.number)
             if episode.whole_number is not None:
                 fe.podcast.itunes_episode(episode.whole_number)
             fe.podcast2.podcast_episode(episode.number)
@@ -161,10 +161,10 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
                 fe.podcast.itunes_image(episode.image.url)
                 if episode.image_width:
                     fe.podcast2.podcast_image(episode.image.url, episode.image_width)
-            elif episode.season2 and episode.season2.image:
-                fe.podcast.itunes_image(episode.season2.image.url)
-                if episode.season2.image_width:
-                    fe.podcast2.podcast_image(episode.season2.image.url, episode.season2.image_width)
+            elif episode.season and episode.season.image:
+                fe.podcast.itunes_image(episode.season.image.url)
+                if episode.season.image_width:
+                    fe.podcast2.podcast_image(episode.season.image.url, episode.season.image_width)
             audio_file_url = episode.get_audio_file_url()
             if audio_file_url:
                 fe.enclosure(

@@ -371,7 +371,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     fields = [
         ("id", "slug"),
         ("name", "podcast"),
-        ("season2", "number"),
+        ("season", "number"),
         ("is_draft", "published"),
         "audio_file",
         "image",
@@ -397,7 +397,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         if apps.is_installed("spodcat.logs"):
             return [
                 "name",
-                "season2",
+                "season",
                 "number_string",
                 "is_visible",
                 "podcast_link",
@@ -409,7 +409,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
             ]
         return [
             "name",
-            "season2",
+            "season",
             "number_string",
             "is_visible",
             "podcast_link",
@@ -418,7 +418,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         ]
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("season2")
+        qs = super().get_queryset(request).select_related("season")
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastEpisodeAudioRequestLog

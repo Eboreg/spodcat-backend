@@ -97,6 +97,6 @@ class EpisodeAdminForm(ModelForm):
     def __init__(self, data=None, files=None, instance: Episode | None = None, **kwargs):
         super().__init__(data, files, instance=instance, **kwargs)
         if instance:
-            season_field = self.fields["season2"]
+            season_field = self.fields["season"]
             assert isinstance(season_field, ModelChoiceField) and season_field.queryset
             season_field.queryset = season_field.queryset.filter(podcast=instance.podcast)

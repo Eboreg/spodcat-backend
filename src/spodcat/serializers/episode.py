@@ -16,7 +16,7 @@ class EpisodeSerializer(serializers.ModelSerializer[Episode]):
     comments = ResourceRelatedField(queryset=Comment.objects, many=True)
     description_html = serializers.SerializerMethodField()
     has_songs = serializers.SerializerMethodField()
-    season2 = ResourceRelatedField(queryset=Season.objects)
+    season = ResourceRelatedField(queryset=Season.objects)
     songs = PolymorphicResourceRelatedField(
         EpisodeSongSerializer,
         queryset=EpisodeSong.objects,
@@ -27,7 +27,7 @@ class EpisodeSerializer(serializers.ModelSerializer[Episode]):
     included_serializers = {
         "comments": "spodcat.serializers.CommentSerializer",
         "podcast": "spodcat.serializers.PodcastSerializer",
-        "season2": "spodcat.serializers.SeasonSerializer",
+        "season": "spodcat.serializers.SeasonSerializer",
         "songs": "spodcat.serializers.EpisodeSongSerializer",
         "videos": "spodcat.serializers.VideoSerializer",
     }
@@ -37,7 +37,7 @@ class EpisodeSerializer(serializers.ModelSerializer[Episode]):
         model = Episode
 
     class JSONAPIMeta:
-        included_resources = ["season2"]
+        included_resources = ["season"]
 
     def get_audio_url(self, obj: Episode) -> str | None:
         return obj.get_audio_file_url()
@@ -62,7 +62,7 @@ class PartialEpisodeSerializer(EpisodeSerializer):
             "number",
             "podcast",
             "published",
-            "season2",
+            "season",
             "slug",
             "image_thumbnail",
         ]

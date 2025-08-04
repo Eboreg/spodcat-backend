@@ -58,17 +58,17 @@
       <itunes:duration>{{episode.duration_seconds|floatformat:"0"}}</itunes:duration>
       {% if episode.number %}<podcast:episode>{{episode.number}}</podcast:episode>{% endif %}
       {% if episode.whole_number %}<itunes:episode>{{episode.whole_number}}</itunes:episode>{% endif %}
-      {% if episode.season2 %}
-      <itunes:season>{{episode.season2.number}}</itunes:season>
-      <podcast:season>{{episode.season2.number}}</podcast:season>
+      {% if episode.season %}
+      <itunes:season>{{episode.season.number}}</itunes:season>
+      <podcast:season>{{episode.season.number}}</podcast:season>
       {% endif %}
       <itunes:episodeType>full</itunes:episodeType>
       {% if episode.image %}
       <itunes:image href="{{ episode.image.url }}"/>
       {% if episode.image_width %}<podcast:images srcset="{{episode.image.url}} {{episode.image_width}}w"/>{% endif %}
-      {% elif episode.season2.image %}
-      <itunes:image href="{{ episode.season2.image.url }}"/>
-      {% if episode.season2.image_width %}<podcast:images srcset="{{episode.season2.image.url}} {{episode.season2.image_width}}w"/>{% endif %}
+      {% elif episode.season.image %}
+      <itunes:image href="{{ episode.season.image.url }}"/>
+      {% if episode.season.image_width %}<podcast:images srcset="{{episode.season.image.url}} {{episode.season.image_width}}w"/>{% endif %}
       {% endif %}
       {% if episode.has_chapters %}
       <podcast:chapters url="{{episode.chapters_url}}" type="application/json+chapters"/>
