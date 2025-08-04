@@ -94,7 +94,6 @@ class Episode(PodcastContent):
     image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     image_width = models.PositiveIntegerField(null=True, default=None)
     number = models.FloatField(null=True, default=None, blank=True, verbose_name=_("number"))
-    season = models.PositiveSmallIntegerField(null=True, default=None, blank=True, verbose_name=_("season"))
     season2 = models.ForeignKey["Season"](
         "spodcat.Season",
         on_delete=models.RESTRICT,
