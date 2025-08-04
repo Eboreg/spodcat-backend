@@ -38,6 +38,7 @@ from .functions import (
     episode_image_upload_to,
 )
 from .podcast_content import PodcastContent
+from .season import Season
 
 
 if TYPE_CHECKING:
@@ -94,6 +95,15 @@ class Episode(PodcastContent):
     image_width = models.PositiveIntegerField(null=True, default=None)
     number = models.FloatField(null=True, default=None, blank=True, verbose_name=_("number"))
     season = models.PositiveSmallIntegerField(null=True, default=None, blank=True, verbose_name=_("season"))
+    season2 = models.ForeignKey["Season"](
+        "spodcat.Season",
+        on_delete=models.RESTRICT,
+        related_name="episodes",
+        verbose_name=_("season"),
+        null=True,
+        blank=True,
+        default=None,
+    )
 
     songs: "RelatedManager[EpisodeSong]"
     chapters: "RelatedManager[EpisodeChapter]"
@@ -156,8 +166,8 @@ class Episode(PodcastContent):
         numbers = []
         name = ""
 
-        if self.season is not None:
-            numbers.append(f"S{self.season:02d}")
+        if self.season2:
+            numbers.append(f"S{self.season2.number:02d}")
         if self.number is not None:
             numbers.append(f"E{self.number:02d}")
         if numbers:
@@ -223,7 +233,9 @@ class Episode(PodcastContent):
             pass
 
         try:
-            self.season = int(entry["itunes_season"]) if "itunes_season" in entry else None
+            season_number = int(entry["itunes_season"]) if "itunes_season" in entry else None
+            if season_number is not None:
+                self.season2 = Season.objects.get_or_create(number=season_number, podcast=self.podcast)[0]
         except Exception:
             pass
 

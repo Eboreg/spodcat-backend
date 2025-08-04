@@ -73,7 +73,13 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
         queryset = Podcast.objects.prefetch_related("authors", "categories").select_related("owner")
         podcast: Podcast = get_object_or_404(queryset, slug=pk)
         authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
-        episode_qs = Episode.objects.filter(podcast=podcast).select_related("podcast").listed().with_has_chapters()
+        episode_qs = (
+            Episode.objects
+            .filter(podcast=podcast)
+            .select_related("podcast", "season2")
+            .listed()
+            .with_has_chapters()
+        )
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRssRequestLog
@@ -142,8 +148,9 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
             fe.description(episode.description_text)
             fe.podcast.itunes_summary(episode.description_text)
             fe.published(episode.published)
-            fe.podcast.itunes_season(episode.season)
-            fe.podcast2.podcast_season(episode.season)
+            if episode.season2:
+                fe.podcast.itunes_season(episode.season2.number)
+                fe.podcast.itunes_season(episode.season2.number)
             if episode.whole_number is not None:
                 fe.podcast.itunes_episode(episode.whole_number)
             fe.podcast2.podcast_episode(episode.number)
@@ -154,6 +161,10 @@ class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
                 fe.podcast.itunes_image(episode.image.url)
                 if episode.image_width:
                     fe.podcast2.podcast_image(episode.image.url, episode.image_width)
+            elif episode.season2 and episode.season2.image:
+                fe.podcast.itunes_image(episode.season2.image.url)
+                if episode.season2.image_width:
+                    fe.podcast2.podcast_image(episode.season2.image.url, episode.season2.image_width)
             audio_file_url = episode.get_audio_file_url()
             if audio_file_url:
                 fe.enclosure(

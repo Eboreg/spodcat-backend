@@ -67,7 +67,10 @@ class Command(BaseCommand):
                 season = None
 
             if number is not None:
-                episode = Episode.objects.filter(podcast=podcast, number=number, season=season).first()
+                if season is not None:
+                    episode = Episode.objects.filter(podcast=podcast, number=number, season2__number=season).first()
+                else:
+                    episode = Episode.objects.filter(podcast=podcast, number=number).first()
             else:
                 episode = Episode.objects.filter(podcast=podcast, name=entry["title"]).first()
 

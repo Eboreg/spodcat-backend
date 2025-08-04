@@ -65,6 +65,8 @@ Here are the available values for `__FILEFIELD_CONSTANT__` and the model types a
 * `PODCAST_COVER_THUMBNAIL`: Same as above
 * `PODCAST_FAVICON`: Same as above
 * `PODCAST_LINK_ICON`: Model is `PodcastLink`. Default: `f"{instance.podcast.slug}/images/links/{filename}"`
+* `SEASON_IMAGE`: Model is `Season`. Default: `f"{instance.podcast.slug}/images/season/{instance.number}/{filename}"`
+* `SEASON_IMAGE_THUMBNAIL`: Same as above
 
 Footnote: The reason for adding the `STORAGE` settings was that I did my file hosting with Azure, but that didn't work with CSS fonts since I couldn't control the `Access-Control-Allow-Origin` header. So I did this:
 

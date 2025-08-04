@@ -50,13 +50,17 @@ def __get_upload_to(key: str, *args, **kwargs):
 setting_changed.connect(__reload)
 
 
+def episode_audio_file_storage():
+    return __get_storage("EPISODE_AUDIO_FILE")
+
+
 def episode_audio_file_upload_to(instance, filename):
     return __get_upload_to("EPISODE_AUDIO_FILE", instance, filename) \
         or f"{instance.podcast.slug}/episodes/{filename}"
 
 
-def episode_audio_file_storage():
-    return __get_storage("EPISODE_AUDIO_FILE")
+def episode_chapter_image_storage():
+    return __get_storage("EPISODE_CHAPTER_IMAGE")
 
 
 def episode_chapter_image_upload_to(instance, filename):
@@ -64,8 +68,12 @@ def episode_chapter_image_upload_to(instance, filename):
         f"{instance.episode.podcast.slug}/images/episodes/{instance.episode.slug}/chapters/{filename}"
 
 
-def episode_chapter_image_storage():
-    return __get_storage("EPISODE_CHAPTER_IMAGE")
+def episode_image_storage():
+    return __get_storage("EPISODE_IMAGE")
+
+
+def episode_image_thumbnail_storage():
+    return __get_storage("EPISODE_IMAGE_THUMBNAIL")
 
 
 def episode_image_thumbnail_upload_to(instance, filename):
@@ -73,57 +81,53 @@ def episode_image_thumbnail_upload_to(instance, filename):
         f"{instance.podcast.slug}/images/episodes/{instance.slug}/{filename}"
 
 
-def episode_image_thumbnail_storage():
-    return __get_storage("EPISODE_IMAGE_THUMBNAIL")
-
-
 def episode_image_upload_to(instance, filename):
     return __get_upload_to("EPISODE_IMAGE", instance, filename) or \
         f"{instance.podcast.slug}/images/episodes/{instance.slug}/{filename}"
-
-
-def episode_image_storage():
-    return __get_storage("EPISODE_IMAGE")
-
-
-def fontface_file_upload_to(instance, filename):
-    return __get_upload_to("FONTFACE_FILE", instance, filename) or f"fonts/{filename}"
 
 
 def fontface_file_storage():
     return __get_storage("FONTFACE_FILE")
 
 
-def podcast_banner_upload_to(instance, filename):
-    return __get_upload_to("PODCAST_BANNER", instance, filename) or f"{instance.slug}/images/{filename}"
+def fontface_file_upload_to(instance, filename):
+    return __get_upload_to("FONTFACE_FILE", instance, filename) or f"fonts/{filename}"
 
 
 def podcast_banner_storage():
     return __get_storage("PODCAST_BANNER")
 
 
-def podcast_cover_thumbnail_upload_to(instance, filename):
-    return __get_upload_to("PODCAST_COVER_THUMBNAIL", instance, filename) or f"{instance.slug}/images/{filename}"
-
-
-def podcast_cover_thumbnail_storage():
-    return __get_storage("PODCAST_COVER_THUMBNAIL")
-
-
-def podcast_cover_upload_to(instance, filename):
-    return __get_upload_to("PODCAST_COVER", instance, filename) or f"{instance.slug}/images/{filename}"
+def podcast_banner_upload_to(instance, filename):
+    return __get_upload_to("PODCAST_BANNER", instance, filename) or f"{instance.slug}/images/{filename}"
 
 
 def podcast_cover_storage():
     return __get_storage("PODCAST_COVER")
 
 
-def podcast_favicon_upload_to(instance, filename):
-    return __get_upload_to("PODCAST_FAVICON", instance, filename) or f"{instance.slug}/images/{filename}"
+def podcast_cover_thumbnail_storage():
+    return __get_storage("PODCAST_COVER_THUMBNAIL")
+
+
+def podcast_cover_thumbnail_upload_to(instance, filename):
+    return __get_upload_to("PODCAST_COVER_THUMBNAIL", instance, filename) or f"{instance.slug}/images/{filename}"
+
+
+def podcast_cover_upload_to(instance, filename):
+    return __get_upload_to("PODCAST_COVER", instance, filename) or f"{instance.slug}/images/{filename}"
 
 
 def podcast_favicon_storage():
     return __get_storage("PODCAST_FAVICON")
+
+
+def podcast_favicon_upload_to(instance, filename):
+    return __get_upload_to("PODCAST_FAVICON", instance, filename) or f"{instance.slug}/images/{filename}"
+
+
+def podcast_link_icon_storage():
+    return __get_storage("PODCAST_LINK_ICON")
 
 
 def podcast_link_icon_upload_to(instance, filename):
@@ -131,5 +135,19 @@ def podcast_link_icon_upload_to(instance, filename):
         or f"{instance.podcast.slug}/images/links/{filename}"
 
 
-def podcast_link_icon_storage():
-    return __get_storage("PODCAST_LINK_ICON")
+def season_image_storage():
+    return __get_storage("SEASON_IMAGE")
+
+
+def season_image_thumbnail_storage():
+    return __get_storage("SEASON_IMAGE_THUMBNAIL")
+
+
+def season_image_thumbnail_upload_to(instance, filename):
+    return __get_upload_to("SEASON_IMAGE_THUMBNAIL", instance, filename) or \
+        f"{instance.podcast.slug}/images/seasons/{instance.number}/{filename}"
+
+
+def season_image_upload_to(instance, filename):
+    return __get_upload_to("SEASON_IMAGE", instance, filename) or \
+        f"{instance.podcast.slug}/images/seasons/{instance.number}/{filename}"

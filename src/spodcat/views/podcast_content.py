@@ -37,6 +37,7 @@ class PodcastContentFilter(IdListFilter):
 class PodcastContentViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[_MT_co]):
     select_for_includes = {
         "podcast": ["podcast"],
+        "season2": ["season2__podcast"],
     }
 
     def filter_queryset(self, queryset):

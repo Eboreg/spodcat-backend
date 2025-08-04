@@ -46,7 +46,11 @@ from spodcat.admin_inlines import (
 )
 from spodcat.contrib.admin.filters import ArtistSongCountFilter
 from spodcat.contrib.admin.mixin import AdminMixin
-from spodcat.forms import PodcastAdminForm, PodcastChangeSlugForm
+from spodcat.forms import (
+    EpisodeAdminForm,
+    PodcastAdminForm,
+    PodcastChangeSlugForm,
+)
 from spodcat.models import (
     Artist,
     Comment,
@@ -57,6 +61,7 @@ from spodcat.models import (
     Post,
 )
 from spodcat.models.podcast_content import PodcastContent
+from spodcat.models.season import Season
 from spodcat.utils import (
     delete_storage_file,
     round_to_whole_hour,
@@ -366,7 +371,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     fields = [
         ("id", "slug"),
         ("name", "podcast"),
-        ("season", "number"),
+        ("season2", "number"),
         ("is_draft", "published"),
         "audio_file",
         "image",
@@ -379,6 +384,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     list_filter = ["is_draft", "published", "podcast"]
     readonly_fields = ["audio_content_type", "audio_file_length", "duration", "id"]
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
+    form = EpisodeAdminForm
 
     def duration(self, obj: Episode):
         return timedelta(seconds=int(obj.duration_seconds))
@@ -391,7 +397,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         if apps.is_installed("spodcat.logs"):
             return [
                 "name",
-                "season",
+                "season2",
                 "number_string",
                 "is_visible",
                 "podcast_link",
@@ -403,7 +409,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
             ]
         return [
             "name",
-            "season",
+            "season2",
             "number_string",
             "is_visible",
             "podcast_link",
@@ -412,21 +418,20 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         ]
 
     def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("season2")
+
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastEpisodeAudioRequestLog
 
-            return (
-                super().get_queryset(request)
-                .annotate(
-                    play_count=Subquery(
-                        PodcastEpisodeAudioRequestLog.objects
-                        .filter(is_bot=False)
-                        .get_play_count_query(episode=OuterRef("pk"))
-                    ),
-                )
+            return qs.annotate(
+                play_count=Subquery(
+                    PodcastEpisodeAudioRequestLog.objects
+                    .filter(is_bot=False)
+                    .get_play_count_query(episode=OuterRef("pk"))
+                ),
             )
 
-        return super().get_queryset(request)
+        return qs
 
     def get_urls(self):
         urls = []
@@ -744,5 +749,21 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
 
             if "file" in form.initial:
                 delete_storage_file(form.initial["file"])
+
+        return instance
+
+
+@admin.register(Season)
+class SeasonAdmin(AdminMixin, admin.ModelAdmin):
+    list_display = ["podcast", "number", "name"]
+    fields = ["podcast", "number", "name", "image"]
+
+    def save_form(self, request, form, change):
+        instance: Season = super().save_form(request, form, change)
+
+        if "image" in form.changed_data:
+            if "image" in form.initial:
+                delete_storage_file(form.initial["image"])
+            instance.handle_uploaded_image()
 
         return instance

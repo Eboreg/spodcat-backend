@@ -50,7 +50,7 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_PCT"]):
             "Episode___image_thumbnail",
             "Episode___number",
             "Episode___podcastcontent_ptr_id",
-            "Episode___season",
+            "Episode___season2",
             "id",
             "name",
             "podcast",
@@ -85,6 +85,7 @@ if TYPE_CHECKING:
 
     class PodcastContentManager(PolymorphicManager[_PCT], PodcastContentQuerySet[_PCT]):
         def filter(self, *args: Any, **kwargs: Any) -> PodcastContentQuerySet[_PCT]: ...
+        def select_related(self, *fields: Any) -> PodcastContentQuerySet[_PCT]: ...
 
     class PodcastManager(Manager[Podcast], PodcastQuerySet):
         ...

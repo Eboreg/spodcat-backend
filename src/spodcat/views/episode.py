@@ -14,6 +14,7 @@ from rest_framework.request import Request
 
 from spodcat import serializers
 from spodcat.models import Comment, Episode, PodcastContent
+from spodcat.models.podcast import Podcast
 from spodcat.settings import spodcat_settings
 from spodcat.utils import (
     extract_range_request_header,
@@ -30,10 +31,14 @@ class EpisodeFilter(PodcastContentFilter):
 class EpisodeViewSet(PodcastContentViewSet[Episode]):
     filterset_class = EpisodeFilter
     prefetch_for_includes = {
-        "podcast.contents": [
+        "podcast": [
             Prefetch(
-                "podcast__contents",
-                queryset=PodcastContent.objects.partial().listed().with_has_songs(),
+                "podcast",
+                queryset=Podcast.objects.select_related("name_font_face").prefetch_related(
+                    "links",
+                    "categories",
+                    Prefetch("contents", queryset=PodcastContent.objects.partial().listed().with_has_songs()),
+                ),
             ),
         ],
         "songs": ["songs__artists"],

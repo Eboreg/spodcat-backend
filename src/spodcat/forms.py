@@ -6,6 +6,7 @@ from django.forms import CharField, ModelChoiceField, ModelForm, Select
 from django.utils.translation import gettext as _
 
 from spodcat.models import FontFace, Podcast, PodcastContent
+from spodcat.models.episode import Episode
 from spodcat.models.video import Video
 
 
@@ -63,8 +64,8 @@ class PodcastContentVideoAdminForm(ModelForm):
         fields = ["video_type", "url_or_id", "title"]
         model = Video
 
-    def __init__(self, data=None, instance: Video | None = None, **kwargs):
-        super().__init__(data, instance=instance, **kwargs)
+    def __init__(self, data=None, files=None, instance: Video | None = None, **kwargs):
+        super().__init__(data, files, instance=instance, **kwargs)
         if instance:
             self.fields["url_or_id"].initial = instance.video_id
 
@@ -90,3 +91,12 @@ class PodcastContentVideoAdminForm(ModelForm):
     def save(self, commit: bool = True):
         self.instance.video_id = self.cleaned_data["video_id"]
         return super().save(commit)
+
+
+class EpisodeAdminForm(ModelForm):
+    def __init__(self, data=None, files=None, instance: Episode | None = None, **kwargs):
+        super().__init__(data, files, instance=instance, **kwargs)
+        if instance:
+            season_field = self.fields["season2"]
+            assert isinstance(season_field, ModelChoiceField) and season_field.queryset
+            season_field.queryset = season_field.queryset.filter(podcast=instance.podcast)

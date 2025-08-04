@@ -12,6 +12,7 @@ from .podcast_content import (
 )
 from .podcast_link import PodcastLinkSerializer
 from .post import PartialPostSerializer, PostSerializer
+from .season import SeasonSerializer
 from .video import VideoSerializer
 
 
@@ -30,5 +31,6 @@ __all__ = [
     "PodcastLinkSerializer",
     "PodcastSerializer",
     "PostSerializer",
+    "SeasonSerializer",
     "VideoSerializer",
 ]
