@@ -1,8 +1,9 @@
+import re
 from io import BytesIO
 from time import time
 
 from django.apps import apps
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.db.models.fields.files import FieldFile
 from django.http import FileResponse, HttpResponseRedirect
 from django.http.response import JsonResponse
@@ -13,40 +14,62 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 
 from spodcat import serializers
-from spodcat.models import Comment, Episode, PodcastContent
-from spodcat.models.podcast import Podcast
+from spodcat.models import Comment, Episode, Podcast, PodcastContent
 from spodcat.settings import spodcat_settings
 from spodcat.utils import (
     extract_range_request_header,
     set_range_response_headers,
 )
 
-from .podcast_content import PodcastContentFilter, PodcastContentViewSet
+from .podcast_content import (
+    AbstractPodcastContentViewSet,
+    PodcastContentFilter,
+)
 
 
 class EpisodeFilter(PodcastContentFilter):
     episode = filters.CharFilter(method="filter_content")
 
+    def filter_freetext(self, queryset, name, value):
+        values = re.split(r"\s+", value)
+        qs = [
+            Q(name__icontains=v) |
+            Q(description__icontains=v) |
+            Q(season__name__icontains=v) |
+            Q(songs__artists__name__icontains=v) |
+            Q(songs__title__icontains=v) |
+            Q(songs__comment__icontains=v) |
+            Q(videos__title__icontains=v)
+            for v in values
+        ]
+        return queryset.filter(*qs).distinct()
 
-class EpisodeViewSet(PodcastContentViewSet[Episode]):
+
+class EpisodeViewSet(AbstractPodcastContentViewSet[Episode]):
     filterset_class = EpisodeFilter
     prefetch_for_includes = {
-        "podcast": [
+        "podcast.contents": [
             Prefetch(
                 "podcast",
-                queryset=Podcast.objects.select_related("name_font_face").prefetch_related(
-                    "links",
-                    "categories",
-                    Prefetch("contents", queryset=PodcastContent.objects.partial().listed().with_has_songs()),
-                ),
+                queryset=Podcast.objects.prefetch_related(
+                    Prefetch("contents", queryset=PodcastContent.objects.listed().with_has_songs())
+                )
             ),
         ],
+        "podcast": ["podcast__links", "podcast__categories", "podcast__seasons", "podcast__contents"],
         "songs": ["songs__artists"],
-        "songs.artists": ["songs__artists"],
         "__all__": ["videos", "songs", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
     }
     serializer_class = serializers.EpisodeSerializer
     queryset = Episode.objects.with_has_songs()
+
+    def get_serializer_class(self):
+        if self.is_list_request():
+            return serializers.PartialEpisodeSerializer
+        return serializers.EpisodeSerializer
+
+    def is_list_request(self):
+        return self.action != "retrieve" and "filter[episode]" not in self.request.query_params
 
     @extend_schema(responses={(200, "audio/*"): OpenApiTypes.BINARY})
     @action(methods=["get"], detail=True)

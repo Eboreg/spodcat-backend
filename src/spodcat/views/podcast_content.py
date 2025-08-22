@@ -14,13 +14,14 @@ from rest_framework_json_api import views
 from spodcat.filters import IdListFilter
 from spodcat.models import PodcastContent
 from spodcat.models.querysets import PodcastContentQuerySet
-from spodcat.views.mixins import LogRequestMixin
+from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
 
 
 _MT_co = TypeVar("_MT_co", bound=PodcastContent, covariant=True)
 
 
 class PodcastContentFilter(IdListFilter):
+    freetext = filters.CharFilter(method="filter_freetext")
     podcast = filters.CharFilter(method="filter_podcast")
 
     def filter_content(self, queryset, name, value):
@@ -34,10 +35,10 @@ class PodcastContentFilter(IdListFilter):
         return queryset.filter(podcast__slug=value)
 
 
-class PodcastContentViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[_MT_co]):
+class AbstractPodcastContentViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet[_MT_co]):
     select_for_includes = {
-        "podcast": ["podcast"],
         "season": ["season__podcast"],
+        "__all__": ["podcast"],
     }
 
     def filter_queryset(self, queryset):
