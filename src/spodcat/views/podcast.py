@@ -24,7 +24,7 @@ from spodcat import serializers
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
-from spodcat.views.mixins import LogRequestMixin
+from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class PodcastFeedEntry(FeedEntry):
     podcast2: Podcast2EntryExtension
 
 
-class PodcastViewSet(LogRequestMixin, views.ReadOnlyModelViewSet[Podcast]):
+class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet[Podcast]):
     prefetch_for_includes = {
         "__all__": [
             "links",

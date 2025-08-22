@@ -8,6 +8,7 @@ from spodcat.models.video import Video
 class PostSerializer(serializers.ModelSerializer[Post]):
     comments = ResourceRelatedField(queryset=Comment.objects, many=True)
     description_html = serializers.SerializerMethodField()
+    podcast_name = serializers.CharField(source="podcast.name")
     videos = ResourceRelatedField(queryset=Video.objects, many=True)
 
     included_serializers = {
@@ -26,5 +27,11 @@ class PostSerializer(serializers.ModelSerializer[Post]):
 
 class PartialPostSerializer(PostSerializer):
     class Meta:
-        fields = ["name", "podcast", "published", "slug", "id"]
+        fields = [
+            "id",
+            "name",
+            "podcast_name",
+            "published",
+            "slug",
+        ]
         model = Post

@@ -1,14 +1,9 @@
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import (
-    PolymorphicResourceRelatedField,
-    ResourceRelatedField,
-)
+from rest_framework_json_api.relations import ResourceRelatedField
 
 from spodcat.models import Comment, Episode, EpisodeSong
 from spodcat.models.season import Season
 from spodcat.models.video import Video
-
-from .episode_song import EpisodeSongSerializer
 
 
 class EpisodeSerializer(serializers.ModelSerializer[Episode]):
@@ -17,12 +12,9 @@ class EpisodeSerializer(serializers.ModelSerializer[Episode]):
     description_html = serializers.SerializerMethodField()
     has_songs = serializers.SerializerMethodField()
     season = ResourceRelatedField(queryset=Season.objects)
-    songs = PolymorphicResourceRelatedField(
-        EpisodeSongSerializer,
-        queryset=EpisodeSong.objects,
-        many=True,
-    )
+    songs = ResourceRelatedField(queryset=EpisodeSong.objects, many=True)
     videos = ResourceRelatedField(queryset=Video.objects, many=True)
+    podcast_name = serializers.CharField(source="podcast.name")
 
     included_serializers = {
         "comments": "spodcat.serializers.CommentSerializer",
@@ -58,12 +50,12 @@ class PartialEpisodeSerializer(EpisodeSerializer):
             "duration_seconds",
             "has_songs",
             "id",
+            "image_thumbnail",
             "name",
             "number",
-            "podcast",
+            "podcast_name",
             "published",
             "season",
             "slug",
-            "image_thumbnail",
         ]
         model = Episode

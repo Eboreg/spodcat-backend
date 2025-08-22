@@ -1,14 +1,9 @@
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import PolymorphicResourceRelatedField
 
-from spodcat.models import PodcastContent, Video
-
-from .podcast_content import PodcastContentSerializer
+from spodcat.models import Video
 
 
 class VideoSerializer(serializers.ModelSerializer[Video]):
-    podcast_content = PolymorphicResourceRelatedField(PodcastContentSerializer, queryset=PodcastContent.objects)
-
     class Meta:
-        fields = "__all__"
+        exclude = ["podcast_content"]
         model = Video

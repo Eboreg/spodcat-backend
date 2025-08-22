@@ -9,5 +9,5 @@ class EpisodeSongSerializer(serializers.ModelSerializer[EpisodeSong]):
     }
 
     class Meta:
-        fields = "__all__"
+        exclude = ["episode"]
         model = EpisodeSong
