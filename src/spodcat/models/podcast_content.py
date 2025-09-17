@@ -1,4 +1,3 @@
-import re
 import uuid
 from typing import TYPE_CHECKING, Self
 from urllib.parse import urljoin
@@ -10,16 +9,14 @@ from django.db.models import Case, Q, Value as V, When
 from django.db.models.functions import Now
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from markdown import markdown
 from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
 from slugify import slugify
 
-from spodcat.markdown import MarkdownExtension
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.settings import spodcat_settings
-from spodcat.utils import round_to_whole_hour
+from spodcat.utils import markdown_to_html, round_to_whole_hour
 
 
 if TYPE_CHECKING:
@@ -60,16 +57,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
 
     @property
     def description_html(self) -> str:
-        if self.description:
-            return markdown(self.description, extensions=["nl2br", "smarty", MarkdownExtension()])
-        return ""
-
-    @property
-    def description_text(self) -> str:
-        if self.description:
-            # Basic stripping of Markdown image tags:
-            return re.sub(r"[\r\n]*!\[.*?\]\(.*?\)", "", self.description).strip()
-        return ""
+        return markdown_to_html(self.description)
 
     @property
     # pylint: disable=no-member

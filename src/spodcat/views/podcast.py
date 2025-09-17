@@ -24,6 +24,7 @@ from spodcat import serializers
 from spodcat.models import Episode, Podcast, PodcastContent
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
+from spodcat.utils import markdown_to_html, strip_markdown_images
 from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
 
 
@@ -140,13 +141,21 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
         fg.podcast2.podcast_guid(str(podcast.guid))
 
         for episode in episode_qs:
+            description_html = episode.description_html + markdown_to_html(podcast.episode_rss_suffix)
+            description_text = strip_markdown_images(episode.description)
+            episode_rss_suffix_text = strip_markdown_images(podcast.episode_rss_suffix)
+            if episode_rss_suffix_text:
+                if description_text:
+                    description_text += "\n\n"
+                description_text += episode_rss_suffix_text
+
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
             if episode.has_chapters: # type: ignore
                 fe.podcast2.podcast_chapters(episode.chapters_url)
             fe.title(episode.name)
-            fe.content(episode.description_html, type="CDATA")
-            fe.description(episode.description_text)
-            fe.podcast.itunes_summary(episode.description_text)
+            fe.content(description_html, type="CDATA")
+            fe.description(description_text)
+            fe.podcast.itunes_summary(description_text)
             fe.published(episode.published)
             if episode.season:
                 fe.podcast.itunes_season(episode.season.number)

@@ -10,9 +10,12 @@ from django.db.models.fields.files import FieldFile, ImageFieldFile
 from django.http import HttpRequest
 from django.http.response import HttpResponseBase
 from django.utils.timezone import get_current_timezone, make_aware, now
+from markdown import markdown
 from PIL import Image
 from pydub import AudioSegment
 from rest_framework.request import Request
+
+from spodcat.markdown import MarkdownExtension
 
 
 if TYPE_CHECKING:
@@ -99,6 +102,12 @@ def get_audio_segment_dbfs_array(audio: AudioSegment) -> list[float]:
     return [dbfs * multiplier for dbfs in dbfs_values]
 
 
+def markdown_to_html(md: str | None):
+    if md:
+        return markdown(md, extensions=["nl2br", "smarty", MarkdownExtension()])
+    return ""
+
+
 def round_to_whole_hour(d: datetime.datetime | None = None) -> datetime.datetime:
     d = d or now()
     return datetime.datetime(year=d.year, month=d.month, day=d.day, hour=d.hour, tzinfo=d.tzinfo)
@@ -125,3 +134,10 @@ def split_audio_segment(whole: AudioSegment, parts: int) -> "Generator[AudioSegm
         assert isinstance(part, AudioSegment)
         yield part
         i += n
+
+
+def strip_markdown_images(md: str | None):
+    # Basic stripping of Markdown image tags:
+    if md:
+        return re.sub(r"[\r\n]*!\[.*?\]\(.*?\)", "", md).strip()
+    return ""

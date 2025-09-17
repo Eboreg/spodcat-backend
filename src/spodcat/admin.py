@@ -126,7 +126,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
-            (None, {"fields": [("name", "slug"), ("tagline", "language"), "description"]}),
+            (None, {"fields": [("name", "slug"), ("tagline", "language"), "description", "episode_rss_suffix"]}),
             (_("Comments"), {"fields": [("enable_comments", "require_comment_approval"),]}),
             (_("Graphics"), {"fields": ["cover", "banner", "favicon", "name_font_size", "name_font_face"]}),
         ]

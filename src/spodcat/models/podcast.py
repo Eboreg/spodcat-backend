@@ -17,11 +17,9 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from iso639 import iter_langs
-from markdown import markdown
 from markdownify import markdownify
 from martor.models import MartorField
 
-from spodcat.markdown import MarkdownExtension
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastQuerySet
 from spodcat.settings import spodcat_settings
@@ -30,6 +28,7 @@ from spodcat.utils import (
     delete_storage_file,
     downscale_image,
     generate_thumbnail,
+    markdown_to_html,
 )
 
 from .functions import (
@@ -118,8 +117,25 @@ class Podcast(ModelMixin, models.Model):
     cover_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
     cover_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     cover_width = models.PositiveIntegerField(null=True, default=None)
+    custom_guid = models.UUIDField(
+        null=True,
+        default=None,
+        blank=True,
+        verbose_name=_("custom GUID"),
+        help_text=_(
+            "Don't set if you don't know what you're doing. "
+            "Ref: https://podcasting2.org/podcast-namespace/tags/guid"
+        ),
+    )
     description = MartorField(null=True, default=None, blank=True, verbose_name=_("description"))
     enable_comments = models.BooleanField(default=False, verbose_name=_("enable comments"))
+    episode_rss_suffix = MartorField(
+        verbose_name=_("Episode RSS suffix"),
+        null=True,
+        blank=True,
+        default=None,
+        help_text=_("Will be added to the bottom of every episode description in the RSS feed."),
+    )
     favicon = models.ImageField(
         null=True,
         default=None,
@@ -130,6 +146,7 @@ class Podcast(ModelMixin, models.Model):
         max_length=300,
     )
     favicon_content_type = models.CharField(null=True, default=None, blank=True, max_length=50)
+    itunes_type = models.CharField(max_length=10, choices=ItunesType.choices, default=ItunesType.EPISODIC)
     language = models.CharField(
         max_length=5,
         choices=get_language_choices,
@@ -168,17 +185,6 @@ class Podcast(ModelMixin, models.Model):
         verbose_name=_("slug"),
     )
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None, verbose_name=_("tagline"))
-    custom_guid = models.UUIDField(
-        null=True,
-        default=None,
-        blank=True,
-        verbose_name=_("custom GUID"),
-        help_text=_(
-            "Don't set if you don't know what you're doing. "
-            "Ref: https://podcasting2.org/podcast-namespace/tags/guid"
-        ),
-    )
-    itunes_type = models.CharField(max_length=10, choices=ItunesType.choices, default=ItunesType.EPISODIC)
 
     contents: "PodcastContentManager"
     links: "RelatedManager[PodcastLink]"
@@ -193,9 +199,7 @@ class Podcast(ModelMixin, models.Model):
 
     @property
     def description_html(self) -> str:
-        if self.description:
-            return markdown(self.description, extensions=["nl2br", "smarty", MarkdownExtension()])
-        return ""
+        return markdown_to_html(self.description)
 
     @property
     def episodes_fm_url(self) -> str:
