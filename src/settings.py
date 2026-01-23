@@ -12,7 +12,7 @@ BASE_DIR = SRC_DIR.parent
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
 
 ADMINS = [(os.environ.get("ADMIN_NAME", "Admin"), os.environ.get("ADMIN_EMAIL", "root@localhost"))]
-ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ".localhost,127.0.0.1,[::1]").split(",")
 DEBUG = env_boolean("DEBUG")
 DJANGO_DB = os.environ.get("DJANGO_DB", ENVIRONMENT)
 INTERNAL_IPS = "127.0.0.1"
