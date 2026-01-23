@@ -4,8 +4,9 @@ from datetime import datetime
 from typing import cast
 
 from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Prefetch
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from drf_spectacular.types import OpenApiTypes
@@ -15,7 +16,6 @@ from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
@@ -41,109 +41,72 @@ class PodcastFeedEntry(FeedEntry):
     podcast2: Podcast2EntryExtension
 
 
-class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet[Podcast]):
-    prefetch_for_includes = {
-        "__all__": [
-            "links",
-            "categories",
-            Prefetch("contents", queryset=PodcastContent.objects.partial().listed().with_has_songs()),
-        ]
-    }
-    select_for_includes = {
-        "__all__": ["name_font_face"],
-    }
-    serializer_class = serializers.PodcastSerializer
-    queryset = Podcast.objects.order_by_last_content(reverse=True)
+class PodcastRssData:
+    podcast: Podcast
+    episodes: PodcastContentQuerySet[Episode]
+    last_published: datetime | None
+    authors: list[dict]
+    author_string: str
 
-    @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
-    @action(methods=["post"], detail=True)
-    def ping(self, request: Request, pk: str):
-        instance = self.get_object()
-
-        if apps.is_installed("spodcat.logs"):
-            from spodcat.logs.models import PodcastRequestLog
-            self.log_request(request, PodcastRequestLog, podcast=instance)
-
-        return Response()
-
-    @extend_schema(responses={(200, "application/xml"): OpenApiTypes.STR})
-    @action(methods=["get"], detail=True)
-    def rss(self, request: Request, pk: str):
-        # Both template and feedgen methods are available; going with feedgen
-        # for now since it's considerably faster in tests.
-        queryset = Podcast.objects.prefetch_related("authors", "categories").select_related("owner")
-        podcast: Podcast = get_object_or_404(queryset, slug=pk)
-        authors = [{"name": o.get_full_name(), "email": o.email} for o in podcast.authors.all()]
-        episode_qs = (
+    def __init__(self, pk: str):
+        self.podcast = Podcast.objects.prefetch_related("authors", "categories").select_related("owner").get(slug=pk)
+        self.authors = [{"name": a.get_full_name(), "email": a.email} for a in self.podcast.authors.all()]
+        self.author_string = ", ".join([a["name"] for a in self.authors if a["name"]])
+        self.episodes = (
             Episode.objects
-            .filter(podcast=podcast)
+            .filter(podcast=self.podcast)
             .select_related("podcast", "season")
             .listed()
             .with_has_chapters()
         )
-
-        if apps.is_installed("spodcat.logs"):
-            from spodcat.logs.models import PodcastRssRequestLog
-            self.log_request(request, PodcastRssRequestLog, podcast=podcast)
-
-        return self.rss_feedgen(
-            request=request,
-            podcast=podcast,
-            episode_qs=episode_qs,
-            last_published=episode_qs.aggregate(last_published=Max("published"))["last_published"],
-            author_string=", ".join([a["name"] for a in authors if a["name"]]),
-            authors=authors,
-        )
+        self.last_published = self.episodes.aggregate(last_published=Max("published"))["last_published"]
 
     # pylint: disable=no-member
-    def rss_feedgen(
-        self,
-        request: Request,
-        podcast: Podcast,
-        episode_qs: PodcastContentQuerySet[Episode],
-        last_published: datetime | None,
-        authors: list[dict],
-        author_string: str,
-    ):
-        categories = [c.to_dict() for c in podcast.categories.all()]
+    def get_rss_string(self):
+        categories = [c.to_dict() for c in self.podcast.categories.all()]
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
         fg.register_extension("podcast2", Podcast2Extension, Podcast2EntryExtension)
         fg = cast(PodcastFeedGenerator, fg)
-        fg.title(podcast.name)
+        fg.title(self.podcast.name)
         fg.link([
-            {"href": podcast.rss_url, "rel": "self", "type": "application/rss+xml"},
-            {"href": podcast.frontend_url, "rel": "alternate"},
+            {"href": self.podcast.rss_url, "rel": "self", "type": "application/rss+xml"},
+            {"href": self.podcast.frontend_url, "rel": "alternate"},
         ])
-        fg.description(podcast.tagline or podcast.name)
-        fg.podcast.itunes_type(podcast.itunes_type)
-        if last_published:
-            fg.lastBuildDate(last_published)
-        if podcast.cover:
-            fg.podcast.itunes_image(podcast.cover.url)
-            if podcast.cover_height and podcast.cover_width:
-                fg.image(url=podcast.cover.url, width=str(podcast.cover_width), height=str(podcast.cover_height))
-            if podcast.cover_width:
-                fg.podcast2.podcast_image(podcast.cover.url, podcast.cover_width)
-        if podcast.cover_thumbnail and podcast.cover_thumbnail_width:
-            fg.podcast2.podcast_image(podcast.cover_thumbnail.url, podcast.cover_thumbnail_width)
-        if podcast.owner.email and podcast.owner.get_full_name():
-            fg.podcast.itunes_owner(name=podcast.owner.get_full_name(), email=podcast.owner.email)
-        if authors:
-            fg.author(authors)
-        if author_string:
-            fg.podcast.itunes_author(author_string)
-        if podcast.language:
-            fg.language(podcast.language)
+        fg.description(self.podcast.tagline or self.podcast.name)
+        fg.podcast.itunes_type(self.podcast.itunes_type)
+
+        if self.last_published:
+            fg.lastBuildDate(self.last_published)
+        if self.podcast.cover:
+            fg.podcast.itunes_image(self.podcast.cover.url)
+            if self.podcast.cover_height and self.podcast.cover_width:
+                fg.image(
+                    url=self.podcast.cover.url,
+                    width=str(self.podcast.cover_width),
+                    height=str(self.podcast.cover_height),
+                )
+            if self.podcast.cover_width:
+                fg.podcast2.podcast_image(self.podcast.cover.url, self.podcast.cover_width)
+        if self.podcast.cover_thumbnail and self.podcast.cover_thumbnail_width:
+            fg.podcast2.podcast_image(self.podcast.cover_thumbnail.url, self.podcast.cover_thumbnail_width)
+        if self.podcast.owner.email and self.podcast.owner.get_full_name():
+            fg.podcast.itunes_owner(name=self.podcast.owner.get_full_name(), email=self.podcast.owner.email)
+        if self.authors:
+            fg.author(self.authors)
+        if self.author_string:
+            fg.podcast.itunes_author(self.author_string)
+        if self.podcast.language:
+            fg.language(self.podcast.language)
         if categories:
             fg.podcast.itunes_category(categories)
-        fg.podcast2.podcast_guid(str(podcast.guid))
+        fg.podcast2.podcast_guid(str(self.podcast.guid))
 
-        for episode in episode_qs:
-            description_html = episode.description_html + markdown_to_html(podcast.episode_rss_suffix)
+        for episode in self.episodes:
+            description_html = episode.description_html + markdown_to_html(self.podcast.episode_rss_suffix)
             description_text = strip_markdown_images(episode.description)
-            episode_rss_suffix_text = strip_markdown_images(podcast.episode_rss_suffix)
+            episode_rss_suffix_text = strip_markdown_images(self.podcast.episode_rss_suffix)
             if episode_rss_suffix_text:
                 if description_text:
                     description_text += "\n\n"
@@ -182,46 +145,87 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
                     length=episode.audio_file_length,
                 )
             fe.guid(guid=str(episode.id), permalink=False)
-            if authors:
-                fe.author(authors)
-            if author_string:
-                fe.podcast.itunes_author(author_string)
+            if self.authors:
+                fe.author(self.authors)
+            if self.author_string:
+                fe.podcast.itunes_author(self.author_string)
 
-        rss = fg.rss_str(pretty=True)
+        return fg.rss_str(pretty=True)
+
+    def get_template_context(self):
+        return {
+            "podcast": self.podcast,
+            "last_published": self.last_published,
+            "authors": self.authors,
+            "author_string": self.author_string,
+            "categories": itertools.groupby(self.podcast.categories.all(), lambda c: c.cat),
+            "episodes": self.episodes,
+        }
+
+
+class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet[Podcast]):
+    prefetch_for_includes = {
+        "__all__": [
+            "links",
+            "categories",
+            Prefetch("contents", queryset=PodcastContent.objects.partial().listed().with_has_songs()),
+        ]
+    }
+    select_for_includes = {
+        "__all__": ["name_font_face"],
+    }
+    serializer_class = serializers.PodcastSerializer
+    queryset = Podcast.objects.order_by_last_content(reverse=True)
+
+    @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
+    @action(methods=["post"], detail=True)
+    def ping(self, request: Request, pk: str):
+        instance = self.get_object()
+
+        if apps.is_installed("spodcat.logs"):
+            from spodcat.logs.models import PodcastRequestLog
+            self.log_request(request, PodcastRequestLog, podcast=instance)
+
+        return Response()
+
+    @extend_schema(responses={(200, "application/xml"): OpenApiTypes.STR})
+    @action(methods=["get"], detail=True)
+    def rss(self, request: Request, pk: str):
+        # Both template and feedgen methods are available; going with feedgen
+        # for now since it's considerably faster in tests.
+        try:
+            data = PodcastRssData(pk)
+        except ObjectDoesNotExist as e:
+            raise Http404 from e
+
+        if apps.is_installed("spodcat.logs"):
+            from spodcat.logs.models import PodcastRssRequestLog
+            self.log_request(request, PodcastRssRequestLog, podcast=data.podcast)
+
+        return self.__rss_feedgen(request=request, data=data)
+
+    def __rss_feedgen(self, request: Request, data: PodcastRssData):
+        rss = data.get_rss_string()
 
         if request.query_params.get("html"):
             return TemplateResponse(
                 request=request._request, # pylint: disable=protected-access
                 template="spodcat/rss.html",
-                context={"rss": rss.decode()},
+                context={"rss": rss.decode() if isinstance(rss, bytes) else rss},
             )
 
         return HttpResponse(
             content=rss,
             content_type="application/xml; charset=utf-8",
             headers={
-                "Content-Disposition": f"inline; filename=\"{podcast.slug}.rss.xml\"",
+                "Content-Disposition": f"inline; filename=\"{data.podcast.slug}.rss.xml\"",
                 "Access-Control-Allow-Origin": "*",
             },
         )
 
-    def rss_template(
-        self,
-        request: Request,
-        podcast: Podcast,
-        episode_qs: PodcastContentQuerySet[Episode],
-        last_published: datetime | None,
-        authors: list[dict],
-        author_string: str,
-    ):
-        context = {
-            "podcast": podcast,
-            "last_published": last_published,
-            "authors": authors,
-            "author_string": author_string,
-            "categories": itertools.groupby(podcast.categories.all(), lambda c: c.cat),
-            "episodes": episode_qs,
-        }
+    # pylint: disable=unused-private-member
+    def __rss_template(self, request: Request, data: PodcastRssData):
+        context = data.get_template_context()
 
         if request.query_params.get("html"):
             return TemplateResponse(
@@ -236,7 +240,7 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
             context=context,
             content_type="application/xml; charset=utf-8",
             headers={
-                "Content-Disposition": f"inline; filename=\"{podcast.slug}.rss.xml\"",
+                "Content-Disposition": f"inline; filename=\"{data.podcast.slug}.rss.xml\"",
                 "Access-Control-Allow-Origin": "*",
             },
         )

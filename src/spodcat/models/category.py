@@ -1,10 +1,16 @@
 from html import escape
+from typing import NotRequired, TypedDict
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.data import CATEGORIES
 from spodcat.model_mixin import ModelMixin
+
+
+class CategoryDict(TypedDict):
+    cat: str
+    sub: NotRequired[str]
 
 
 class Category(ModelMixin, models.Model):
@@ -39,7 +45,7 @@ class Category(ModelMixin, models.Model):
         if new_categories:
             cls.objects.bulk_create(new_categories)
 
-    def to_dict(self):
+    def to_dict(self) -> CategoryDict:
         if self.sub:
             return {"cat": escape(self.cat), "sub": escape(self.sub)}
         return {"cat": escape(self.cat)}
