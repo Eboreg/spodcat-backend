@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_language_choices():
-    return [(l.pt1, l.name) for l in iter_langs() if l.pt1]
+    return [(lang.pt1, lang.name) for lang in iter_langs() if lang.pt1]
 
 
 def podcast_slug_validator(value: str):
@@ -156,7 +156,7 @@ class Podcast(ModelMixin, models.Model):
         verbose_name=_("language"),
     )
     name = models.CharField(max_length=100, verbose_name=_("name"))
-    name_font_face = models.ForeignKey["FontFace | None"](
+    name_font_face: "models.ForeignKey[FontFace | None]" = models.ForeignKey(
         "spodcat.FontFace",
         related_name="+",
         on_delete=models.SET_NULL,

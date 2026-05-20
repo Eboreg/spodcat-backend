@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
     from .episode import Episode
-    from .podcast import Podcast
+    from .podcast import Podcast  # noqa: F401
 
 
 class Season(ModelMixin, models.Model):

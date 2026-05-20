@@ -8,7 +8,7 @@ class SpodcatConfig(AppConfig):
     verbose_name = _("Podcasts")
 
     def ready(self):
-        from spodcat import signals
+        from spodcat import signals  # noqa: F401
         from spodcat.settings import patch_django_settings
 
         patch_django_settings()

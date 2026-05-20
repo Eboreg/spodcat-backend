@@ -14,7 +14,7 @@ class Command(BaseCommand):
             PodcastRssRequestLog.objects
             .using(options["database"])
             .order_by("path_info", "created"),
-            key=lambda l: l.path_info,
+            key=lambda log: log.path_info,
         ):
             logs = list(logs)
             requests = len(logs)
@@ -23,10 +23,10 @@ class Command(BaseCommand):
                 continue
             hours = delta.total_seconds() / 60 / 60
             days = hours / 24
-            uq_ips = set(l.remote_addr for l in logs)
+            uq_ips = set(log.remote_addr for log in logs)
             referrers = {
-                r: [l for l in logs if l.referrer == r]
-                for r in set(l.referrer for l in logs) if r
+                r: [log for log in logs if log.referrer == r]
+                for r in set(log.referrer for log in logs) if r
             }
 
             self.stdout.write(path_info)
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             if referrers:
                 self.stdout.write("Referrers:")
                 for ref, ref_logs in referrers.items():
-                    ref_uq_ips = set(l.remote_addr for l in ref_logs)
+                    ref_uq_ips = set(log.remote_addr for log in ref_logs)
                     ref_percent = len(ref_logs) / len(logs) * 100
                     self.stdout.write(
                         f" * {ref}: {len(ref_logs)} / {ref_percent:.02f}% ({len(ref_uq_ips)} unique IPs)"

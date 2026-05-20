@@ -40,7 +40,7 @@ if TYPE_CHECKING:
         PodcastRequestLogManager,
         PodcastRssRequestLogManager,
     )
-    from spodcat.models import Episode, Podcast, PodcastContent
+    from spodcat.models import Episode, Podcast, PodcastContent  # noqa: F401
 
 
 logger = logging.getLogger(__name__)

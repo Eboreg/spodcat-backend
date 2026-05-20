@@ -20,7 +20,7 @@ from spodcat.utils import markdown_to_html, round_to_whole_hour
 
 
 if TYPE_CHECKING:
-    from spodcat.models import Podcast
+    from spodcat.models import Podcast  # noqa: F401
     from spodcat.models.querysets import PodcastContentManager
 
 

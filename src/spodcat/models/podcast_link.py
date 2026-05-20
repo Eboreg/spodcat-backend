@@ -9,7 +9,7 @@ from .functions import podcast_link_icon_storage, podcast_link_icon_upload_to
 
 
 if TYPE_CHECKING:
-    from .podcast import Podcast
+    from .podcast import Podcast  # noqa: F401
 
 
 class PodcastLink(ModelMixin, models.Model):

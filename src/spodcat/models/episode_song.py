@@ -9,7 +9,7 @@ from .episode_chapter import AbstractEpisodeChapter
 
 if TYPE_CHECKING:
     from .artist import Artist
-    from .episode import Episode
+    from .episode import Episode  # noqa: F401
 
 
 class EpisodeSong(AbstractEpisodeChapter):

@@ -7,7 +7,7 @@ from spodcat.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
-    from .podcast_content import PodcastContent
+    from .podcast_content import PodcastContent  # noqa: F401
 
 
 class Video(ModelMixin, models.Model):

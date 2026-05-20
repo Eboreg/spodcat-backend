@@ -287,7 +287,7 @@ class Episode(PodcastContent):
                 self.handle_uploaded_image()
 
         if "links" in entry:
-            link = getitem0_nullable(entry["links"], lambda l: l.get("rel", "") == "enclosure")
+            link = getitem0_nullable(entry["links"], lambda link: link.get("rel", "") == "enclosure")
             if link and "href" in link:
                 logger.info("Fetching audio file: %s", link["href"])
                 response = requests.get(link["href"], timeout=60)

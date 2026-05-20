@@ -11,7 +11,7 @@ from spodcat.model_mixin import ModelMixin
 
 
 if TYPE_CHECKING:
-    from spodcat.models import Podcast
+    from spodcat.models import Podcast  # noqa: F401
 
 
 def generate_term():

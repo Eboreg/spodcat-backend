@@ -52,7 +52,7 @@ MIDDLEWARE = [
 
 try:
     # pylint: disable=unused-import
-    import debug_toolbar
+    import debug_toolbar  # noqa: F401
 
     INSTALLED_APPS.append("debug_toolbar")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
