@@ -16,3 +16,4 @@
 /fonts
 /dist
 /.idea
+**/.ruff_cache

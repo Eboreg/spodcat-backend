@@ -1,0 +1,2 @@
+(()=>{function e(e){let t=django.jQuery;t(e).find(".field-artists .admin-autocomplete").not("[name*=__prefix__]").each(function(e,a){t(a).select2({ajax:{data:e=>({term:e.term,page:e.page,app_label:a.dataset.appLabel,model_name:a.dataset.modelName,field_name:a.dataset.fieldName})},tags:!0,createTag:function(e){if("string"!=typeof e.term)return null;let t=e.term.trim();return""==t?null:{id:`NEW--${t}`,text:t,newTag:!0}}})})}$(function(){e(document)}),document.addEventListener("formset:added",t=>{e(t.target)})})();
+//# sourceMappingURL=artist_autocomplete.js.map

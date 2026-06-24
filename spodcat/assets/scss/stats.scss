@@ -1,0 +1,145 @@
+.main .stats-table-wrapper {
+    width: 100%;
+}
+
+.main:not(.shifted) .stats-table-wrapper {
+    @media screen and (width >= 576px) {
+        width: calc(50% - 0.5rem);
+    }
+    @media screen and (width >= 1200px) {
+        width: calc(33% - (1rem * 2 / 3));
+    }
+}
+
+.main.shifted .stats-table-wrapper {
+    @media screen and (width >= 992px) {
+        width: calc(50% - 0.5rem);
+    }
+    @media screen and (width >= 1400px) {
+        width: calc(33% - (1rem * 2 / 3));
+    }
+}
+
+.stats {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 1rem;
+
+    h2 {
+        margin-top: 0;
+    }
+
+    h3 {
+        margin-bottom: 0.75em;
+    }
+
+    .date-fields {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .graph {
+        height: 200px;
+        position: relative;
+        min-width: min(400px, 100%);
+    }
+
+    .graph-container {
+        position: relative;
+
+        .graph-header {
+            display: flex;
+            width: calc(100% - 10px);
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+
+            h2, h3, h4 {
+                flex: 1 1 auto;
+            }
+
+            .horizontal {
+                gap: 5px 10px;
+            }
+        }
+
+        .graph-subheader {
+            font-size: small;
+            margin-bottom: 10px;
+        }
+    }
+
+    .horizontal {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+
+        .graph-container {
+            flex: 1 1 1;
+        }
+    }
+
+    .stats-section {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stats-table {
+        display: flex;
+        flex-direction: column;
+
+        &.collapsible {
+            .expand-link {
+                display: none;
+            }
+
+            &.collapsed {
+                .collapse-link {
+                    display: none;
+                }
+                .row:nth-child(n + 7) {
+                    // Hide all but the first 6 rows
+                    display: none;
+                }
+                &:has(.row:nth-child(n + 7)) .expand-link {
+                    // Don't show expand link if there are less than 6 rows
+                    display: block;
+                }
+            }
+        }
+
+        .row,
+        .link {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .row {
+            &.head {
+                background-color: var(--selected-row);
+            }
+
+            &:nth-child(odd):not(.head) {
+                background-color: var(--darkened-bg);
+            }
+
+            .key {
+                flex: 1 1 auto;
+            }
+
+            .value {
+                text-align: end;
+            }
+        }
+    }
+
+    .stats-table-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+}

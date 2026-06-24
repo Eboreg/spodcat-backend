@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% load static i18n spodcat %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media.js }}
+<script type="module" src={% static "spodcat/js/stats.js" %}></script>
+{% endblock extrahead %}
+
+{% block extrastyle %}
+{{ block.super }}
+{{ media.css }}
+<link rel="stylesheet" href="{% static "spodcat/css/stats.css" %}">
+{% endblock %}
+
+{% block extrabody %}
+{{ block.super }}
+<input type="hidden" name="__root_path__" id="__root_path__" value="{% root_path %}">
+{% endblock extrabody %}

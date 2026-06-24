@@ -1,14 +1,14 @@
 {
     "devDependencies": {
-        "@parcel/transformer-sass": "^2.14.4",
-        "@types/jquery": "^3.5.32",
+        "@parcel/transformer-sass": "^2.16.4",
+        "@types/jquery": "^3.5.34",
         "@types/select2": "^4.0.63",
-        "bootstrap": "^5.3.7",
+        "bootstrap": "^5.3.8",
+        "chart.js": "^4.5.1",
         "chartjs-adapter-date-fns": "^3.0.0",
-        "date-fns": "^4.1.0",
-        "typescript": "^5.8.3",
-        "chart.js": "^4.4.9",
-        "parcel": "^2.14.4"
+        "date-fns": "^4.4.0",
+        "parcel": "^2.16.4",
+        "typescript": "^5.9.3"
     },
     "scripts": {
         "build": "parcel build",
@@ -16,12 +16,12 @@
     },
     "targets": {
         "js": {
-            "source": "src/assets/ts/*.ts",
-            "distDir": "src/spodcat/static/spodcat/js"
+            "source": "spodcat/assets/ts/*.ts",
+            "distDir": "spodcat/static/spodcat/js"
         },
         "css": {
-            "source": "src/assets/scss/*.scss",
-            "distDir": "src/spodcat/static/spodcat/css"
+            "source": "spodcat/assets/scss/*.scss",
+            "distDir": "spodcat/static/spodcat/css"
         }
     }
 }

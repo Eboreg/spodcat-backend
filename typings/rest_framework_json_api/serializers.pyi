@@ -31,7 +31,6 @@ from rest_framework.serializers import (
     ModelField as ModelField,
     ModelSerializer as ModelSerializerBase,
     MultipleChoiceField as MultipleChoiceField,
-    NullBooleanField as NullBooleanField,
     PrimaryKeyRelatedField as PrimaryKeyRelatedField,
     ReadOnlyField as ReadOnlyField,
     RegexField as RegexField,
@@ -46,22 +45,15 @@ from rest_framework.serializers import (
     ValidationError as ValidationError,
 )
 
-
 _MT = TypeVar("_MT", bound=Model)  # Model Type
 _IN = TypeVar("_IN")  # Instance Type
 
 class ResourceIdentifierObjectSerializer(BaseSerializer): ...
-
 class SparseFieldsetsMixin: ...
-
 class IncludedResourcesValidationMixin: ...
-
 class ReservedFieldNamesMixin: ...
-
 class LazySerializersDict(Mapping): ...
-
 class SerializerMetaclass(SerializerMetaclassBase): ...
-
 class Serializer(
     IncludedResourcesValidationMixin,
     SparseFieldsetsMixin,
@@ -69,7 +61,6 @@ class Serializer(
     SerializerBase[_IN],
     metaclass=SerializerMetaclass,
 ): ...
-
 class HyperlinkedModelSerializer(
     IncludedResourcesValidationMixin,
     SparseFieldsetsMixin,
@@ -77,7 +68,6 @@ class HyperlinkedModelSerializer(
     HyperlinkedModelSerializerBase[_MT],
     metaclass=SerializerMetaclass,
 ): ...
-
 class ModelSerializer(
     IncludedResourcesValidationMixin,
     SparseFieldsetsMixin,
@@ -85,21 +75,16 @@ class ModelSerializer(
     ModelSerializerBase[_MT],
     metaclass=SerializerMetaclass,
 ): ...
-
 class PolymorphicSerializerMetaclass(SerializerMetaclass): ...
 
 class PolymorphicModelSerializer(ModelSerializer[_MT], metaclass=PolymorphicSerializerMetaclass):
     @classmethod
     def get_polymorphic_serializer_for_instance(cls, instance): ...
-
     @classmethod
     def get_polymorphic_model_for_serializer(cls, serializer): ...
-
     @classmethod
     def get_polymorphic_serializer_for_type(cls, obj_type): ...
-
     @classmethod
     def get_polymorphic_model_for_type(cls, obj_type): ...
-
     @classmethod
     def get_polymorphic_types(cls): ...

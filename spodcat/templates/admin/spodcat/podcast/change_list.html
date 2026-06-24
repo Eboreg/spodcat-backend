@@ -1,0 +1,12 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block result_list %}
+{% if logs_app_installed %}
+<div class="change-list-legend">
+    <p>{% translate "<code>VIEWS</code> = number of times the podcast's index page has been requested." %}</p>
+    <p>{% translate "<code>PLAYS</code> = number of times the podcast episodes' audio files have been downloaded <em>by a non-bot client</em> (as far as we're able to tell). May be a fraction because of partial downloads (common when streaming)." %}</p>
+</div>
+{% endif %}
+{{ block.super }}
+{% endblock result_list %}

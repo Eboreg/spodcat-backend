@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools"]
+requires = ["uv_build>=0.9.7"]
+build-backend = "uv_build"
 
 [project]
 authors = [
@@ -16,14 +16,18 @@ classifiers = [
 dependencies = [
     "audioop-lts; python_version >= '3.13'",
     "country_list",
+    "django-filter>=25.2",
     "django-polymorphic",
+    "django-rest-polymorphic>=0.1.10",
     "django",
     "djangorestframework-jsonapi[django-polymorphic,django-filter]",
     "djangorestframework",
+    "drf-nested-routers>=0.95.0",
     "drf-spectacular-jsonapi",
     "drf-spectacular",
     "feedgen",
     "feedparser",
+    "ffmpeg-python>=0.2.0",
     "geoip2",
     "iso639-lang",
     "klaatu-django",
@@ -39,10 +43,16 @@ license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
-requires-python = ">=3.10"
-version = "0.12.0"
+requires-python = ">=3.11"
+version = "2.0.0"
 
-[project.optional-dependencies]
+[project.urls]
+"Live example" = "https://podd.huseli.us"
+Homepage = "https://github.com/Eboreg/spodcat-backend"
+Issues = "https://github.com/Eboreg/spodcat-backend/issues"
+Source = "https://github.com/Eboreg/spodcat-backend"
+
+[dependency-groups]
 dev = [
     "django-debug-toolbar",
     "django-extensions",
@@ -57,16 +67,21 @@ dev = [
     "pylint-django",
     "pylint",
     "python-dotenv",
+    "ruff>=0.15.10",
+    "ty>=0.0.31",
     "types-markdown",
     "types-requests",
     "whitenoise",
 ]
 
-[project.urls]
-"Live example" = "https://podd.huseli.us"
-Homepage = "https://github.com/Eboreg/spodcat-backend"
-Issues = "https://github.com/Eboreg/spodcat-backend/issues"
-Source = "https://github.com/Eboreg/spodcat-backend"
+[tool.uv]
+exclude-newer = "P7D"
+
+[tool.uv.build-backend]
+module-name = "spodcat"
+module-root = ""
+source-exclude = ["test_env/**"]
+wheel-exclude = ["test_env/**"]
 
 [tool.pylint.main]
 disable = [
@@ -126,3 +141,29 @@ ignore = [".venv"]
 include = ["src"]
 stubPath = "typings"
 typeCheckingMode = "basic"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+exclude = [".venv", ".git", ".mypy_cache", "__pycache__", "build", "node_modules", "scratch.py"]
+show-fixes = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I"]
+ignore = ["E722", "B027"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+combine-as-imports = true
+default-section = "third-party"
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-line-length = 80

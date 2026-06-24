@@ -1,0 +1,24 @@
+{% extends "admin/index.html" %}
+{% load static i18n %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "spodcat/css/admin.css" %}">{% endblock %}
+
+{% block sidebar %}
+<div id="sidebar">
+    {% if comments_awaiting_approval %}
+    <div class="module">
+        <h2>{% translate "Comments awaiting approval" %}</h2>
+        <ul class="actionlist">
+            {% for comment in comments_awaiting_approval %}
+                <li class="changelink">
+                    <a href="{% url "admin:spodcat_comment_change" comment.id %}">
+                        {{ comment.created|date:"SHORT_DATE_FORMAT" }}: {{ comment.name }} ({{ comment.podcast_content }})
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {{ block.super }}
+</div>
+{% endblock sidebar %}
