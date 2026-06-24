@@ -1,13 +1,6 @@
-[submodule "src/spodcat/submodules/user-agents-v2"]
-	path = src/spodcat/submodules/user-agents-v2
+[submodule "spodcat/submodules/user-agents-v2"]
+	path = spodcat/submodules/user-agents-v2
 	url = https://github.com/opawg/user-agents-v2.git
-[submodule "src/spodcat/submodules/GoodBots"]
-	path = src/spodcat/submodules/GoodBots
+[submodule "spodcat/submodules/GoodBots"]
+	path = spodcat/submodules/GoodBots
 	url = https://github.com/AnTheMaker/GoodBots.git
-[submodule "GoodBots"]
-	path = GoodBots
-	url = https://github.com/AnTheMaker/GoodBots.git
-	branch = main
-[submodule "user-agents-v2"]
-	path = user-agents-v2
-	url = https://github.com/opawg/user-agents-v2.git
