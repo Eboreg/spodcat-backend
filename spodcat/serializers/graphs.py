@@ -9,8 +9,8 @@ class GraphDataPointSerializer(serializers.Serializer):
 
 # pylint: disable=abstract-method
 class GraphDatasetSerializer(serializers.Serializer):
-    label = serializers.CharField() # pyright: ignore[reportAssignmentType]
-    data = GraphDataPointSerializer(many=True) # pyright: ignore[reportAssignmentType]
+    label = serializers.CharField()  # pyright: ignore[reportAssignmentType]
+    data = GraphDataPointSerializer(many=True)  # pyright: ignore[reportAssignmentType]
 
 
 # pylint: disable=abstract-method

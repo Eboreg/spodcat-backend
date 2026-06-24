@@ -4,7 +4,7 @@ from .challenge import ChallengeSerializer
 from .comment import CommentSerializer
 from .episode import EpisodeSerializer, PartialEpisodeSerializer
 from .episode_song import EpisodeSongSerializer
-from .podcast import PodcastSerializer
+from .podcast import PodcastListSerializer, PodcastSerializer
 from .podcast_content import PodcastContentPolymorphicSerializer
 from .podcast_link import PodcastLinkSerializer
 from .post import PartialPostSerializer, PostSerializer
@@ -23,6 +23,7 @@ __all__ = [
     "PartialPostSerializer",
     "PodcastContentPolymorphicSerializer",
     "PodcastLinkSerializer",
+    "PodcastListSerializer",
     "PodcastSerializer",
     "PostSerializer",
     "SeasonSerializer",

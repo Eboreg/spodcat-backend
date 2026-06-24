@@ -6,4 +6,4 @@ from spodcat.models.season import Season
 class SeasonSerializer(serializers.ModelSerializer[Season]):
     class Meta:
         model = Season
-        fields = "__all__"
+        fields = ["id", "name", "number", "image_thumbnail"]

@@ -14,5 +14,5 @@ class SeasonFilter(filters.FilterSet):
 
 class SeasonViewSet(ListModelMixin, V2ViewMixin, GenericViewSet[Season]):
     filterset_class = SeasonFilter
-    queryset = Season.objects.all()
+    queryset = Season.objects.only("id", "name", "number", "image_thumbnail")
     serializer_class = SeasonSerializer
