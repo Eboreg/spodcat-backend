@@ -13,7 +13,7 @@ from .podcast_content import PartialPodcastContentSerializer
 class PodcastSerializer(serializers.ModelSerializer[Podcast]):
     contents = PolymorphicResourceRelatedField(
         PartialPodcastContentSerializer,
-        queryset=PodcastContent.objects.partial().listed(),
+        queryset=PodcastContent.objects.partial().published(),
         many=True,
     )
     description_html = serializers.SerializerMethodField()

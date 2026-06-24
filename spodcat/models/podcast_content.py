@@ -5,9 +5,7 @@ from urllib.parse import urljoin
 from django.contrib import admin
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import Case, Q, Value as V, When
-from django.db.models.functions import Now
-from django.utils import timezone
+from django.db.models import Case, Value as V, When
 from django.utils.translation import gettext_lazy as _
 from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
@@ -16,7 +14,7 @@ from slugify import slugify
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.settings import spodcat_settings
-from spodcat.utils import markdown_to_html, round_to_whole_hour
+from spodcat.utils import markdown_to_html
 
 
 if TYPE_CHECKING:
@@ -36,11 +34,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         related_name="contents",
         verbose_name=_("podcast"),
     )
-    published = models.DateTimeField(
-        default=round_to_whole_hour,
-        verbose_name=_("published"),
-        help_text=_("Will be rounded down to the nearest whole hour."),
-    )
+    published = models.DateTimeField(null=True, default=None, verbose_name=_("published"))
     slug = models.SlugField(max_length=100, verbose_name=_("slug"))
 
     objects: ClassVar["PodcastContentManager[Self]"] = PodcastContentQuerySet[Self].as_manager()
@@ -105,10 +99,10 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     @admin.display(
         boolean=True,
         description=_("visible"),
-        ordering=Case(When(Q(is_draft=False, published__lte=Now()), then=V(1)), default=V(0)),
+        ordering=Case(When(is_draft=False, then=V(1)), default=V(0)),
     )
     def is_visible(self) -> bool:
-        return self.published <= timezone.now() and not self.is_draft
+        return not self.is_draft
 
     def save(self, *args, **kwargs):
         if not self.slug:

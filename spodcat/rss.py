@@ -38,7 +38,7 @@ class PodcastRssData:
         self.episodes = (
             Episode.objects.filter(podcast=self.podcast)
             .select_related("podcast", "season")
-            .listed()
+            .published()
             .with_has_chapters()
         )
         self.last_published = self.episodes.aggregate(last_published=Max("published"))["last_published"]

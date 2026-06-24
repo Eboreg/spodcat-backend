@@ -25,7 +25,7 @@ class PostViewSet(AbstractPodcastContentViewSet[Post]):
             Prefetch(
                 "podcast",
                 queryset=Podcast.objects.prefetch_related(
-                    Prefetch("contents", queryset=PodcastContent.objects.listed().with_has_songs())
+                    Prefetch("contents", queryset=PodcastContent.objects.published().with_has_songs())
                 ),
             ),
         ],

@@ -4,8 +4,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from polymorphic.query import PolymorphicQuerySet
 
-from spodcat.utils import round_to_whole_hour
-
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
@@ -33,7 +31,7 @@ class PodcastQuerySet(QuerySet["Podcast"]):
         return self.alias(
             last_content=Max(
                 "contents__published",
-                filter=Q(contents__is_draft=False, contents__published__lte=round_to_whole_hour()),
+                filter=Q(contents__is_draft=False),
             ),
         ).order_by(field_name, "name")
 
@@ -60,10 +58,7 @@ class PodcastContentQuerySet(PolymorphicQuerySet["_PCT"]):
         )
 
     def published(self):
-        return self.filter(published__lte=round_to_whole_hour())
-
-    def listed(self):
-        return self.published().filter(is_draft=False)
+        return self.filter(published__isnull=False, is_draft=False)
 
     def with_has_chapters(self):
         from spodcat.models import EpisodeChapter, EpisodeSong

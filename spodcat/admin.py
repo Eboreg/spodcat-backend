@@ -64,7 +64,6 @@ from spodcat.models.podcast_content import PodcastContent
 from spodcat.models.season import Season
 from spodcat.utils import (
     delete_storage_file,
-    round_to_whole_hour,
     seconds_to_timestamp,
 )
 
@@ -257,7 +256,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         audio_request_log_qs = PodcastEpisodeAudioRequestLog.objects.filter(episode__podcast=obj, is_bot=False)
         home_page_views = PodcastRequestLog.objects.filter(podcast=obj).get_monthly_views()
         content_page_views = PodcastContentRequestLog.objects.filter(content__podcast=obj).get_monthly_views()
-        episode_qs = Episode.objects.filter(podcast=obj).listed()
+        episode_qs = Episode.objects.filter(podcast=obj).published()
         episode_dates = episode_qs.aggregate(first=Min("published"), last=Max("published"))
         episode_count = episode_qs.count()
         episode_durations = episode_qs.aggregate(
@@ -295,7 +294,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                         visitors=Count("remote_addr", distinct=True)
                     )
                 )["visitors"],
-                "published_episodes": Episode.objects.filter(podcast=obj).listed().count(),
+                "published_episodes": Episode.objects.filter(podcast=obj).published().count(),
                 "episode_durations": episode_durations,
                 "episode_interval": episode_interval,
                 "top_episodes_all_time": top_episodes_all_time,
@@ -362,8 +361,8 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin, Generic[_PCT]):
 
     def save_form(self, request, form, change):
         instance: _PCT = super().save_form(request, form, change)
-        if "published" in form.changed_data:
-            instance.published = round_to_whole_hour(form.cleaned_data["published"])
+        if "is_draft" in form.changed_data and not form.cleaned_data["is_draft"]:
+            instance.published = now()
         return instance
 
     @admin.display(description=_("views"), ordering="view_count")
@@ -396,7 +395,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     ]
     inlines = [EpisodeSongInline, EpisodeChapterInline, PodcastContentVideoInline]
     list_filter = ["is_draft", "published", "podcast"]
-    readonly_fields = ["audio_content_type", "audio_file_length", "duration", "id"]
+    readonly_fields = ["audio_content_type", "audio_file_length", "duration", "id", "published"]
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
     form = EpisodeAdminForm
 
@@ -603,6 +602,7 @@ class PostAdmin(BasePodcastContentAdmin[Post]):
         "description",
     ]
     inlines = [PodcastContentVideoInline]
+    readonly_fields = ["id", "published"]
 
     @admin.display(description="")
     def frontend_link(self, obj: Post):

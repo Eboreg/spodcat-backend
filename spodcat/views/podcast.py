@@ -22,7 +22,7 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
         "__all__": [
             "links",
             "categories",
-            Prefetch("contents", queryset=PodcastContent.objects.partial().listed().with_has_songs()),
+            Prefetch("contents", queryset=PodcastContent.objects.partial().published().with_has_songs()),
         ]
     }
     select_for_includes = {

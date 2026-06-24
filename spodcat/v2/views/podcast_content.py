@@ -45,8 +45,6 @@ class PodcastContentFilter(filters.FilterSet):
 class AbstractPodcastContentViewSet(LogRequestMixin, V2ViewMixin, GenericViewSet[_MT]):
     def filter_queryset(self, queryset):
         queryset = cast(PodcastContentQuerySet, super().filter_queryset(queryset))
-        if self.action == "list":
-            return queryset.listed()
         return queryset.published()
 
     def is_list_request(self):

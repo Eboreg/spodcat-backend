@@ -40,8 +40,6 @@ class AbstractPodcastContentViewSet(LogRequestMixin, PreloadIncludesMixin, views
 
     def filter_queryset(self, queryset):
         queryset = cast(PodcastContentQuerySet, super().filter_queryset(queryset))
-        if self.action == "list":
-            return queryset.listed()
         return queryset.published()
 
     @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
