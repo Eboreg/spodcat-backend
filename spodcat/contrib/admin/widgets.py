@@ -16,7 +16,7 @@ class MartorWidget(BaseMartorWidget):
                 # "plugins/css/bootstrap.min.css",
                 # "martor/css/martor-admin.min.css",
                 "plugins/css/ace.min.css",
-                "plugins/css/resizable.min.css",
+                # "plugins/css/resizable.min.css",
                 "spodcat/css/martor.css",
                 "spodcat/css/martor-extra.css",
             )
@@ -32,7 +32,7 @@ class MartorWidget(BaseMartorWidget):
             "plugins/js/ext-language_tools.js",
             "plugins/js/theme-github.js",
             "plugins/js/highlight.min.js",
-            "plugins/js/resizable.min.js",
+            # "plugins/js/resizable.min.js",
             "plugins/js/emojis.min.js",
             "martor/js/martor.bootstrap.min.js",
         )
