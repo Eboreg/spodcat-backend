@@ -54,7 +54,7 @@ class FontFaceSelect(Select):
 
 
 class PodcastAdminForm(ModelForm):
-    name_font_face = ModelChoiceField(queryset=FontFace.objects.all(), widget=FontFaceSelect)
+    name_font_face = ModelChoiceField(queryset=FontFace.objects.all(), widget=FontFaceSelect, required=False)
 
 
 class PodcastContentVideoAdminForm(ModelForm):
