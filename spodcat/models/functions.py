@@ -1,11 +1,14 @@
+from collections.abc import Callable
+
 from django.conf import settings
-from django.core.files.storage import default_storage, storages
+from django.core.files.storage import Storage, default_storage, storages
 from django.core.signals import setting_changed
+from django.db.models import Model
 from django.utils.module_loading import import_string
 
 
-__user_functions = {}
-__user_storages = {}
+__user_functions: dict[str, Callable[[Model, str], str] | None] = {}
+__user_storages: dict[str, Storage] = {}
 
 
 def __perform_import(val):
@@ -17,8 +20,6 @@ def __perform_import(val):
         return None
     if isinstance(val, str):
         return import_string(val)
-    if isinstance(val, (list, tuple)):
-        return [import_string(item) for item in val]
     return val
 
 
@@ -28,7 +29,7 @@ def __reload(*args, **kwargs):
         __user_functions.clear()
 
 
-def __get_storage(key: str):
+def __get_storage(key: str) -> Storage:
     if key not in __user_storages:
         filefield_conf = getattr(settings, "SPODCAT", {}).get("FILEFIELDS", {}).get(key, {})
         user_storage = filefield_conf.get("STORAGE", None)
@@ -38,7 +39,7 @@ def __get_storage(key: str):
     return __user_storages[key] or default_storage
 
 
-def __get_upload_to(key: str, *args, **kwargs):
+def __get_upload_to(key: str, *args, **kwargs) -> str | None:
     if key not in __user_functions:
         filefield_conf = getattr(settings, "SPODCAT", {}).get("FILEFIELDS", {}).get(key, {})
         user_function = filefield_conf.get("UPLOAD_TO", None)
@@ -139,6 +140,10 @@ def podcast_link_icon_upload_to(instance, filename):
     return (
         __get_upload_to("PODCAST_LINK_ICON", instance, filename) or f"{instance.podcast.slug}/images/links/{filename}"
     )
+
+
+def rss_xml_storage():
+    return __get_storage("RSS_XML")
 
 
 def season_image_storage():

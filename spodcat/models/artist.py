@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q
@@ -7,8 +9,16 @@ from django.utils.translation import gettext_lazy as _
 from spodcat.model_mixin import ModelMixin
 
 
+if TYPE_CHECKING:
+    from django.db.models.fields.related_descriptors import RelatedManager
+
+    from spodcat.models import EpisodeSong
+
+
 class Artist(ModelMixin, models.Model):
     name = models.CharField(max_length=100, verbose_name=_("name"))
+
+    songs: "RelatedManager[EpisodeSong]"
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["name"], name="podcasts__artist__name__uq")]

@@ -34,12 +34,10 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
     @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
     @action(methods=["post"], detail=True)
     def ping(self, request: Request, pk: str):
-        instance = self.get_object()
-
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRequestLog
 
-            self.log_request(request, PodcastRequestLog, podcast=instance)
+            self.log_request(request, PodcastRequestLog, podcast_id=pk)
 
         return Response()
 
@@ -56,12 +54,12 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRssRequestLog
 
-            self.log_request(request, PodcastRssRequestLog, podcast=data.podcast)
+            self.log_request(request, PodcastRssRequestLog, podcast_id=pk)
 
         return self.__rss_feedgen(request=request, data=data)
 
     def __rss_feedgen(self, request: Request, data: PodcastRssData):
-        rss = data.get_rss_string()
+        rss = data.fetch_static_or_generate()
 
         if request.query_params.get("html"):
             return TemplateResponse(
@@ -74,7 +72,7 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
             content=rss,
             content_type="application/rss+xml; charset=utf-8",
             headers={
-                "Content-Disposition": f'inline; filename="{data.podcast.slug}.rss.xml"',
+                "Content-Disposition": f'inline; filename="{data.podcast_slug}.rss.xml"',
                 "Access-Control-Allow-Origin": "*",
             },
         )
@@ -96,7 +94,7 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
             context=context,
             content_type="application/xml; charset=utf-8",
             headers={
-                "Content-Disposition": f'inline; filename="{data.podcast.slug}.rss.xml"',
+                "Content-Disposition": f'inline; filename="{data.podcast_slug}.rss.xml"',
                 "Access-Control-Allow-Origin": "*",
             },
         )

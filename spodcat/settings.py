@@ -58,6 +58,7 @@ DEFAULTS = {
     "BACKEND_HOST": "http://localhost:8000/",
     "BACKEND_ROOT": "",
     "FRONTEND_ROOT_URL": "http://localhost:4200/",
+    "STATIC_RSS_XML": True,
     "USE_INTERNAL_AUDIO_PROXY": False,
     "USE_INTERNAL_AUDIO_REDIRECT": False,
 }

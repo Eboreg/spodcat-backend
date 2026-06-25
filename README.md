@@ -20,6 +20,10 @@ Used (along with `BACKEND_ROOT`, see below) for generating RSS feed URLs which a
 
 Set this is your backend installation is not at the URL root. Default: empty string.
 
+### `STATIC_RSS_XML`
+
+Whether to serve RSS feeds from static files (regenerated every time a relevant object is created/modified/deleted in admin) or generate them on the fly for every request. Default: `True`.
+
 ### `USE_INTERNAL_AUDIO_REDIRECT`
 
 If `True`, the episode API responses and RSS feeds will use the internal view `spodcat:episode-audio` (resolving to something like `https://example.com/episodes/<episode-id>/audio/`) for episode URLs instead of linking directly to whatever `episode.audio_file.url` returns. This view will then save a `PodcastEpisodeAudioRequestLog` entry (provided the `spodcat.logs` app is installed) and return a 302 (temporary) redirect to `episode.audio_file.url`.
@@ -67,6 +71,9 @@ Here are the available values for `__FILEFIELD_CONSTANT__` and the model types a
 * `PODCAST_LINK_ICON`: Model is `PodcastLink`. Default: `f"{instance.podcast.slug}/images/links/{filename}"`
 * `SEASON_IMAGE`: Model is `Season`. Default: `f"{instance.podcast.slug}/images/season/{instance.number}/{filename}"`
 * `SEASON_IMAGE_THUMBNAIL`: Same as above
+
+Special case:
+* `RSS_XML`: Not connected to a model. This determines what storage engine will deal with static RSS XML (if `STATIC_RSS_XML` is enabled). Also, `UPLOAD_TO` will not be used.
 
 Footnote: The reason for adding the `STORAGE` settings was that I did my file hosting with Azure, but that didn't work with CSS fonts since I couldn't control the `Access-Control-Allow-Origin` header. So I did this:
 

@@ -162,6 +162,7 @@ SPODCAT = {
     "BACKEND_HOST": os.environ.get("BACKEND_HOST"),
     "FILEFIELDS": {
         "FONTFACE_FILE": {"STORAGE": "local"},
+        "RSS_XML": {"STORAGE": "local"},
     },
     "FRONTEND_ROOT_URL": os.environ.get("FRONTEND_ROOT_URL"),
     "USE_INTERNAL_AUDIO_REDIRECT": True,

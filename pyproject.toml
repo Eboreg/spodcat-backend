@@ -44,7 +44,7 @@ license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
 requires-python = ">=3.11"
-version = "2.2.0"
+version = "2.3.0"
 
 [project.urls]
 "Live example" = "https://podd.huseli.us"

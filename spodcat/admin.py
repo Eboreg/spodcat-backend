@@ -3,6 +3,7 @@ import os
 import random
 import statistics
 import tempfile
+from collections.abc import Iterable
 from datetime import date, timedelta
 from threading import Thread
 from typing import TYPE_CHECKING, Generic, TypeVar
@@ -45,7 +46,7 @@ from spodcat.admin_inlines import (
     PodcastLinkInline,
 )
 from spodcat.contrib.admin.filters import ArtistSongCountFilter
-from spodcat.contrib.admin.mixin import AdminMixin
+from spodcat.contrib.admin.mixin import AdminMixin, StaticRSSMixin
 from spodcat.forms import (
     EpisodeAdminForm,
     PodcastAdminForm,
@@ -77,7 +78,7 @@ _PCT = TypeVar("_PCT", bound=PodcastContent)
 
 
 @admin.register(Podcast)
-class PodcastAdmin(AdminMixin, admin.ModelAdmin):
+class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
     filter_horizontal = ["categories", "authors"]
     inlines = [PodcastLinkInline]
     readonly_fields = ("slug",)
@@ -161,6 +162,12 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
                 "stats_link",
             ]
         return ["name", "slug", "owner_link", "author_links", "frontend_link"]
+
+    def get_podcast_slugs_from_instance(self, obj: Podcast) -> list[str]:
+        return [obj.slug]
+
+    def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[Podcast, Podcast]) -> list[str]:
+        return list(queryset.values_list("slug", flat=True))
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).prefetch_related("authors").select_related("owner", "name_font_face")
@@ -325,7 +332,7 @@ class PodcastAdmin(AdminMixin, admin.ModelAdmin):
         )
 
 
-class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin, Generic[_PCT]):
+class BasePodcastContentAdmin(AdminMixin, StaticRSSMixin[_PCT], admin.ModelAdmin, Generic[_PCT]):
     save_on_top = True
     search_fields = ["name", "description", "slug"]
 
@@ -339,6 +346,12 @@ class BasePodcastContentAdmin(AdminMixin, admin.ModelAdmin, Generic[_PCT]):
         ):
             field.queryset = field.queryset.filter(Q(authors=request.user) | Q(owner=request.user)).distinct()
         return Form
+
+    def get_podcast_slugs_from_instance(self, obj: _PCT) -> list[str]:
+        return [obj.podcast.slug]
+
+    def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[_PCT, _PCT]) -> Iterable[str]:
+        return set(queryset.values_list("podcast__slug", flat=True))
 
     def get_queryset(self, request):
         qs = (
@@ -623,12 +636,18 @@ class PostAdmin(BasePodcastContentAdmin[Post]):
 
 
 @admin.register(Artist)
-class ArtistAdmin(AdminMixin, admin.ModelAdmin):
+class ArtistAdmin(AdminMixin, StaticRSSMixin[Artist], admin.ModelAdmin):
     inlines = [ArtistSongInline]
     list_display = ["name", "song_count"]
     list_filter = [ArtistSongCountFilter]
     save_on_top = True
     search_fields = ["name"]
+
+    def get_podcast_slugs_from_instance(self, obj: Artist) -> Iterable[str]:
+        return set(obj.songs.values_list("episode__podcast__slug", flat=True))
+
+    def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[Artist, Artist]) -> Iterable[str]:
+        return set(queryset.values_list("songs__episode__podcast__slug", flat=True))
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(song_count=models.Count("songs"))
@@ -639,7 +658,7 @@ class ArtistAdmin(AdminMixin, admin.ModelAdmin):
 
 
 @admin.register(EpisodeSong)
-class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
+class EpisodeSongAdmin(AdminMixin, StaticRSSMixin[EpisodeSong], admin.ModelAdmin):
     filter_horizontal = ["artists"]
     list_display = ["title", "artists_str", "episode_str", "start_time_str"]
     ordering = ["-episode__number", "start_time"]
@@ -662,6 +681,12 @@ class EpisodeSongAdmin(AdminMixin, admin.ModelAdmin):
                 Q(podcast__authors=request.user) | Q(podcast__owner=request.user)
             ).distinct()
         return Form
+
+    def get_podcast_slugs_from_instance(self, obj: EpisodeSong) -> Iterable[str]:
+        return [obj.episode.podcast.slug]
+
+    def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[EpisodeSong, EpisodeSong]) -> Iterable[str]:
+        return set(queryset.values_list("episode__podcast__slug", flat=True))
 
     def get_queryset(self, request):
         return (
@@ -770,9 +795,15 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Season)
-class SeasonAdmin(AdminMixin, admin.ModelAdmin):
+class SeasonAdmin(AdminMixin, StaticRSSMixin[Season], admin.ModelAdmin):
     list_display = ["podcast", "number", "name"]
     fields = ["podcast", "number", "name", "image"]
+
+    def get_podcast_slugs_from_instance(self, obj: Season) -> Iterable[str]:
+        return [obj.podcast.slug]
+
+    def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[Season, Season]) -> Iterable[str]:
+        return set(queryset.values_list("podcast__slug", flat=True))
 
     def save_form(self, request, form, change):
         instance: Season = super().save_form(request, form, change)

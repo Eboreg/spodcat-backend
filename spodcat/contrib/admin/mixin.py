@@ -1,6 +1,7 @@
-from typing import Any
+from collections.abc import Iterable
+from typing import Any, Generic, TypeVar
 
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from django.forms import TimeInput
 from django.urls import reverse
 from django.utils.html import format_html
@@ -11,6 +12,10 @@ from spodcat.contrib.admin.site import AdminSite
 from spodcat.contrib.admin.widgets import AdminMartorWidget
 from spodcat.model_fields import TimestampField
 from spodcat.model_mixin import ModelMixin
+from spodcat.settings import spodcat_settings
+
+
+_ModelT = TypeVar("_ModelT", bound=Model)
 
 
 class AdminMixin:
@@ -65,3 +70,34 @@ class AdminMixin:
             return obj.has_delete_permission(request)
 
         return self.has_change_permission(request, obj)
+
+
+class StaticRSSMixin(Generic[_ModelT]):
+    def delete_model(self, request, obj: _ModelT):
+        super().delete_model(request, obj)  # type: ignore
+        if slugs := self.get_podcast_slugs_from_instance(obj):
+            self.regenerate_static_rss(slugs)
+
+    def delete_queryset(self, request, queryset: QuerySet[_ModelT]):
+        super().delete_queryset(request, queryset)  # type: ignore
+        if slugs := self.get_podcast_slugs_from_queryset(queryset):
+            self.regenerate_static_rss(slugs)
+
+    def get_podcast_slugs_from_instance(self, obj: _ModelT) -> Iterable[str]:
+        return []
+
+    def get_podcast_slugs_from_queryset(self, queryset: QuerySet[_ModelT]) -> Iterable[str]:
+        return []
+
+    def regenerate_static_rss(self, podcast_slugs: Iterable[str]):
+        if spodcat_settings.STATIC_RSS_XML:
+            from spodcat.rss import PodcastRssData
+
+            for slug in podcast_slugs:
+                data = PodcastRssData(slug)
+                data.regenerate_static()
+
+    def save_model(self, request, obj: _ModelT, form, change):
+        super().save_model(request, obj, form, change)  # type: ignore
+        if slugs := self.get_podcast_slugs_from_instance(obj):
+            self.regenerate_static_rss(slugs)
