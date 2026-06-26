@@ -20,26 +20,32 @@ def get_lib_doc_excludes():
 REST_FRAMEWORK_DEFAULTS = {
     "EXCEPTION_HANDLER": "rest_framework_json_api.exceptions.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": [],
-    "DEFAULT_FILTER_BACKENDS": (
+    "DEFAULT_FILTER_BACKENDS": [
         "rest_framework_json_api.filters.QueryParameterValidationFilter",
         "rest_framework_json_api.filters.OrderingFilter",
         "rest_framework_json_api.django_filters.DjangoFilterBackend",
-    ),
+    ],
     "DEFAULT_METADATA_CLASS": "rest_framework_json_api.metadata.JSONAPIMetadata",
     "DEFAULT_PAGINATION_CLASS": "drf_spectacular_jsonapi.schemas.pagination.JsonApiPageNumberPagination",
-    "DEFAULT_PARSER_CLASSES": (
+    "DEFAULT_PARSER_CLASSES": [
         "rest_framework_json_api.parsers.JSONParser",
         "rest_framework.parsers.FormParser",
         "rest_framework.parsers.MultiPartParser",
-    ),
-    "DEFAULT_RENDERER_CLASSES": (
-        "rest_framework_json_api.renderers.JSONRenderer",
-        "rest_framework_json_api.renderers.BrowsableAPIRenderer",
-    ),
+    ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular_jsonapi.schemas.openapi.JsonApiAutoSchema",
     "PAGE_SIZE": None,
     "SEARCH_PARAM": "filter[search]",
 }
+
+if settings.DEBUG:
+    REST_FRAMEWORK_DEFAULTS["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework_json_api.renderers.JSONRenderer",
+        "rest_framework_json_api.renderers.BrowsableAPIRenderer",
+    ]
+else:
+    REST_FRAMEWORK_DEFAULTS["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework_json_api.renderers.JSONRenderer",
+    ]
 
 DJANGO_DEFAULTS = {
     "JSON_API_FORMAT_FIELD_NAMES": "dasherize",
