@@ -173,7 +173,6 @@ class Episode(PodcastContent):
 
         return name
 
-    # pylint: disable=no-member
     def get_audio_file_url(self) -> str | None:
         if spodcat_settings.USE_INTERNAL_AUDIO_PROXY or spodcat_settings.USE_INTERNAL_AUDIO_REDIRECT:
             return spodcat_settings.get_absolute_backend_url("spodcat:episode-audio", kwargs={"pk": self.pk})
@@ -181,29 +180,32 @@ class Episode(PodcastContent):
             return self.audio_file.url
         return None
 
-    # pylint: disable=no-member,consider-using-with
-    def get_dbfs_and_duration(self, temp_file: tempfile._TemporaryFileWrapper | None = None):
-        if temp_file is None:
+    def get_dbfs_and_duration(self, filename: str | None = None, delete_file: bool = False):
+        if filename is None:
             assert self.audio_file.name
             _, extension = os.path.splitext(os.path.basename(self.audio_file.name))
-            temp_file = tempfile.NamedTemporaryFile(suffix=extension)
-            temp_file.write(self.audio_file.read())
+            with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp_file:
+                temp_file.write(self.audio_file.read())
+            delete_file = True
+            filename = temp_file.name
 
-        info = mediainfo(temp_file.name)
-        self.duration_seconds = float(info["duration"])
-        self.save(update_fields=["duration_seconds"])
+        info = mediainfo(filename)
+        duration_seconds = float(info["duration"])
 
-        sample_rate = int(info["sample_rate"])
+        if duration_seconds != self.duration_seconds:
+            self.duration_seconds = duration_seconds
+            self.save(update_fields=["duration_seconds"])
+
         self.dbfs_array = get_audio_file_dbfs_array_2(
-            temp_file.name,
-            duration_seconds=self.duration_seconds,
-            sample_rate=sample_rate,
+            filename,
+            duration_seconds=duration_seconds,
+            sample_rate=int(info["sample_rate"]),
         )
         self.save(update_fields=["dbfs_array"])
 
-        temp_file.close()
+        if delete_file:
+            os.unlink(filename)
 
-    # pylint: disable=no-member
     def handle_uploaded_image(self, save: bool = False):
         delete_storage_file(self.image_thumbnail)
         if self.image:
@@ -277,7 +279,6 @@ class Episode(PodcastContent):
                 if content_type:
                     suffix = mimetypes.guess_extension(content_type) or ("." + content_type.split("/")[-1])
                 delete_storage_file(self.image)
-                # pylint: disable=no-member
                 self.image.save(
                     name=f"{self.generate_filename_stem()}{suffix}",
                     content=ImageFile(file=BytesIO(response.content)),
@@ -290,25 +291,27 @@ class Episode(PodcastContent):
             if link and "href" in link:
                 logger.info("Fetching audio file: %s", link["href"])
                 response = requests.get(link["href"], timeout=60)
+
                 if response.ok:
                     delete_storage_file(self.audio_file)
                     self.audio_content_type = response.headers.get("Content-Type", "")
                     prefix, suffix = self.generate_audio_filename()
                     filename = f"{prefix}{suffix}"
 
-                    with tempfile.NamedTemporaryFile(suffix=suffix) as file:
+                    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
                         logger.info("Saving audio file: %s", filename)
-                        file.write(response.content)
-                        # pylint: disable=no-member
-                        self.audio_file.save(name=filename, content=File(file=file), save=False)
-                        info = mediainfo(file.name)
-                        self.duration_seconds = float(info["duration"])
-                        self.audio_file_length = len(response.content)
-                        logger.info("Updating dBFS array for audio file")
-                        self.dbfs_array = get_audio_file_dbfs_array_2(
-                            file.name,
-                            duration_seconds=self.duration_seconds,
-                            sample_rate=info["sample_rate"],
-                        )
+                        temp_file.write(response.content)
+                        self.audio_file.save(name=filename, content=File(file=temp_file), save=False)
+
+                    info = mediainfo(temp_file.name)
+                    self.duration_seconds = float(info["duration"])
+                    self.audio_file_length = len(response.content)
+                    logger.info("Updating dBFS array for audio file")
+                    self.dbfs_array = get_audio_file_dbfs_array_2(
+                        temp_file.name,
+                        duration_seconds=self.duration_seconds,
+                        sample_rate=info["sample_rate"],
+                    )
+                    os.unlink(temp_file.name)
 
         self.save()

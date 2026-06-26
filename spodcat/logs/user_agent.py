@@ -37,7 +37,6 @@ class UserAgentData:
     device_category: DeviceCategory | None = None
 
     @classmethod
-    # pylint: disable=redefined-builtin
     def from_dicts(
         cls,
         user_agent: str,

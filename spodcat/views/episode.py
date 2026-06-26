@@ -45,7 +45,7 @@ class EpisodeFilter(AbstractPodcastContentFilter):
         return queryset.filter(*qs).distinct()
 
 
-class EpisodeViewSet(AbstractPodcastContentViewSet[Episode]):
+class EpisodeViewSet(AbstractPodcastContentViewSet):
     filterset_class = EpisodeFilter
     prefetch_for_includes = {
         "podcast.contents": [
@@ -140,7 +140,6 @@ class EpisodeViewSet(AbstractPodcastContentViewSet[Episode]):
             "chapters": sorted(chapters + songs, key=lambda c: c["startTime"]),
         }
 
-        # pylint: disable=redundant-content-type-for-json-response
         return JsonResponse(
             data=result,
             content_type="application/json+chapters",

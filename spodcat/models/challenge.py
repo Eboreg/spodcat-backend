@@ -43,7 +43,6 @@ class Challenge(ModelMixin, models.Model):
         verbose_name_plural = _("challenges")
 
     @property
-    # pylint: disable=no-member,invalid-sequence-index
     def challenge_string(self):
         with translation.override(self.podcast.language or settings.LANGUAGE_CODE):
             return _("%(term1)s plus %(term2)s") % {

@@ -18,7 +18,7 @@ class PostFilter(AbstractPodcastContentFilter):
         return queryset.filter(*qs).distinct()
 
 
-class PostViewSet(AbstractPodcastContentViewSet[Post]):
+class PostViewSet(AbstractPodcastContentViewSet):
     filterset_class = PostFilter
     prefetch_for_includes = {
         "podcast.contents": [

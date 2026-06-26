@@ -17,7 +17,7 @@ from spodcat.rss import PodcastRssData
 from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
 
 
-class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet[Podcast]):
+class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet):
     prefetch_for_includes = {
         "__all__": [
             "links",
@@ -63,7 +63,7 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
 
         if request.query_params.get("html"):
             return TemplateResponse(
-                request=request._request,  # pylint: disable=protected-access
+                request=request._request,
                 template="spodcat/rss.html",
                 context={"rss": rss.decode() if isinstance(rss, bytes) else rss},
             )
@@ -77,19 +77,18 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
             },
         )
 
-    # pylint: disable=unused-private-member
     def __rss_template(self, request: Request, data: PodcastRssData):
         context = data.get_template_context()
 
         if request.query_params.get("html"):
             return TemplateResponse(
-                request=request._request,  # pylint: disable=protected-access
+                request=request._request,
                 template="spodcat/rss.html",
                 context={"rss": get_template("spodcat/rss.xml").render(context=context)},
             )
 
         return TemplateResponse(
-            request=request._request,  # pylint: disable=protected-access
+            request=request._request,
             template="spodcat/rss.xml",
             context=context,
             content_type="application/xml; charset=utf-8",

@@ -223,7 +223,6 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
             ),
         )
 
-    # pylint: disable=useless-parent-delegation
     def values(self, *fields, **expressions) -> "PodcastEpisodeAudioRequestLogQuerySet[dict[str, Any]]":
         return super().values(*fields, **expressions)  # type: ignore
 

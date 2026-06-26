@@ -1,4 +1,4 @@
-from typing import TypeVar, cast
+from typing import cast
 from uuid import UUID
 
 from django.apps import apps
@@ -12,12 +12,8 @@ from rest_framework.response import Response
 from rest_framework_json_api import views
 
 from spodcat.filters import IdListFilter
-from spodcat.models import PodcastContent
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
-
-
-_MT_co = TypeVar("_MT_co", bound=PodcastContent, covariant=True)
 
 
 class AbstractPodcastContentFilter(IdListFilter):
@@ -32,7 +28,7 @@ class AbstractPodcastContentFilter(IdListFilter):
             return queryset.filter(slug=value)
 
 
-class AbstractPodcastContentViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet[_MT_co]):
+class AbstractPodcastContentViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet):
     select_for_includes = {
         "season": ["season__podcast"],
         "__all__": ["podcast"],

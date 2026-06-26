@@ -6,7 +6,7 @@ from .episode import EpisodeSerializer, PartialEpisodeSerializer
 from .post import PartialPostSerializer, PostSerializer
 
 
-class PodcastContentSerializer(serializers.PolymorphicModelSerializer[PodcastContent]):
+class PodcastContentSerializer(serializers.PolymorphicModelSerializer):
     included_serializers = {
         "podcast": "spodcat.serializers.PodcastSerializer",
     }

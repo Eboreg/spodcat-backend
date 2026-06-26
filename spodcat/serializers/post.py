@@ -1,11 +1,11 @@
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import ResourceRelatedField
 
-from spodcat.models import Comment, Episode, Post
+from spodcat.models import Comment, Post
 from spodcat.models.video import Video
 
 
-class PostSerializer(serializers.ModelSerializer[Post]):
+class PostSerializer(serializers.ModelSerializer):
     comments = ResourceRelatedField(queryset=Comment.objects, many=True)
     description_html = serializers.SerializerMethodField()
     podcast_name = serializers.CharField(source="podcast.name")
@@ -21,7 +21,7 @@ class PostSerializer(serializers.ModelSerializer[Post]):
         exclude = ["polymorphic_ctype", "is_draft"]
         model = Post
 
-    def get_description_html(self, obj: Episode) -> str:
+    def get_description_html(self, obj: Post) -> str:
         return obj.description_html
 
 

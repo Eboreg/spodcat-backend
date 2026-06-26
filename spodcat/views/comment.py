@@ -5,6 +5,6 @@ from spodcat import serializers
 from spodcat.models import Comment
 
 
-class CommentViewSet(CreateModelMixin, views.ReadOnlyModelViewSet[Comment]):
+class CommentViewSet(CreateModelMixin, views.ReadOnlyModelViewSet):
     serializer_class = serializers.CommentSerializer
     queryset = Comment.objects.filter(is_approved=True).select_related("podcast_content")

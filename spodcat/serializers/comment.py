@@ -87,7 +87,7 @@ class CommentSerializerMixin:
         return strip_tags(value)
 
 
-class CommentSerializer(CommentSerializerMixin, serializers.ModelSerializer[Comment]):
+class CommentSerializer(CommentSerializerMixin, serializers.ModelSerializer):
     challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects, write_only=True)
     challenge_answer = serializers.IntegerField(write_only=True)
     is_approved = serializers.BooleanField(read_only=True)

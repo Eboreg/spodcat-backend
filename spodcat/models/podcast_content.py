@@ -54,7 +54,6 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         return markdown_to_html(self.description)
 
     @property
-    # pylint: disable=no-member
     def frontend_url(self) -> str:
         instance_class = self.get_real_instance_class() or self.__class__
 
@@ -88,7 +87,6 @@ class PodcastContent(ModelMixin, PolymorphicModel):
 
         return slug
 
-    # pylint: disable=no-member
     def has_change_permission(self, request):
         return isinstance(request.user, AbstractUser) and (
             request.user.is_superuser

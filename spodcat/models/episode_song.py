@@ -38,7 +38,6 @@ class EpisodeSong(AbstractEpisodeChapter):
         return self.title
 
     @property
-    # pylint: disable=no-member
     def formatted_title(self):
         artists = "/".join(a.name for a in self.artists.all())
         result = f"{artists} - " if artists else ""
@@ -47,7 +46,6 @@ class EpisodeSong(AbstractEpisodeChapter):
             result += f" ({self.comment})"
         return result
 
-    # pylint: disable=no-member
     def has_change_permission(self, request):
         return isinstance(request.user, AbstractUser) and (
             request.user.is_superuser

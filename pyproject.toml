@@ -1,6 +1,6 @@
 [build-system]
-requires = ["uv_build>=0.9.7"]
 build-backend = "uv_build"
+requires = ["uv_build>=0.9.7"]
 
 [project]
 authors = [
@@ -44,7 +44,7 @@ license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
 requires-python = ">=3.11"
-version = "2.3.3"
+version = "2.4.0"
 
 [project.urls]
 "Live example" = "https://podd.huseli.us"
@@ -59,13 +59,9 @@ dev = [
     "django-storages[azure]",
     "django-stubs",
     "djangorestframework-stubs",
-    "flake8",
     "ipdb",
     "ipython",
-    "isort",
     "psycopg[binary]",
-    "pylint-django",
-    "pylint",
     "python-dotenv",
     "ruff>=0.15.10",
     "ty>=0.0.31",
@@ -83,58 +79,6 @@ module-root = ""
 source-exclude = ["test_env/**"]
 wheel-exclude = ["test_env/**"]
 
-[tool.pylint.main]
-disable = [
-    "broad-exception-caught",
-    "import-outside-toplevel",
-    "invalid-name",
-    "invalid-str-returned",
-    "missing-class-docstring",
-    "missing-function-docstring",
-    "missing-module-docstring",
-    "too-few-public-methods",
-    "too-many-ancestors",
-    "too-many-arguments",
-    "too-many-branches",
-    "too-many-instance-attributes",
-    "too-many-locals",
-    "too-many-positional-arguments",
-    "too-many-return-statements",
-    "too-many-statements",
-    "unused-argument",
-]
-ignore = [".venv", "node_modules"]
-ignore-paths = [".*migrations.*"]
-ignore-patterns = ["^\\.#", ".*\\.pyi", "apps\\.py"]
-max-line-length = 119
-
-[tool.isort]
-combine_as_imports = true
-default_section = "THIRDPARTY"
-include_trailing_comma = true
-line_length = 79
-lines_after_imports = 2
-multi_line_output = 3
-sections = [
-    "FUTURE",
-    "STDLIB",
-    "THIRDPARTY",
-    "FIRSTPARTY",
-    "LOCALFOLDER",
-]
-skip = [".venv", "node_modules", "build"]
-
-[tool.mypy]
-check_untyped_defs = true
-files = "."
-follow_imports = "skip"
-ignore_missing_imports = true
-show_error_codes = true
-
-[[tool.mypy.overrides]]
-ignore_errors = true
-module = ["*.migrations.*"]
-
 [tool.pyright]
 exclude = ["**/__pycache__", "node_modules", "build", "**/migrations", "**/.*", ".venv"]
 ignore = [".venv"]
@@ -143,19 +87,23 @@ stubPath = "typings"
 typeCheckingMode = "basic"
 
 [tool.ruff]
-line-length = 120
-target-version = "py312"
 exclude = [".venv", ".git", ".mypy_cache", "__pycache__", "build", "node_modules", "scratch.py"]
+line-length = 120
 show-fixes = true
+target-version = "py312"
+
+[tool.ruff.format]
+docstring-code-line-length = 80
+quote-style = "double"
 
 [tool.ruff.lint]
+ignore = ["E722", "B027", "B009"]
 select = ["E", "F", "W", "B", "I"]
-ignore = ["E722", "B027"]
 
 [tool.ruff.lint.isort]
-lines-after-imports = 2
 combine-as-imports = true
 default-section = "third-party"
+lines-after-imports = 2
 section-order = [
     "future",
     "standard-library",
@@ -163,7 +111,3 @@ section-order = [
     "first-party",
     "local-folder",
 ]
-
-[tool.ruff.format]
-quote-style = "double"
-docstring-code-line-length = 80

@@ -223,7 +223,6 @@ class Podcast(ModelMixin, models.Model):
     def __str__(self):
         return self.name
 
-    # pylint: disable=no-member
     def handle_uploaded_banner(self, save: bool = False):
         downscale_image(self.banner, max_width=960, max_height=320, save=save)
         if self.banner:
@@ -235,7 +234,6 @@ class Podcast(ModelMixin, models.Model):
         if save:
             self.save()
 
-    # pylint: disable=no-member
     def handle_uploaded_cover(self, save: bool = False):
         delete_storage_file(self.cover_thumbnail)
         if self.cover:
@@ -280,7 +278,6 @@ class Podcast(ModelMixin, models.Model):
                 if content_type:
                     suffix = mimetypes.guess_extension(content_type) or ("." + content_type.split("/")[-1])
                 delete_storage_file(self.cover)
-                # pylint: disable=no-member
                 self.cover.save(
                     name=f"cover{suffix}",
                     content=ImageFile(file=BytesIO(response.content)),

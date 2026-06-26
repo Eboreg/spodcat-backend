@@ -30,7 +30,7 @@ from django.db.models import (
     Sum,
 )
 from django.db.models.functions import Cast
-from django.forms import ClearableFileInput, ModelChoiceField
+from django.forms import ClearableFileInput, ModelChoiceField, ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -89,7 +89,7 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
     def author_links(self, obj: Podcast):
         return mark_safe("<br>".join(self.get_change_link(u) for u in obj.authors.all()))
 
-    def change_slug_view(self, request: HttpRequest, object_id):
+    def change_slug_view(self, request: HttpRequest, object_id: str):
         obj = self.get_object(request, unquote(object_id))
 
         if not self.has_change_permission(request, obj):
@@ -128,7 +128,7 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
     def frontend_link(self, obj: Podcast):
         return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
-    def get_fieldsets(self, request, obj=None) -> "_FieldsetSpec":
+    def get_fieldsets(self, request: HttpRequest, obj: Podcast | None = None) -> "_FieldsetSpec":
         fieldsets: "_FieldsetSpec" = [
             (None, {"fields": [("name", "slug"), ("tagline", "language"), "description", "episode_rss_suffix"]}),
             (
@@ -149,7 +149,7 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
 
         return fieldsets
 
-    def get_list_display(self, request):
+    def get_list_display(self, request: HttpRequest):
         if apps.is_installed("spodcat.logs"):
             return [
                 "name",
@@ -169,7 +169,7 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
     def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[Podcast, Podcast]) -> list[str]:
         return list(queryset.values_list("slug", flat=True))
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest):
         qs = super().get_queryset(request).prefetch_related("authors").select_related("owner", "name_font_face")
 
         if apps.is_installed("spodcat.logs"):
@@ -201,7 +201,7 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
         return self.get_change_link(obj.owner)
 
     @admin.display(description=_("plays"))
-    def play_count(self, obj):
+    def play_count(self, obj: Podcast):
         from spodcat.logs.models import PodcastEpisodeAudioRequestLog
 
         play_count = (
@@ -220,7 +220,7 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
             is_bot__exact=0,
         )
 
-    def save_form(self, request, form, change):
+    def save_form(self, request: HttpRequest, form: ModelForm, change: bool):
         instance: Podcast = super().save_form(request, form, change)
 
         if not change:
@@ -252,7 +252,7 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
         url = reverse(f"admin:{meta.app_label}_{meta.model_name}_stats", args=(obj.pk,))
         return mark_safe(f'<a href="{url}">' + _("Statistics") + "</a>")
 
-    def stats_view(self, request: HttpRequest, object_id):
+    def stats_view(self, request: HttpRequest, object_id: str):
         from spodcat.logs.models import (
             PodcastContentRequestLog,
             PodcastEpisodeAudioRequestLog,
@@ -319,15 +319,17 @@ class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
         )
 
     @admin.display(description=_("views"), ordering="view_count")
-    def view_count(self, obj):
+    def view_count(self, obj: Podcast):
         from spodcat.logs.models import PodcastRequestLog
 
-        if not obj.view_count:
+        view_count: int = getattr(obj, "view_count", 0)
+
+        if not view_count:
             return 0
 
         return self.get_changelist_link(
             model=PodcastRequestLog,
-            text=obj.view_count,
+            text=view_count,
             podcast__slug__exact=obj.pk,
         )
 
@@ -336,7 +338,7 @@ class BasePodcastContentAdmin(AdminMixin, StaticRSSMixin[_PCT], admin.ModelAdmin
     save_on_top = True
     search_fields = ["name", "description", "slug"]
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
+    def get_form(self, request: HttpRequest, obj: _PCT | None = None, change: bool = False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("podcast")
         if (
@@ -353,7 +355,7 @@ class BasePodcastContentAdmin(AdminMixin, StaticRSSMixin[_PCT], admin.ModelAdmin
     def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[_PCT, _PCT]) -> Iterable[str]:
         return set(queryset.values_list("podcast__slug", flat=True))
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest):
         qs = (
             super()
             .get_queryset(request)
@@ -366,28 +368,30 @@ class BasePodcastContentAdmin(AdminMixin, StaticRSSMixin[_PCT], admin.ModelAdmin
 
         return qs
 
-    def get_readonly_fields(self, request: HttpRequest, obj=None):
+    def get_readonly_fields(self, request: HttpRequest, obj: _PCT | None = None):
         fields = super().get_readonly_fields(request, obj)
         if obj is None:
             return ["slug", *fields]
         return fields
 
-    def save_form(self, request, form, change):
+    def save_form(self, request: HttpRequest, form: ModelForm, change: bool):
         instance: _PCT = super().save_form(request, form, change)
         if "is_draft" in form.changed_data and not form.cleaned_data["is_draft"]:
             instance.published = now()
         return instance
 
     @admin.display(description=_("views"), ordering="view_count")
-    def view_count(self, obj):
+    def view_count(self, obj: _PCT):
         from spodcat.logs.models import PodcastContentRequestLog
 
-        if not obj.view_count:
+        view_count: int = getattr(obj, "view_count", 0)
+
+        if not view_count:
             return 0
 
         return self.get_changelist_link(
             model=PodcastContentRequestLog,
-            text=obj.view_count,
+            text=view_count,
             content__id__exact=obj.pk,
         )
 
@@ -419,7 +423,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     def frontend_link(self, obj: Episode):
         return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
-    def get_list_display(self, request):
+    def get_list_display(self, request: HttpRequest):
         if apps.is_installed("spodcat.logs"):
             return [
                 "name",
@@ -443,7 +447,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
             "frontend_link",
         ]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest):
         qs = super().get_queryset(request).select_related("season")
 
         if apps.is_installed("spodcat.logs"):
@@ -472,11 +476,11 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
 
         return urls + super().get_urls()
 
-    def handle_audio_file_async(self, instance: Episode, temp_file: tempfile._TemporaryFileWrapper):
-        logger.info("handle_audio_file_async starting for %s, temp_file=%s", instance, temp_file)
+    def handle_audio_file_async(self, instance: Episode, filename: str):
+        logger.info("handle_audio_file_async starting for %s, filename=%s", instance, filename)
 
         try:
-            instance.get_dbfs_and_duration(temp_file=temp_file)
+            instance.get_dbfs_and_duration(filename=filename, delete_file=True)
             logger.info("handle_audio_file_async finished for %s", instance)
         except Exception as e:
             logger.error("handle_audio_file_async error", exc_info=e)
@@ -486,15 +490,17 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         return obj.number_string
 
     @admin.display(description=_("plays"), ordering=F("play_count").asc(nulls_first=True))
-    def play_count(self, obj):
+    def play_count(self, obj: Episode):
         from spodcat.logs.models import PodcastEpisodeAudioRequestLog
 
-        if obj.play_count is None:
+        play_count: float | None = getattr(obj, "play_count")
+
+        if play_count is None:
             return 0.0
 
         return self.get_changelist_link(
             model=PodcastEpisodeAudioRequestLog,
-            text=round(obj.play_count, 2),
+            text=round(play_count, 2),
             episode__podcastcontent_ptr__exact=obj.pk,
             is_bot__exact=0,
         )
@@ -503,7 +509,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     def podcast_link(self, obj: Episode):
         return self.get_change_link(obj.podcast)
 
-    def save_form(self, request, form, change):
+    def save_form(self, request: HttpRequest, form: ModelForm, change: bool):
         instance: Episode = super().save_form(request, form, change)
 
         if "image" in form.changed_data:
@@ -527,27 +533,30 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         logger.info("save_form finished for %s with audio_file=%s", instance, instance.audio_file)
         return instance
 
-    def save_model(self, request, obj: Episode, form, change):
+    def save_model(self, request, obj: Episode, form: ModelForm, change: bool):
         super().save_model(request, obj, form, change)
 
         if "audio_file" in form.changed_data and form.cleaned_data["audio_file"]:
             audio_file: UploadedFile = form.cleaned_data["audio_file"]
             assert audio_file.name
             _, extension = os.path.splitext(os.path.basename(audio_file.name))
+            audio_file.seek(0)
 
             # Cannot send the UploadedFile itself, because it may be closed
             # once the thread runs.
-            # pylint: disable=consider-using-with
-            temp_file = tempfile.NamedTemporaryFile(suffix=extension)
-            audio_file.seek(0)
-            temp_file.write(audio_file.read())
-            temp_file.seek(0)
+            with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp_file:
+                temp_file.write(audio_file.read())
 
-            logger.info("save_model start thread for %s with audio_file=%s, temp_file=%s", obj, audio_file, temp_file)
+            logger.info(
+                "save_model start thread for %s with audio_file=%s, filename=%s",
+                obj,
+                audio_file,
+                temp_file.name,
+            )
 
             Thread(
                 target=self.handle_audio_file_async,
-                kwargs={"instance": obj, "temp_file": temp_file},
+                kwargs={"instance": obj, "filename": temp_file.name},
             ).start()
 
     @admin.display(description="")
@@ -556,7 +565,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         url = reverse(f"admin:{meta.app_label}_{meta.model_name}_stats", args=(obj.pk,))
         return mark_safe(f'<a href="{url}">' + _("Statistics") + "</a>")
 
-    def stats_view(self, request: HttpRequest, object_id):
+    def stats_view(self, request: HttpRequest, object_id: str):
         from spodcat.logs.models import (
             PodcastContentRequestLog,
             PodcastEpisodeAudioRequestLog,
@@ -621,7 +630,7 @@ class PostAdmin(BasePodcastContentAdmin[Post]):
     def frontend_link(self, obj: Post):
         return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
-    def get_list_display(self, request):
+    def get_list_display(self, request: HttpRequest):
         if apps.is_installed("spodcat.logs"):
             return [
                 "name",
@@ -649,7 +658,7 @@ class ArtistAdmin(AdminMixin, StaticRSSMixin[Artist], admin.ModelAdmin):
     def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[Artist, Artist]) -> Iterable[str]:
         return set(queryset.values_list("songs__episode__podcast__slug", flat=True))
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest):
         return super().get_queryset(request).annotate(song_count=models.Count("songs"))
 
     @admin.display(description=_("songs"), ordering="song_count")
@@ -673,7 +682,7 @@ class EpisodeSongAdmin(AdminMixin, StaticRSSMixin[EpisodeSong], admin.ModelAdmin
     def episode_str(self, obj: EpisodeSong):
         return self.get_change_link(obj.episode)
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
+    def get_form(self, request: HttpRequest, obj: EpisodeSong | None = None, change: bool = False, **kwargs):
         Form = super().get_form(request, obj, change, **kwargs)
         field = Form.base_fields.get("episode")
         if isinstance(field, ModelChoiceField) and field.queryset is not None:
@@ -688,7 +697,7 @@ class EpisodeSongAdmin(AdminMixin, StaticRSSMixin[EpisodeSong], admin.ModelAdmin
     def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[EpisodeSong, EpisodeSong]) -> Iterable[str]:
         return set(queryset.values_list("episode__podcast__slug", flat=True))
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest):
         return (
             super()
             .get_queryset(request)
@@ -702,7 +711,7 @@ class EpisodeSongAdmin(AdminMixin, StaticRSSMixin[EpisodeSong], admin.ModelAdmin
 
 
 @admin.action(description=_("Approve comments"))
-def approve_comments(modeladmin, request, queryset):
+def approve_comments(modeladmin: "CommentAdmin", request: HttpRequest, queryset: models.QuerySet[Comment]):
     queryset.update(is_approved=True)
 
 
@@ -721,7 +730,7 @@ class CommentAdmin(AdminMixin, admin.ModelAdmin):
     def frontend_link(self, obj: Comment):
         return mark_safe(f'<a href="{obj.podcast_content.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest):
         return (
             super()
             .get_queryset(request)
@@ -737,7 +746,7 @@ class CommentAdmin(AdminMixin, admin.ModelAdmin):
 
 
 class FontFileWidget(ClearableFileInput):
-    def build_attrs(self, base_attrs, extra_attrs=None):
+    def build_attrs(self, base_attrs: dict, extra_attrs: dict | None = None):
         return {
             **super().build_attrs(base_attrs, extra_attrs),
             "accept": ".woff, .woff2, .ttf, .otf, .eot, .svg, .svgz, .otc, .ttc, font/*",
@@ -763,17 +772,17 @@ class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
         "Homosexualitet",
     ]
 
-    def change_view(self, request, object_id, form_url="", extra_context: dict | None = None):
+    def change_view(self, request: HttpRequest, object_id, form_url="", extra_context: dict | None = None):
         extra_context = extra_context or {}
         extra_context["sample_text"] = random.choice(self.sample_texts)
         return super().change_view(request, object_id, form_url, extra_context)
 
-    def get_fields(self, request, obj=None):
+    def get_fields(self, request: HttpRequest, obj: FontFace | None = None):
         if obj:
             return self.fields
         return self.add_fields
 
-    def save_form(self, request, form, change):
+    def save_form(self, request: HttpRequest, form: ModelForm, change: bool):
         instance: FontFace = super().save_form(request, form, change)
 
         if not change or form.has_changed():
@@ -805,7 +814,7 @@ class SeasonAdmin(AdminMixin, StaticRSSMixin[Season], admin.ModelAdmin):
     def get_podcast_slugs_from_queryset(self, queryset: models.QuerySet[Season, Season]) -> Iterable[str]:
         return set(queryset.values_list("podcast__slug", flat=True))
 
-    def save_form(self, request, form, change):
+    def save_form(self, request: HttpRequest, form: ModelForm, change: bool):
         instance: Season = super().save_form(request, form, change)
 
         if "image" in form.changed_data:

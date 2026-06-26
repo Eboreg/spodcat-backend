@@ -64,7 +64,6 @@ class Season(ModelMixin, models.Model):
             return f"{self.number}: {self.name}"
         return str(self.number)
 
-    # pylint: disable=no-member
     def handle_uploaded_image(self, save: bool = False):
         delete_storage_file(self.image_thumbnail)
         if self.image:

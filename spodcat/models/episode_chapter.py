@@ -43,7 +43,6 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
     def formatted_title(self):
         return self.title
 
-    # pylint: disable=no-member
     def to_dict(self):
         # https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/examples/chapters/jsonChapters.md
         return cast(

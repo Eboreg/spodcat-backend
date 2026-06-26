@@ -140,7 +140,7 @@ class PodcastRssData:
 
             fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
 
-            if episode.has_chapters:  # type: ignore
+            if episode.has_chapters:  # pyright: ignore[reportAttributeAccessIssue]
                 fe.podcast2.podcast_chapters(episode.chapters_url)
 
             fe.title(episode.name)

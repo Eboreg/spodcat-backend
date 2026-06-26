@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from django.db.models import Model, QuerySet
 from django.forms import TimeInput
@@ -16,6 +16,15 @@ from spodcat.settings import spodcat_settings
 
 
 _ModelT = TypeVar("_ModelT", bound=Model)
+
+
+if TYPE_CHECKING:
+    from django.contrib.admin import ModelAdmin
+
+    class MixinBase(ModelAdmin, Generic[_ModelT]): ...
+else:
+
+    class MixinBase(Generic[_ModelT]): ...
 
 
 class AdminMixin:
@@ -72,14 +81,14 @@ class AdminMixin:
         return self.has_change_permission(request, obj)
 
 
-class StaticRSSMixin(Generic[_ModelT]):
+class StaticRSSMixin(MixinBase[_ModelT]):
     def delete_model(self, request, obj: _ModelT):
-        super().delete_model(request, obj)  # type: ignore
+        super().delete_model(request, obj)
         if slugs := self.get_podcast_slugs_from_instance(obj):
             self.regenerate_static_rss(slugs)
 
     def delete_queryset(self, request, queryset: QuerySet[_ModelT]):
-        super().delete_queryset(request, queryset)  # type: ignore
+        super().delete_queryset(request, queryset)
         if slugs := self.get_podcast_slugs_from_queryset(queryset):
             self.regenerate_static_rss(slugs)
 
@@ -98,6 +107,6 @@ class StaticRSSMixin(Generic[_ModelT]):
                 data.regenerate_static()
 
     def save_model(self, request, obj: _ModelT, form, change):
-        super().save_model(request, obj, form, change)  # type: ignore
+        super().save_model(request, obj, form, change)
         if slugs := self.get_podcast_slugs_from_instance(obj):
             self.regenerate_static_rss(slugs)

@@ -34,7 +34,6 @@ class Comment(ModelMixin, models.Model):
     def text_html(self) -> str:
         return markdown(self.text, extensions=["nl2br", "smarty", MarkdownExtension()])
 
-    # pylint: disable=no-member
     def has_change_permission(self, request):
         return isinstance(request.user, AbstractUser) and (
             request.user.is_superuser

@@ -6,7 +6,7 @@ from spodcat.models.season import Season
 from spodcat.models.video import Video
 
 
-class EpisodeSerializer(serializers.ModelSerializer[Episode]):
+class EpisodeSerializer(serializers.ModelSerializer):
     audio_url = serializers.SerializerMethodField()
     comments = ResourceRelatedField(queryset=Comment.objects, many=True)
     description_html = serializers.SerializerMethodField()

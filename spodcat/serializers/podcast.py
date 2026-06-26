@@ -10,7 +10,7 @@ from spodcat.models.season import Season
 from .podcast_content import PartialPodcastContentSerializer
 
 
-class PodcastSerializer(serializers.ModelSerializer[Podcast]):
+class PodcastSerializer(serializers.ModelSerializer):
     contents = PolymorphicResourceRelatedField(
         PartialPodcastContentSerializer,
         queryset=PodcastContent.objects.partial().published(),

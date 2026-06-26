@@ -6,7 +6,7 @@ from spodcat.models.podcast_link import PodcastLink
 from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
 
 
-class PodcastLinkViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet[PodcastLink]):
+class PodcastLinkViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet):
     queryset = PodcastLink.objects.all()
     filterset_class = IdListFilter
     serializer_class = serializers.PodcastLinkSerializer

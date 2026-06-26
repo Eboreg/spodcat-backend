@@ -62,7 +62,6 @@ class FontFace(ModelMixin, models.Model):
 
         return None
 
-    # pylint: disable=no-member,bad-string-format-type
     def get_css(self):
         format_str = f" format({self.format})" if self.format else ""
         rules = [
