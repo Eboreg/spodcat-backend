@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.db.models import Max
 from django.http import HttpRequest, HttpResponse
 from django.utils.http import http_date
 
@@ -9,9 +8,7 @@ from spodcat.models import FontFace
 
 def font_face_css(request: HttpRequest):
     font_faces = FontFace.objects.all()
-    last_modified = FontFace.objects.aggregate(latest=Max("updated"))["latest"]
-    if isinstance(last_modified, str):
-        last_modified = datetime.fromisoformat(last_modified)
+    last_modified: datetime | None = max((ff.updated for ff in font_faces), default=None)
     css = "\n".join(ff.get_css() for ff in font_faces).encode()
     headers = {
         "Content-Disposition": 'inline; filename="font-faces.css"',

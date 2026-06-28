@@ -4,7 +4,6 @@ from time import time
 
 from django.apps import apps
 from django.db.models import Prefetch, Q, QuerySet
-from django.db.models.fields.files import FieldFile
 from django.http import FileResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.http.response import JsonResponse
 from django_filters import rest_framework as filters
@@ -74,8 +73,8 @@ class EpisodeViewSet(AbstractPodcastContentViewSet):
     @extend_schema(responses={(200, "audio/*"): OpenApiTypes.BINARY})
     @action(methods=["get"], detail=True)
     def audio(self, request: Request, pk: str):
-        episode = self.get_object()
-        audio_file: FieldFile = episode.audio_file
+        episode: Episode = Episode.objects.only("audio_file", "audio_content_type").get(pk=pk)
+        audio_file = episode.audio_file
         range_start = range_end = 0
         duration_ms: int | None = None
 

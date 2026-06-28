@@ -54,9 +54,10 @@ class CommentSerializerMixin:
         except Exception as e:
             logger.error("Could not send email to %s: %s", to, e, exc_info=e)
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict):
         challenge = attrs.pop("challenge", None)
         answer = attrs.pop("challenge_answer", None)
+        name = attrs.get("name", None)
         podcast_content = self.get_podcast_content(attrs)
 
         assert isinstance(challenge, Challenge)
@@ -70,11 +71,11 @@ class CommentSerializerMixin:
         if not podcast_content.podcast.require_comment_approval:
             attrs["is_approved"] = True
 
-        if podcast_content.podcast.owner.email:
+        if podcast_content.podcast.owner.email and name:
             self.send_email(
                 podcast_content=podcast_content,
                 to=podcast_content.podcast.owner.email,
-                commenter=attrs.get("name"),
+                commenter=name,
             )
 
         challenge.delete()
