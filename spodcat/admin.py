@@ -376,7 +376,7 @@ class BasePodcastContentAdmin(AdminMixin, StaticRSSMixin[_PCT], admin.ModelAdmin
 
     def save_form(self, request: HttpRequest, form: ModelForm, change: bool):
         instance: _PCT = super().save_form(request, form, change)
-        if "is_draft" in form.changed_data and not form.cleaned_data["is_draft"]:
+        if not form.cleaned_data["is_draft"] and (not change or "is_draft" in form.changed_data):
             instance.published = now()
         return instance
 

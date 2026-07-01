@@ -13,7 +13,7 @@ class EpisodeSerializer(AbstractPodcastContentSerializer[Episode]):
     songs = EpisodeSongSerializer(many=True)
 
     class Meta:
-        exclude = ["polymorphic_ctype", "is_draft", "audio_file", "audio_file_length", "audio_content_type"]
+        exclude = ["polymorphic_ctype", "is_draft", "audio_file", "audio_file_length"]
         model = Episode
 
     def get_audio_url(self, obj: Episode) -> str | None:
