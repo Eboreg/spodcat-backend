@@ -10,6 +10,7 @@ from django_filters import rest_framework as filters
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 
 from spodcat import serializers
@@ -73,7 +74,13 @@ class EpisodeViewSet(AbstractPodcastContentViewSet):
     @extend_schema(responses={(200, "audio/*"): OpenApiTypes.BINARY})
     @action(methods=["get"], detail=True)
     def audio(self, request: Request, pk: str):
-        episode: Episode = Episode.objects.only("audio_file", "audio_content_type").get(pk=pk)
+        queryset = Episode.objects.only("audio_file", "audio_content_type")
+
+        try:
+            episode = get_object_or_404(queryset, pk=pk)
+        except:
+            episode = get_object_or_404(queryset, slug=pk)
+
         audio_file = episode.audio_file
         range_start = range_end = 0
         duration_ms: int | None = None

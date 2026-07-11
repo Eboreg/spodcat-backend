@@ -32,13 +32,11 @@ class EpisodeFilter(filters.FilterSet):
 
 class EpisodeViewSet(ReadOnlyModelViewSet, AbstractPodcastContentViewSet[Episode]):
     filterset_class = EpisodeFilter
+    queryset = Episode.objects.with_has_songs()
     serializer_class = EpisodeSerializer
 
-    def get_queryset(self) -> QuerySet:
-        qs = Episode.objects.with_has_songs()
-        if self.is_list_request():
-            return qs
-        return qs.select_related("podcast", "season").prefetch_related("songs__artists", "videos")
+    def get_detail_queryset(self, queryset):
+        return queryset.select_related("podcast", "season").prefetch_related("songs__artists", "videos")
 
     def get_serializer_class(self):
         if self.is_list_request():

@@ -7,6 +7,7 @@ from django_filters import rest_framework as filters
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -47,6 +48,27 @@ class AbstractPodcastContentViewSet(LogRequestMixin, V2ViewMixin, GenericViewSet
         queryset = cast(PodcastContentQuerySet, super().filter_queryset(queryset))
         return queryset.published()
 
+    def get_detail_queryset(self, queryset: QuerySet[_MT, _MT]) -> QuerySet[_MT, _MT]:
+        return queryset
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        try:
+            obj = get_object_or_404(queryset, pk=self.kwargs[lookup_url_kwarg])
+        except:
+            obj = get_object_or_404(queryset, slug=self.kwargs[lookup_url_kwarg])
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def get_queryset(self) -> QuerySet[_MT, _MT]:
+        queryset = super().get_queryset()
+        if not self.is_list_request():
+            return self.get_detail_queryset(queryset)
+        return queryset
+
     def is_list_request(self):
         return self.action == "list"
 
@@ -63,10 +85,8 @@ class AbstractPodcastContentViewSet(LogRequestMixin, V2ViewMixin, GenericViewSet
 
 class PodcastContentViewSet(ListModelMixin, AbstractPodcastContentViewSet[PodcastContent]):
     filterset_class = PodcastContentFilter
+    queryset = PodcastContent.objects.with_has_songs()
     serializer_class = PodcastContentPolymorphicSerializer
 
-    def get_queryset(self):
-        qs = PodcastContent.objects.with_has_songs()
-        if self.is_list_request():
-            return qs
-        return qs.select_related("podcast")
+    def get_detail_queryset(self, queryset):
+        return queryset.select_related("podcast")

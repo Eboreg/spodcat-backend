@@ -23,12 +23,11 @@ class PostFilter(filters.FilterSet):
 
 class PostViewSet(ReadOnlyModelViewSet, AbstractPodcastContentViewSet[Post]):
     filterset_class = PostFilter
+    queryset = Post.objects.all()
     serializer_class = PostSerializer
 
-    def get_queryset(self) -> QuerySet:
-        if self.is_list_request():
-            return Post.objects.all()
-        return Post.objects.select_related("podcast")
+    def get_detail_queryset(self, queryset):
+        return queryset.select_related("podcast")
 
     def get_serializer_class(self):
         if self.is_list_request():

@@ -7,6 +7,7 @@ from django_filters import rest_framework as filters
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_json_api import views
@@ -37,6 +38,18 @@ class AbstractPodcastContentViewSet(LogRequestMixin, PreloadIncludesMixin, views
     def filter_queryset(self, queryset):
         queryset = cast(PodcastContentQuerySet, super().filter_queryset(queryset))
         return queryset.published()
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        try:
+            obj = get_object_or_404(queryset, pk=self.kwargs[lookup_url_kwarg])
+        except:
+            obj = get_object_or_404(queryset, slug=self.kwargs[lookup_url_kwarg])
+
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
     @action(methods=["post"], detail=True)
