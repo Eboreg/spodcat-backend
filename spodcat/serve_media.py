@@ -42,4 +42,5 @@ def serve_media(request, path, document_root=None, show_indexes=False):
         response["Content-Length"] = file_size
 
     response["Accept-Ranges"] = "bytes"
+
     return response

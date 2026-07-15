@@ -15,27 +15,21 @@ class TimePeriod(ABC):
     """
     A time period which is also anchored in absolute time. E.g. not just "a
     month", but "the month of August, 2024".
+
+    Note that `start_date` is inclusive while `end_date` is exclusive, so
+    `Month(date(2026, 7, 14))` will produce an object with
+    `start_date == date(2026, 7, 1)` and `end_date == date(2026, 8, 1)`.
     """
 
     start_date: datetime.date
     end_date: datetime.date
-    __start_timestamp: int
-    __end_timestamp: int
+    start_timestamp: int
+    end_timestamp: int
 
-    @property
-    def start_timestamp(self):
-        if not hasattr(self, "__start_timestamp"):
-            self.__start_timestamp = date_to_timestamp_ms(self.start_date)
-        return self.__start_timestamp
-
-    @property
-    def end_timestamp(self):
-        if not hasattr(self, "__end_timestamp"):
-            self.__end_timestamp = date_to_timestamp_ms(self.end_date)
-        return self.__end_timestamp
-
-    @abstractmethod
-    def __init__(self, start_date: datetime.date): ...
+    def __init__(self, start_date: datetime.date):
+        self.start_date, self.end_date = self.construct_dates(start_date)
+        self.start_timestamp = date_to_timestamp_ms(self.start_date)
+        self.end_timestamp = date_to_timestamp_ms(self.end_date)
 
     @abstractmethod
     def __add__(self, other) -> Self: ...
@@ -56,6 +50,10 @@ class TimePeriod(ABC):
     @abstractmethod
     def __sub__(self, other) -> Self | int: ...
 
+    @staticmethod
+    @abstractmethod
+    def construct_dates(start_date: datetime.date) -> tuple[datetime.date, datetime.date]: ...
+
     def range(self, stop: Self, inclusive: bool = True) -> "Generator[Self]":
         if stop > self:
             for i in range(stop - self):
@@ -67,10 +65,6 @@ class TimePeriod(ABC):
 
 
 class Day(TimePeriod):
-    def __init__(self, start_date: datetime.date):
-        self.start_date = start_date
-        self.end_date = self.start_date + relativedelta(days=1)
-
     def __add__(self, other):
         if isinstance(other, int):
             return Day(self.start_date + relativedelta(days=other))
@@ -83,12 +77,12 @@ class Day(TimePeriod):
             return (self.start_date - other.start_date).days
         return NotImplemented
 
+    @staticmethod
+    def construct_dates(start_date: datetime.date):
+        return start_date, start_date + relativedelta(days=1)
+
 
 class Month(TimePeriod):
-    def __init__(self, start_date: datetime.date):
-        self.start_date = datetime.date(start_date.year, start_date.month, 1)
-        self.end_date = self.start_date + relativedelta(months=1)
-
     def __add__(self, other):
         if isinstance(other, int):
             return Month(self.start_date + relativedelta(months=other))
@@ -102,13 +96,13 @@ class Month(TimePeriod):
             return (delta.years * 12) + delta.months
         return NotImplemented
 
+    @staticmethod
+    def construct_dates(start_date: datetime.date):
+        start_date = datetime.date(start_date.year, start_date.month, 1)
+        return start_date, start_date + relativedelta(months=1)
+
 
 class Week(TimePeriod):
-    def __init__(self, start_date: datetime.date):
-        year, week, _ = start_date.isocalendar()
-        self.start_date = datetime.date.fromisocalendar(year, week, 1)
-        self.end_date = self.start_date + relativedelta(weeks=1)
-
     def __add__(self, other):
         if isinstance(other, int):
             return Week(self.start_date + relativedelta(weeks=other))
@@ -121,12 +115,13 @@ class Week(TimePeriod):
             return int((self.start_date - other.start_date).days / 7)
         return NotImplemented
 
+    def construct_dates(self, start_date: datetime.date):
+        year, week, _ = start_date.isocalendar()
+        start_date = datetime.date.fromisocalendar(year, week, 1)
+        return start_date, start_date + relativedelta(weeks=1)
+
 
 class Year(TimePeriod):
-    def __init__(self, start_date: datetime.date):
-        self.start_date = datetime.date(start_date.year, 1, 1)
-        self.end_date = self.start_date + relativedelta(years=1)
-
     def __add__(self, other):
         if isinstance(other, int):
             return Year(self.start_date + relativedelta(years=other))
@@ -138,3 +133,8 @@ class Year(TimePeriod):
         if isinstance(other, Year):
             return relativedelta(self.start_date, other.start_date).years
         return NotImplemented
+
+    @staticmethod
+    def construct_dates(start_date: datetime.date):
+        start_date = datetime.date(start_date.year, 1, 1)
+        return start_date, start_date + relativedelta(years=1)

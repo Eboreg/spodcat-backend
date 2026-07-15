@@ -197,6 +197,7 @@ class PodcastRssData:
     def get_authors(self):
         if self.__authors is None:
             self.__authors = [{"name": a.get_full_name(), "email": a.email} for a in self.get_podcast().authors.all()]
+
         return self.__authors
 
     def get_episodes(self):
@@ -207,11 +208,13 @@ class PodcastRssData:
                 .published()
                 .with_has_chapters()
             )
+
         return self.__episodes
 
     def get_last_published(self):
         if self.__last_published is None and self.__episodes is None:
             self.__last_published = self.get_episodes().aggregate(last_published=Max("published"))["last_published"]
+
         return self.__last_published
 
     def get_podcast(self):
@@ -221,10 +224,12 @@ class PodcastRssData:
                 .select_related("owner")
                 .get(slug=self.podcast_slug)
             )
+
         return self.__podcast
 
     def get_template_context(self):
         podcast = self.get_podcast()
+
         return {
             "podcast": podcast,
             "last_published": self.get_last_published(),

@@ -36,10 +36,7 @@ class PodcastChangeSlugForm(ModelForm):
             PodcastContent.objects.filter(podcast=old_instance).update(podcast=self.instance)
 
             if apps.is_installed("spodcat.logs"):
-                from spodcat.logs.models import (
-                    PodcastRequestLog,
-                    PodcastRssRequestLog,
-                )
+                from spodcat.logs.models import PodcastRequestLog, PodcastRssRequestLog
 
                 PodcastRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
                 PodcastRssRequestLog.objects.filter(podcast=old_instance).update(podcast=self.instance)
@@ -66,6 +63,7 @@ class PodcastContentVideoAdminForm(ModelForm):
 
     def __init__(self, data=None, files=None, instance: Video | None = None, **kwargs):
         super().__init__(data, files, instance=instance, **kwargs)
+
         if instance:
             self.fields["url_or_id"].initial = instance.video_id
 
@@ -96,6 +94,7 @@ class PodcastContentVideoAdminForm(ModelForm):
 class EpisodeAdminForm(ModelForm):
     def __init__(self, data=None, files=None, instance: Episode | None = None, **kwargs):
         super().__init__(data, files, instance=instance, **kwargs)
+
         if instance:
             season_field = self.fields["season"]
             assert isinstance(season_field, ModelChoiceField) and season_field.queryset is not None

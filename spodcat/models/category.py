@@ -1,16 +1,11 @@
 from html import escape
-from typing import NotRequired, TypedDict
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.data import CATEGORIES
 from spodcat.model_mixin import ModelMixin
-
-
-class CategoryDict(TypedDict):
-    cat: str
-    sub: NotRequired[str]
+from spodcat.types import CategoryDict
 
 
 class Category(ModelMixin, models.Model):

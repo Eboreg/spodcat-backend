@@ -1,7 +1,6 @@
 import ipaddress
 import logging
 from pathlib import Path
-from typing import NotRequired, TypedDict
 
 import geoip2.database
 import geoip2.errors
@@ -26,21 +25,6 @@ class IpAddressCategory(models.TextChoices):
     @property
     def is_bot(self):
         return self != IpAddressCategory.UNKNOWN
-
-
-class GeoProperties(TypedDict):
-    address: str
-    city: str
-    country: str
-    hostname: NotRequired[str]
-    ip: str
-    lat: float
-    lng: float
-    ok: bool
-    org: str
-    postal: str
-    state: str
-    status: str
 
 
 ip_list_cache: dict[IpAddressCategory, list[ipaddress.IPv4Network | ipaddress.IPv6Network]] = {}

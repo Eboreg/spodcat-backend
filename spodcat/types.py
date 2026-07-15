@@ -1,21 +1,33 @@
-import time
-from typing import NotRequired, TypedDict
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
+
+
+if TYPE_CHECKING:
+    from time import struct_time
+
+    from django.core.files.storage import Storage
+    from django.db.models import Model
+
+
+class CategoryDict(TypedDict):
+    cat: str
+    sub: NotRequired[str]
 
 
 class ChapterLocationDict(TypedDict):
-    name: str
     geo: str
+    name: str
     osm: NotRequired[str]
 
 
 class ChapterDict(TypedDict):
-    startTime: int | float
     endTime: NotRequired[int | float]
-    title: NotRequired[str]
     img: NotRequired[str]
-    url: NotRequired[str]
-    toc: NotRequired[bool]
     location: NotRequired[ChapterLocationDict]
+    startTime: int | float
+    title: NotRequired[str]
+    toc: NotRequired[bool]
+    url: NotRequired[str]
 
 
 class RssImage(TypedDict):
@@ -23,48 +35,80 @@ class RssImage(TypedDict):
 
 
 class RssLink(TypedDict):
-    rel: str | None
-    type: str | None
     href: str
     length: NotRequired[str]
+    rel: str | None
+    type: str | None
 
 
 class RssTag(TypedDict):
-    term: str
-    scheme: str
     label: str | None
+    scheme: str
+    term: str
 
 
 class RssAuthor(TypedDict):
-    name: str
     email: NotRequired[str]
+    name: str
 
 
 class RssFeed(TypedDict):
-    title: str
-    links: list[RssLink]
-    description: str
-    link: str
-    language: str
-    category: str
-    image: RssImage
-    podcast_guid: NotRequired[str]
     author: NotRequired[str]
-    tags: NotRequired[list[RssTag]]
     authors: NotRequired[list[RssAuthor]]
+    category: str
+    description: str
+    image: RssImage
+    language: str
+    link: str
+    links: list[RssLink]
+    podcast_guid: NotRequired[str]
+    tags: NotRequired[list[RssTag]]
+    title: str
 
 
 class RssEntry(TypedDict):
-    title: str
+    description: NotRequired[str]
+    image: NotRequired[RssImage]
+    itunes_duration: NotRequired[str | int | float]
     itunes_episode: NotRequired[str]
     itunes_season: NotRequired[str]
-    description: NotRequired[str]
-    published_parsed: NotRequired[time.struct_time]
-    itunes_duration: NotRequired[str | int | float]
-    image: NotRequired[RssImage]
     links: NotRequired[list[RssLink]]
+    published_parsed: NotRequired["struct_time"]
+    title: str
 
 
 class Rss(TypedDict):
-    feed: RssFeed
     entries: list[RssEntry]
+    feed: RssFeed
+
+
+class SettingsFileFieldDict(TypedDict, total=False):
+    STORAGE: "Storage | str"
+    UPLOAD_TO: Callable[["Model", str], str] | str
+
+
+SettingsFileFieldKey = Literal[
+    "EPISODE_AUDIO_FILE",
+    "EPISODE_CHAPTER_IMAGE",
+    "EPISODE_IMAGE_THUMBNAIL",
+    "EPISODE_IMAGE",
+    "FONTFACE_FILE",
+    "PODCAST_BANNER",
+    "PODCAST_COVER_THUMBNAIL",
+    "PODCAST_COVER",
+    "PODCAST_FAVICON",
+    "PODCAST_LINK_ICON",
+    "RSS_XML",
+    "SEASON_IMAGE_THUMBNAIL",
+    "SEASON_IMAGE",
+]
+
+
+class SpodcatSettingsDict(TypedDict, total=False):
+    BACKEND_HOST: str
+    BACKEND_ROOT: str
+    FILEFIELDS: dict[SettingsFileFieldKey, SettingsFileFieldDict]
+    FRONTEND_ROOT_URL: str
+    STATIC_RSS_XML: bool
+    USE_INTERNAL_AUDIO_PROXY: bool
+    USE_INTERNAL_AUDIO_REDIRECT: bool

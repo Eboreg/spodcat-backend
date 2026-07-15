@@ -1,8 +1,11 @@
+from typing import cast
 from urllib.parse import urljoin
 
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.core.signals import setting_changed
 from django.urls import reverse
+
+from spodcat.types import SettingsFileFieldDict, SettingsFileFieldKey, SpodcatSettingsDict
 
 
 def get_lib_doc_excludes():
@@ -37,7 +40,7 @@ REST_FRAMEWORK_DEFAULTS = {
     "SEARCH_PARAM": "filter[search]",
 }
 
-if settings.DEBUG:
+if django_settings.DEBUG:
     REST_FRAMEWORK_DEFAULTS["DEFAULT_RENDERER_CLASSES"] = [
         "rest_framework_json_api.renderers.JSONRenderer",
         "rest_framework_json_api.renderers.BrowsableAPIRenderer",
@@ -60,10 +63,11 @@ SPECTACULAR_DEFAULTS = {
     ],
 }
 
-DEFAULTS = {
+SPODCAT_DEFAULTS: SpodcatSettingsDict = {
     "BACKEND_HOST": "http://localhost:8000/",
     "BACKEND_ROOT": "",
-    "FRONTEND_ROOT_URL": "http://localhost:4200/",
+    "FILEFIELDS": {},
+    "FRONTEND_ROOT_URL": "http://localhost:3000/",
     "STATIC_RSS_XML": True,
     "USE_INTERNAL_AUDIO_PROXY": False,
     "USE_INTERNAL_AUDIO_REDIRECT": False,
@@ -72,27 +76,36 @@ DEFAULTS = {
 
 def patch_django_settings():
     for key, value in DJANGO_DEFAULTS.items():
-        if not hasattr(settings, key):
-            setattr(settings, key, value)
+        if not hasattr(django_settings, key):
+            setattr(django_settings, key, value)
 
-    settings.REST_FRAMEWORK = {**REST_FRAMEWORK_DEFAULTS, **getattr(settings, "REST_FRAMEWORK", {})}
-    settings.SPECTACULAR_SETTINGS = {**SPECTACULAR_DEFAULTS, **getattr(settings, "SPECTACULAR_SETTINGS", {})}
+    django_settings.REST_FRAMEWORK = {**REST_FRAMEWORK_DEFAULTS, **getattr(django_settings, "REST_FRAMEWORK", {})}
+    django_settings.SPECTACULAR_SETTINGS = {
+        **SPECTACULAR_DEFAULTS,
+        **getattr(django_settings, "SPECTACULAR_SETTINGS", {}),
+    }
 
 
 class SpodcatSettings:
-    _user_settings: dict | None = None
+    _user_settings: dict | None
+    BACKEND_HOST: str
+    BACKEND_ROOT: str
+    FILEFIELDS: dict[SettingsFileFieldKey, SettingsFileFieldDict]
+    FRONTEND_ROOT_URL: str
+    STATIC_RSS_XML: bool
+    USE_INTERNAL_AUDIO_PROXY: bool
+    USE_INTERNAL_AUDIO_REDIRECT: bool
 
-    def __init__(self, defaults: dict | None = None):
-        self.defaults = defaults or DEFAULTS
+    def __init__(self, defaults: SpodcatSettingsDict | None = None):
+        self._user_settings = None
+        self.defaults = defaults or SPODCAT_DEFAULTS
         self._cached_attrs = set()
 
     @property
     def user_settings(self):
-        user_settings = self._user_settings
-        if user_settings is None:
-            user_settings = getattr(settings, "SPODCAT", {})
-            self._user_settings = user_settings
-        return user_settings
+        if self._user_settings is None:
+            self._user_settings = getattr(django_settings, "SPODCAT", {})
+        return cast(SpodcatSettingsDict, self._user_settings)
 
     def __getattr__(self, attr):
         try:
@@ -125,7 +138,7 @@ class SpodcatSettings:
         self._user_settings = None
 
 
-spodcat_settings = SpodcatSettings(DEFAULTS)
+spodcat_settings = SpodcatSettings(SPODCAT_DEFAULTS)
 
 
 def reload_spodcat_settings(*args, **kwargs):

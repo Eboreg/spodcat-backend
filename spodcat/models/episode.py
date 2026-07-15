@@ -16,16 +16,13 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from klaatu_python.utils import getitem0_nullable
 from markdownify import markdownify
-from pydub.utils import mediainfo
 from slugify import slugify
 
+from spodcat.dbfs import get_audio_file_dbfs_array
+from spodcat.mediainfo import mediainfo
 from spodcat.settings import spodcat_settings
 from spodcat.types import RssEntry
-from spodcat.utils import (
-    delete_storage_file,
-    generate_thumbnail,
-    get_audio_file_dbfs_array_2,
-)
+from spodcat.utils import delete_storage_file, generate_thumbnail
 
 from .functions import (
     episode_audio_file_storage,
@@ -36,7 +33,6 @@ from .functions import (
     episode_image_upload_to,
 )
 from .podcast_content import PodcastContent
-from .season import Season
 
 
 if TYPE_CHECKING:
@@ -44,6 +40,7 @@ if TYPE_CHECKING:
 
     from .episode_chapter import EpisodeChapter
     from .episode_song import EpisodeSong
+    from .season import Season  # noqa: F401
 
 
 logger = logging.getLogger(__name__)
@@ -196,7 +193,7 @@ class Episode(PodcastContent):
             self.duration_seconds = duration_seconds
             self.save(update_fields=["duration_seconds"])
 
-        self.dbfs_array = get_audio_file_dbfs_array_2(
+        self.dbfs_array = get_audio_file_dbfs_array(
             filename,
             duration_seconds=duration_seconds,
             sample_rate=int(info["sample_rate"]),
@@ -227,6 +224,8 @@ class Episode(PodcastContent):
             self.save()
 
     def update_from_feed(self, entry: RssEntry):
+        from .season import Season
+
         try:
             self.number = int(entry["itunes_episode"]) if "itunes_episode" in entry else None
         except Exception:
@@ -307,7 +306,7 @@ class Episode(PodcastContent):
                     self.duration_seconds = float(info["duration"])
                     self.audio_file_length = len(response.content)
                     logger.info("Updating dBFS array for audio file")
-                    self.dbfs_array = get_audio_file_dbfs_array_2(
+                    self.dbfs_array = get_audio_file_dbfs_array(
                         temp_file.name,
                         duration_seconds=self.duration_seconds,
                         sample_rate=info["sample_rate"],

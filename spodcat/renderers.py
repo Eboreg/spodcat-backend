@@ -21,4 +21,5 @@ class BrowsableAPIRenderer(renderers.BrowsableAPIRenderer):
     def show_form_for_method(self, view: APIView, method: str, request: Request, obj: Any) -> bool | None:
         if "forms" in request.query_params and not is_truthy(request.query_params["forms"]):
             return False
+
         return super().show_form_for_method(view, method, request, obj)

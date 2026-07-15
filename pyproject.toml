@@ -14,7 +14,6 @@ classifiers = [
     "Topic :: Multimedia :: Sound/Audio",
 ]
 dependencies = [
-    "audioop-lts; python_version >= '3.13'",
     "country_list",
     "django-filter>=25.2",
     "django-polymorphic",
@@ -27,14 +26,12 @@ dependencies = [
     "drf-spectacular",
     "feedgen",
     "feedparser",
-    "ffmpeg-python>=0.2.0",
     "geoip2",
     "iso639-lang",
     "klaatu-django",
     "markdownify",
     "martor",
     "pillow",
-    "pydub",
     "python-dateutil",
     "python-slugify",
 ]
@@ -44,7 +41,7 @@ license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
 requires-python = ">=3.11"
-version = "2.8.0"
+version = "2.9.0"
 
 [project.urls]
 "Live example" = "https://podd.huseli.us"
@@ -83,7 +80,7 @@ wheel-exclude = ["test_env/**"]
 [tool.pyright]
 exclude = ["**/__pycache__", "node_modules", "build", "**/migrations", "**/.*", ".venv"]
 ignore = [".venv"]
-include = ["src"]
+include = ["spodcat"]
 stubPath = "typings"
 typeCheckingMode = "basic"
 
