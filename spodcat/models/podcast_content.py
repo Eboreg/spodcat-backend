@@ -1,6 +1,5 @@
 import uuid
 from typing import TYPE_CHECKING, ClassVar, Self
-from urllib.parse import urljoin
 
 from django.contrib import admin
 from django.contrib.auth.models import AbstractUser
@@ -58,13 +57,11 @@ class PodcastContent(ModelMixin, PolymorphicModel):
         instance_class = self.get_real_instance_class() or self.__class__
 
         if self.is_draft:
-            return urljoin(
-                spodcat_settings.FRONTEND_ROOT_URL,
+            return spodcat_settings.get_absolute_frontend_url(
                 f"{self.podcast.slug}/{instance_class._meta.model_name}/draft/{self.id}",
             )
 
-        return urljoin(
-            spodcat_settings.FRONTEND_ROOT_URL,
+        return spodcat_settings.get_absolute_frontend_url(
             f"{self.podcast.slug}/{instance_class._meta.model_name}/{self.slug}",
         )
 

@@ -86,10 +86,10 @@ def patch_django_settings():
 
 class SpodcatSettings:
     _user_settings: dict | None
-    BACKEND_HOST: str
-    BACKEND_ROOT: str
+    BACKEND_HOST: str | None
+    BACKEND_ROOT: str | None
     FILEFIELDS: dict[SettingsFileFieldKey, SettingsFileFieldDict]
-    FRONTEND_ROOT_URL: str
+    FRONTEND_ROOT_URL: str | None
     STATIC_RSS_XML: bool
     USE_INTERNAL_AUDIO_PROXY: bool
     USE_INTERNAL_AUDIO_REDIRECT: bool
@@ -115,19 +115,22 @@ class SpodcatSettings:
         setattr(self, attr, val)
         return val
 
-    def get_absolute_backend_url(self, viewname: str, args=None, kwargs=None, query=None):
+    def get_absolute_backend_url(self, viewname: str, args=None, kwargs=None, query=None) -> str:
         return urljoin(self.get_backend_root_url(), reverse(viewname, args=args, kwargs=kwargs, query=query))
 
-    def get_backend_root_path(self):
+    def get_absolute_frontend_url(self, path: str) -> str:
+        return urljoin(self.FRONTEND_ROOT_URL or "", path)
+
+    def get_backend_root_path(self) -> str:
         """Only (absolute) path, without host."""
-        root = self.BACKEND_ROOT.strip("/")
+        root = (self.BACKEND_ROOT or "").strip("/")
         if root:
             return f"/{root}/"
         return "/"
 
-    def get_backend_root_url(self):
+    def get_backend_root_url(self) -> str:
         """Host and absolute path."""
-        return self.BACKEND_HOST.rstrip("/") + self.get_backend_root_path()
+        return (self.BACKEND_HOST or "").rstrip("/") + self.get_backend_root_path()
 
     def reload(self):
         for attr in self._cached_attrs:

@@ -5,7 +5,6 @@ import uuid
 from base64 import b64encode
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar
-from urllib.parse import urljoin
 
 import requests
 from django.conf import settings
@@ -201,7 +200,7 @@ class Podcast(ModelMixin, models.Model):
 
     @property
     def frontend_url(self) -> str:
-        return urljoin(spodcat_settings.FRONTEND_ROOT_URL, self.slug)
+        return spodcat_settings.get_absolute_frontend_url(self.slug)
 
     @property
     def guid(self):

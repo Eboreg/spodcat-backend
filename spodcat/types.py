@@ -105,10 +105,10 @@ SettingsFileFieldKey = Literal[
 
 
 class SpodcatSettingsDict(TypedDict, total=False):
-    BACKEND_HOST: str
-    BACKEND_ROOT: str
+    BACKEND_HOST: str | None
+    BACKEND_ROOT: str | None
     FILEFIELDS: dict[SettingsFileFieldKey, SettingsFileFieldDict]
-    FRONTEND_ROOT_URL: str
+    FRONTEND_ROOT_URL: str | None
     STATIC_RSS_XML: bool
     USE_INTERNAL_AUDIO_PROXY: bool
     USE_INTERNAL_AUDIO_REDIRECT: bool
