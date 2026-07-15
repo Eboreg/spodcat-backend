@@ -3,10 +3,7 @@ from django.db.models.functions.text import Lower
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.model_mixin import ModelMixin
-from spodcat.models.functions import (
-    fontface_file_storage,
-    fontface_file_upload_to,
-)
+from spodcat.models.functions import fontface_file_storage, fontface_file_upload_to
 
 
 class FontFace(ModelMixin, models.Model):

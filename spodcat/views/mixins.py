@@ -2,9 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Iterable
 
 from rest_framework.request import Request
-from rest_framework_json_api.views import (
-    PreloadIncludesMixin as BasePreloadIncludesMixin,
-)
+from rest_framework_json_api.views import PreloadIncludesMixin as BasePreloadIncludesMixin
 
 
 if TYPE_CHECKING:

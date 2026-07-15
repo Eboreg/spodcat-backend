@@ -7,10 +7,7 @@ from django.http import FileResponse, HttpResponseNotFound
 from django.utils._os import safe_join
 from django.views.static import serve
 
-from spodcat.utils import (
-    extract_range_request_header,
-    set_range_response_headers,
-)
+from spodcat.utils import extract_range_request_header, set_range_response_headers
 
 
 def serve_media(request, path, document_root=None, show_indexes=False):

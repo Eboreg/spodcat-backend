@@ -24,12 +24,7 @@ from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastQuerySet
 from spodcat.settings import spodcat_settings
 from spodcat.types import RssFeed
-from spodcat.utils import (
-    delete_storage_file,
-    downscale_image,
-    generate_thumbnail,
-    markdown_to_html,
-)
+from spodcat.utils import delete_storage_file, downscale_image, generate_thumbnail, markdown_to_html
 
 from .functions import (
     podcast_banner_storage,

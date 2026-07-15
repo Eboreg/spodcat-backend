@@ -8,10 +8,7 @@ from spodcat.model_mixin import ModelMixin
 from spodcat.types import ChapterDict
 from spodcat.utils import filter_values_not_null
 
-from .functions import (
-    episode_chapter_image_storage,
-    episode_chapter_image_upload_to,
-)
+from .functions import episode_chapter_image_storage, episode_chapter_image_upload_to
 
 
 if TYPE_CHECKING:

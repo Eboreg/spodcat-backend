@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from spodcat.models.podcast_link import PodcastLink
+from spodcat.models import PodcastLink
 
 
 class PodcastLinkSerializer(serializers.ModelSerializer[PodcastLink]):

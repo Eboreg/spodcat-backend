@@ -1,11 +1,7 @@
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import (
-    PolymorphicResourceRelatedField,
-    ResourceRelatedField,
-)
+from rest_framework_json_api.relations import PolymorphicResourceRelatedField, ResourceRelatedField
 
-from spodcat.models import Podcast, PodcastContent, PodcastLink
-from spodcat.models.season import Season
+from spodcat.models import Podcast, PodcastContent, PodcastLink, Season
 
 from .podcast_content import PartialPodcastContentSerializer
 

@@ -1,8 +1,7 @@
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
-from spodcat.models import Episode, FontFace, Podcast
-from spodcat.models.season import Season
+from spodcat.models import Episode, FontFace, Podcast, Season
 from spodcat.utils import delete_storage_file
 
 

@@ -1,8 +1,7 @@
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import ResourceRelatedField
 
-from spodcat.models import Comment, Post
-from spodcat.models.video import Video
+from spodcat.models import Comment, Post, Video
 
 
 class PostSerializer(serializers.ModelSerializer):

@@ -1,7 +1,7 @@
 from django_filters import rest_framework as filters
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from spodcat.models.podcast_link import PodcastLink
+from spodcat.models import PodcastLink
 from spodcat.v2.serializers.podcast_link import PodcastLinkSerializer
 from spodcat.views.mixins import LogRequestMixin
 

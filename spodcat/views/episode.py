@@ -16,15 +16,9 @@ from rest_framework.request import Request
 from spodcat import serializers
 from spodcat.models import Comment, Episode, Podcast, PodcastContent
 from spodcat.settings import spodcat_settings
-from spodcat.utils import (
-    extract_range_request_header,
-    set_range_response_headers,
-)
+from spodcat.utils import extract_range_request_header, set_range_response_headers
 
-from .podcast_content import (
-    AbstractPodcastContentFilter,
-    AbstractPodcastContentViewSet,
-)
+from .podcast_content import AbstractPodcastContentFilter, AbstractPodcastContentViewSet
 
 
 class EpisodeFilter(AbstractPodcastContentFilter):

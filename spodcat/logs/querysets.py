@@ -4,17 +4,9 @@ from datetime import date
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.contrib.auth.models import AbstractUser
-from django.db.models import (
-    CharField,
-    Count,
-    F,
-    FloatField,
-    Min,
-    Q,
-    QuerySet,
-    Sum,
-    Value as V,
-)
+from django.db.models import F, Q, QuerySet, Value as V
+from django.db.models.aggregates import Count, Min, Sum
+from django.db.models.fields import CharField, FloatField
 from django.db.models.functions import Cast, Coalesce, LPad, Round
 
 from spodcat.logs.graph_data import PeriodicalGraphData

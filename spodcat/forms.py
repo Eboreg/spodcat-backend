@@ -5,9 +5,7 @@ from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelChoiceField, ModelForm, Select
 from django.utils.translation import gettext as _
 
-from spodcat.models import FontFace, Podcast, PodcastContent
-from spodcat.models.episode import Episode
-from spodcat.models.video import Video
+from spodcat.models import Episode, FontFace, Podcast, PodcastContent, Video
 
 
 class PodcastChangeSlugForm(ModelForm):

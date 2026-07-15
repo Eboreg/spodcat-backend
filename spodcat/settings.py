@@ -9,9 +9,7 @@ from spodcat.types import SettingsFileFieldDict, SettingsFileFieldKey, SpodcatSe
 
 
 def get_lib_doc_excludes():
-    from drf_spectacular.plumbing import (
-        get_lib_doc_excludes as get_lib_doc_excludes_base,
-    )
+    from drf_spectacular.plumbing import get_lib_doc_excludes as get_lib_doc_excludes_base
     from rest_framework_json_api import views
 
     return [

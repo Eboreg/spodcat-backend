@@ -1,14 +1,11 @@
 import datetime
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Self
+from collections.abc import Generator
+from typing import Self
 
 from dateutil.relativedelta import relativedelta
 
 from spodcat.utils import date_to_timestamp_ms
-
-
-if TYPE_CHECKING:
-    from typing import Generator
 
 
 class TimePeriod(ABC):

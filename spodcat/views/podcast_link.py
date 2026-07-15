@@ -2,7 +2,7 @@ from rest_framework_json_api import views
 
 from spodcat import serializers
 from spodcat.filters import IdListFilter
-from spodcat.models.podcast_link import PodcastLink
+from spodcat.models import PodcastLink
 from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
 
 

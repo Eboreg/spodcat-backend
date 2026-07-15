@@ -1,9 +1,6 @@
 from django import forms
 from django.conf import settings
-from django.contrib.admin.widgets import (
-    AdminTextareaWidget,
-    AutocompleteSelectMultiple,
-)
+from django.contrib.admin.widgets import AdminTextareaWidget, AutocompleteSelectMultiple
 from django.core.validators import EMPTY_VALUES
 from django.forms import Widget
 from martor.widgets import MartorWidget as BaseMartorWidget
