@@ -7,7 +7,8 @@ def mediainfo(filepath: str) -> dict:
     """Borrowed from Pydub (https://pydub.com/)"""
 
     command_args = [
-        "-v", "quiet",
+        "-v",
+        "quiet",
         "-show_format",
         "-show_streams",
         filepath,

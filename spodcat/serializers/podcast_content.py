@@ -1,25 +1,15 @@
-from rest_framework_json_api import serializers
+from rest_polymorphic.serializers import PolymorphicSerializer
 
-from spodcat.models import PodcastContent
+from spodcat.models import Episode, Post
+from spodcat.serializers.episode import PartialEpisodeSerializer
+from spodcat.serializers.post import PartialPostSerializer
 
-from .episode import EpisodeSerializer, PartialEpisodeSerializer
-from .post import PartialPostSerializer, PostSerializer
 
-
-class PodcastContentSerializer(serializers.PolymorphicModelSerializer):
-    included_serializers = {
-        "podcast": "spodcat.serializers.PodcastSerializer",
+class PodcastContentPolymorphicSerializer(PolymorphicSerializer):
+    model_serializer_mapping = {
+        Episode: PartialEpisodeSerializer,
+        Post: PartialPostSerializer,
     }
-    polymorphic_serializers = [EpisodeSerializer, PostSerializer]
 
-    class Meta:
-        fields = "__all__"
-        model = PodcastContent
-
-
-class PartialPodcastContentSerializer(PodcastContentSerializer):
-    polymorphic_serializers = [PartialEpisodeSerializer, PartialPostSerializer]
-
-    class Meta:
-        fields = ["name", "podcast", "published", "slug", "id"]
-        model = PodcastContent
+    def to_resource_type(self, model_or_instance):
+        return model_or_instance._meta.object_name.lower()

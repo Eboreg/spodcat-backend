@@ -4,7 +4,6 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,16 +14,12 @@ from spodcat.time_period import Day, Month, TimePeriod, Week, Year
 
 
 class GraphView(APIView):
-    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(exclude=True)
     def get(self, request: Request, *args, **kwargs):
-        from spodcat.logs.models import (
-            PodcastEpisodeAudioRequestLog,
-            PodcastRssRequestLog,
-        )
+        from spodcat.logs.models import PodcastEpisodeAudioRequestLog, PodcastRssRequestLog
 
         graph_type = request.query_params["type"]
         graph_data: PeriodicalGraphData | None = None

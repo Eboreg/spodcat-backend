@@ -1,6 +1,6 @@
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Prefetch
+from django.db.models import QuerySet
 from django.http import Http404, HttpResponse
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
@@ -9,27 +9,27 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_json_api import views
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from spodcat import serializers
-from spodcat.models import Podcast, PodcastContent
+from spodcat.models import Podcast
 from spodcat.rss import PodcastRssData
-from spodcat.views.mixins import LogRequestMixin, PreloadIncludesMixin
+from spodcat.views.mixins import LogRequestMixin
 
 
-class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelViewSet):
-    prefetch_for_includes = {
-        "__all__": [
-            "links",
-            "categories",
-            Prefetch("contents", queryset=PodcastContent.objects.partial().published().with_has_songs()),
-        ]
-    }
-    select_for_includes = {
-        "__all__": ["name_font_face"],
-    }
-    serializer_class = serializers.PodcastSerializer
-    queryset = Podcast.objects.order_by_last_content(reverse=True)
+class PodcastViewSet(LogRequestMixin, ReadOnlyModelViewSet[Podcast]):
+    lookup_field = "slug"
+
+    def get_queryset(self) -> QuerySet[Podcast, Podcast]:
+        qs = Podcast.objects.select_related("name_font_face")
+        if self.action == "list":
+            return qs.only("slug", "name", "banner", "cover_thumbnail", "name_font_face", "name_font_size", "tagline")
+        return qs.prefetch_related("links")
+
+    def get_serializer_class(self) -> type[serializers.PodcastSerializer]:
+        if self.action == "list":
+            return serializers.PodcastListSerializer
+        return serializers.PodcastSerializer
 
     @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
     @action(methods=["post"], detail=True)
@@ -43,18 +43,18 @@ class PodcastViewSet(LogRequestMixin, PreloadIncludesMixin, views.ReadOnlyModelV
 
     @extend_schema(responses={(200, "application/rss+xml"): OpenApiTypes.STR})
     @action(methods=["get"], detail=True)
-    def rss(self, request: Request, pk: str):
+    def rss(self, request: Request, slug: str):
         # Both template and feedgen methods are available; going with feedgen
         # for now since it's considerably faster in tests.
         try:
-            data = PodcastRssData(pk)
+            data = PodcastRssData(slug)
         except ObjectDoesNotExist as e:
             raise Http404 from e
 
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRssRequestLog
 
-            self.log_request(request, PodcastRssRequestLog, podcast_id=pk)
+            self.log_request(request, PodcastRssRequestLog, podcast_id=slug)
 
         return self.__rss_feedgen(request=request, data=data)
 

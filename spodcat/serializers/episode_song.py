@@ -1,12 +1,11 @@
-from rest_framework_json_api import serializers
+from rest_framework import serializers
 
 from spodcat.models import EpisodeSong
+from spodcat.serializers.artist import ArtistSerializer
 
 
-class EpisodeSongSerializer(serializers.ModelSerializer):
-    included_serializers = {
-        "artists": "spodcat.serializers.ArtistSerializer",
-    }
+class EpisodeSongSerializer(serializers.ModelSerializer[EpisodeSong]):
+    artists = ArtistSerializer(many=True)
 
     class Meta:
         exclude = ["episode"]

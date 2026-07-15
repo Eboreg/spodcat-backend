@@ -1,9 +1,9 @@
-from rest_framework_json_api import serializers
+from rest_framework import serializers
 
 from spodcat.models import Season
 
 
-class SeasonSerializer(serializers.ModelSerializer):
+class SeasonSerializer(serializers.ModelSerializer[Season]):
     class Meta:
         model = Season
-        exclude = ["podcast"]
+        fields = ["id", "name", "number", "image", "image_thumbnail"]

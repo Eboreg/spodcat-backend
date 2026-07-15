@@ -1,13 +1,11 @@
-from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import ResourceRelatedField
+from rest_framework import serializers
 
-from spodcat.models import Challenge, Podcast
+from spodcat.models import Challenge
 
 
-class ChallengeSerializer(serializers.ModelSerializer):
+class ChallengeSerializer(serializers.ModelSerializer[Challenge]):
     challenge_string = serializers.SerializerMethodField()
     id = serializers.UUIDField(read_only=True)
-    podcast = ResourceRelatedField(queryset=Podcast.objects)
 
     class Meta:
         fields = ["id", "challenge_string", "podcast"]

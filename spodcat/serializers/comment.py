@@ -3,13 +3,10 @@ import logging
 from django.core.mail import send_mail
 from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
-from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import PolymorphicResourceRelatedField
+from rest_framework import serializers
 
 from spodcat.models import Challenge, Comment, PodcastContent
 from spodcat.settings import spodcat_settings
-
-from .podcast_content import PodcastContentSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -88,15 +85,10 @@ class CommentSerializerMixin:
         return strip_tags(value)
 
 
-class CommentSerializer(CommentSerializerMixin, serializers.ModelSerializer):
+class CommentSerializer(CommentSerializerMixin, serializers.ModelSerializer[Comment]):
     challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects, write_only=True)
     challenge_answer = serializers.IntegerField(write_only=True)
     is_approved = serializers.BooleanField(read_only=True)
-    podcast_content = PolymorphicResourceRelatedField(
-        PodcastContentSerializer,
-        queryset=PodcastContent.objects,
-        write_only=True,
-    )
     text_html = serializers.SerializerMethodField()
 
     class Meta:

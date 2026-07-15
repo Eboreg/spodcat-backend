@@ -8,57 +8,24 @@ from django.urls import reverse
 from spodcat.types import SettingsFileFieldDict, SettingsFileFieldKey, SpodcatSettingsDict
 
 
-def get_lib_doc_excludes():
-    from drf_spectacular.plumbing import get_lib_doc_excludes as get_lib_doc_excludes_base
-    from rest_framework_json_api import views
-
-    return [
-        *get_lib_doc_excludes_base(),
-        *[getattr(views, c) for c in dir(views) if c.endswith("ViewSet") or c.endswith("View") or c.endswith("Mixin")],
-    ]
-
-
 REST_FRAMEWORK_DEFAULTS = {
-    "EXCEPTION_HANDLER": "rest_framework_json_api.exceptions.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": [],
-    "DEFAULT_FILTER_BACKENDS": [
-        "rest_framework_json_api.filters.QueryParameterValidationFilter",
-        "rest_framework_json_api.filters.OrderingFilter",
-        "rest_framework_json_api.django_filters.DjangoFilterBackend",
-    ],
-    "DEFAULT_METADATA_CLASS": "rest_framework_json_api.metadata.JSONAPIMetadata",
-    "DEFAULT_PAGINATION_CLASS": "drf_spectacular_jsonapi.schemas.pagination.JsonApiPageNumberPagination",
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework_json_api.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular_jsonapi.schemas.openapi.JsonApiAutoSchema",
-    "PAGE_SIZE": None,
-    "SEARCH_PARAM": "filter[search]",
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 if django_settings.DEBUG:
     REST_FRAMEWORK_DEFAULTS["DEFAULT_RENDERER_CLASSES"] = [
-        "rest_framework_json_api.renderers.JSONRenderer",
-        "rest_framework_json_api.renderers.BrowsableAPIRenderer",
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
     ]
 else:
     REST_FRAMEWORK_DEFAULTS["DEFAULT_RENDERER_CLASSES"] = [
-        "rest_framework_json_api.renderers.JSONRenderer",
+        "rest_framework.renderers.JSONRenderer",
     ]
-
-DJANGO_DEFAULTS = {
-    "JSON_API_FORMAT_FIELD_NAMES": "dasherize",
-    "JSON_API_FORMAT_TYPES": "dasherize",
-}
 
 SPECTACULAR_DEFAULTS = {
     "COMPONENT_SPLIT_REQUEST": True,
-    "GET_LIB_DOC_EXCLUDES": get_lib_doc_excludes,
-    "PREPROCESSING_HOOKS": [
-        "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
-    ],
 }
 
 SPODCAT_DEFAULTS: SpodcatSettingsDict = {
@@ -73,10 +40,6 @@ SPODCAT_DEFAULTS: SpodcatSettingsDict = {
 
 
 def patch_django_settings():
-    for key, value in DJANGO_DEFAULTS.items():
-        if not hasattr(django_settings, key):
-            setattr(django_settings, key, value)
-
     django_settings.REST_FRAMEWORK = {**REST_FRAMEWORK_DEFAULTS, **getattr(django_settings, "REST_FRAMEWORK", {})}
     django_settings.SPECTACULAR_SETTINGS = {
         **SPECTACULAR_DEFAULTS,

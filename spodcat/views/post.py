@@ -1,39 +1,32 @@
 import re
 
-from django.db.models import Prefetch, Q
+from django.db.models import Q, QuerySet
 from django_filters import rest_framework as filters
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from spodcat import serializers
-from spodcat.models import Comment, Podcast, PodcastContent, Post
+from spodcat.models import Post
+from spodcat.views.podcast_content import AbstractPodcastContentViewSet
 
-from .podcast_content import AbstractPodcastContentFilter, AbstractPodcastContentViewSet
 
+class PostFilter(filters.FilterSet):
+    freetext = filters.CharFilter(method="filter_freetext", label="Freetext")
+    podcast = filters.CharFilter(field_name="podcast__slug")
+    slug = filters.CharFilter(field_name="slug")
 
-class PostFilter(AbstractPodcastContentFilter):
-    post = filters.CharFilter(method="filter_content", label="Post")
-
-    def filter_freetext(self, queryset, name, value):
+    def filter_freetext(self, queryset: QuerySet, name, value):
         values = re.split(r"\s+", value)
         qs = [Q(name__icontains=v) | Q(description__icontains=v) | Q(videos__title__icontains=v) for v in values]
         return queryset.filter(*qs).distinct()
 
 
-class PostViewSet(AbstractPodcastContentViewSet):
+class PostViewSet(ReadOnlyModelViewSet, AbstractPodcastContentViewSet[Post]):
     filterset_class = PostFilter
-    prefetch_for_includes = {
-        "podcast.contents": [
-            Prefetch(
-                "podcast",
-                queryset=Podcast.objects.prefetch_related(
-                    Prefetch("contents", queryset=PodcastContent.objects.published().with_has_songs())
-                ),
-            ),
-        ],
-        "podcast": ["podcast__links", "podcast__categories", "podcast__seasons", "podcast__contents"],
-        "__all__": ["videos", Prefetch("comments", queryset=Comment.objects.filter(is_approved=True))],
-    }
-    serializer_class = serializers.PostSerializer
     queryset = Post.objects.all()
+    serializer_class = serializers.PostSerializer
+
+    def get_detail_queryset(self, queryset):
+        return queryset.select_related("podcast")
 
     def get_serializer_class(self):
         if self.is_list_request():
@@ -41,4 +34,4 @@ class PostViewSet(AbstractPodcastContentViewSet):
         return serializers.PostSerializer
 
     def is_list_request(self):
-        return self.action != "retrieve" and "filter[post]" not in self.request.query_params
+        return self.action != "retrieve" and not self.request.query_params.get("slug")

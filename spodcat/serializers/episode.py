@@ -1,39 +1,22 @@
-from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import ResourceRelatedField
+from rest_framework import serializers
 
-from spodcat.models import Comment, Episode, EpisodeSong, Season, Video
+from spodcat.models import Episode
+from spodcat.serializers.abstract_podcast_content import AbstractPodcastContentSerializer
+from spodcat.serializers.episode_song import EpisodeSongSerializer
 
 
-class EpisodeSerializer(serializers.ModelSerializer):
+class EpisodeSerializer(AbstractPodcastContentSerializer[Episode]):
     audio_url = serializers.SerializerMethodField()
-    comments = ResourceRelatedField(queryset=Comment.objects, many=True)
-    description_html = serializers.SerializerMethodField()
     has_songs = serializers.SerializerMethodField()
-    season = ResourceRelatedField(queryset=Season.objects)
-    songs = ResourceRelatedField(queryset=EpisodeSong.objects, many=True)
-    videos = ResourceRelatedField(queryset=Video.objects, many=True)
-    podcast_name = serializers.CharField(source="podcast.name")
-
-    included_serializers = {
-        "comments": "spodcat.serializers.CommentSerializer",
-        "podcast": "spodcat.serializers.PodcastSerializer",
-        "season": "spodcat.serializers.SeasonSerializer",
-        "songs": "spodcat.serializers.EpisodeSongSerializer",
-        "videos": "spodcat.serializers.VideoSerializer",
-    }
+    season = serializers.PrimaryKeyRelatedField(read_only=True)
+    songs = EpisodeSongSerializer(many=True)
 
     class Meta:
         exclude = ["polymorphic_ctype", "is_draft", "audio_file", "audio_file_length"]
         model = Episode
 
-    class JSONAPIMeta:
-        included_resources = ["season"]
-
     def get_audio_url(self, obj: Episode) -> str | None:
         return obj.get_audio_file_url()
-
-    def get_description_html(self, obj: Episode) -> str:
-        return obj.description_html
 
     def get_has_songs(self, obj: Episode) -> bool:
         if hasattr(obj, "has_songs"):
@@ -51,8 +34,9 @@ class PartialEpisodeSerializer(EpisodeSerializer):
             "image_thumbnail",
             "name",
             "number",
-            "podcast_name",
+            "podcast",
             "published",
+            "resourcetype",
             "season",
             "slug",
         ]

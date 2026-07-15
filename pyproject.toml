@@ -19,10 +19,7 @@ dependencies = [
     "django-polymorphic",
     "django-rest-polymorphic>=0.1.10",
     "django",
-    "djangorestframework-jsonapi[django-polymorphic,django-filter]",
     "djangorestframework",
-    "drf-nested-routers>=0.95.0",
-    "drf-spectacular-jsonapi",
     "drf-spectacular",
     "feedgen",
     "feedparser",
@@ -41,7 +38,7 @@ license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
 requires-python = ">=3.11"
-version = "2.10.1"
+version = "2.11.0"
 
 [project.urls]
 "Live example" = "https://podd.huseli.us"

@@ -2,17 +2,15 @@ from django_filters import rest_framework as filters
 from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 
+from spodcat import serializers
 from spodcat.models import Season
-from spodcat.v2.serializers import SeasonSerializer
-
-from .base import V2ViewMixin
 
 
 class SeasonFilter(filters.FilterSet):
     podcast = filters.CharFilter(field_name="podcast__slug")
 
 
-class SeasonViewSet(ListModelMixin, V2ViewMixin, GenericViewSet[Season]):
+class SeasonViewSet(ListModelMixin, GenericViewSet[Season]):
     filterset_class = SeasonFilter
-    queryset = Season.objects.only("id", "name", "number", "image_thumbnail")
-    serializer_class = SeasonSerializer
+    queryset = Season.objects.only("id", "name", "number", "image", "image_thumbnail")
+    serializer_class = serializers.SeasonSerializer

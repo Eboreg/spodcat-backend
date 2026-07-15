@@ -3,8 +3,7 @@ from typing import TypeVar
 from rest_framework import serializers
 
 from spodcat.models import PodcastContent
-
-from .video import VideoSerializer
+from spodcat.serializers.video import VideoSerializer
 
 
 _MT = TypeVar("_MT", bound=PodcastContent)

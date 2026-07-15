@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.utils.translation import gettext_lazy as _
 
+from spodcat.types import SpodcatSettingsDict
 from spodcat.utils import env_boolean
 
 
@@ -29,7 +30,6 @@ INSTALLED_APPS = [
     "django.forms",
     "django_extensions",
     "rest_framework",
-    "rest_framework_json_api",
     "polymorphic",
     "martor",
     "django_filters",
@@ -146,18 +146,11 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Django REST Framework
-REST_FRAMEWORK = {
-    "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
-    "TEST_REQUEST_RENDERER_CLASSES": ("rest_framework_json_api.renderers.JSONRenderer",),
-}
-
-
 MARTOR_ENABLE_LABEL = True
 AUTH_USER_MODEL = "test_env.User"
 
 
-SPODCAT = {
+SPODCAT: SpodcatSettingsDict = {
     "BACKEND_HOST": os.environ.get("BACKEND_HOST"),
     "FILEFIELDS": {
         "FONTFACE_FILE": {"STORAGE": "local"},

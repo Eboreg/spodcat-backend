@@ -1,10 +1,16 @@
-from rest_framework.mixins import CreateModelMixin
-from rest_framework_json_api import views
+from django_filters import rest_framework as filters
+from rest_framework.mixins import CreateModelMixin, ListModelMixin
+from rest_framework.viewsets import GenericViewSet
 
 from spodcat import serializers
 from spodcat.models import Comment
 
 
-class CommentViewSet(CreateModelMixin, views.ReadOnlyModelViewSet):
+class CommentFilter(filters.FilterSet):
+    podcast_content = filters.CharFilter(field_name="podcast_content")
+
+
+class CommentViewSet(CreateModelMixin, ListModelMixin, GenericViewSet[Comment]):
+    filterset_class = CommentFilter
+    queryset = Comment.objects.filter(is_approved=True)
     serializer_class = serializers.CommentSerializer
-    queryset = Comment.objects.filter(is_approved=True).select_related("podcast_content")

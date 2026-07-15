@@ -1,33 +1,18 @@
-from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import PolymorphicResourceRelatedField, ResourceRelatedField
+from rest_framework import serializers
 
-from spodcat.models import Podcast, PodcastContent, PodcastLink, Season
-
-from .podcast_content import PartialPodcastContentSerializer
+from spodcat.models import Podcast
+from spodcat.serializers.podcast_link import PodcastLinkSerializer
 
 
-class PodcastSerializer(serializers.ModelSerializer):
-    contents = PolymorphicResourceRelatedField(
-        PartialPodcastContentSerializer,
-        queryset=PodcastContent.objects.partial().published(),
-        many=True,
-    )
+class PodcastSerializer(serializers.ModelSerializer[Podcast]):
     description_html = serializers.SerializerMethodField()
     episodes_fm_url = serializers.SerializerMethodField()
-    links = ResourceRelatedField(queryset=PodcastLink.objects, many=True)
-    rss_url = serializers.SerializerMethodField()
+    links = PodcastLinkSerializer(many=True)
     name_font_family = serializers.SerializerMethodField()
-    seasons = ResourceRelatedField(queryset=Season.objects, many=True)
-
-    included_serializers = {
-        "categories": "spodcat.serializers.CategorySerializer",
-        "contents": "spodcat.serializers.PartialPodcastContentSerializer",
-        "links": "spodcat.serializers.PodcastLinkSerializer",
-        "seasons": "spodcat.serializers.SeasonSerializer",
-    }
+    rss_url = serializers.SerializerMethodField()
 
     class Meta:
-        exclude = ["authors", "owner", "custom_guid"]
+        exclude = ["categories", "authors", "owner", "custom_guid", "episode_rss_suffix", "itunes_type"]
         model = Podcast
 
     def get_description_html(self, obj: Podcast) -> str:
@@ -43,3 +28,9 @@ class PodcastSerializer(serializers.ModelSerializer):
 
     def get_rss_url(self, obj: Podcast) -> str:
         return obj.rss_url
+
+
+class PodcastListSerializer(PodcastSerializer):
+    class Meta:
+        fields = ["slug", "name", "banner", "cover_thumbnail", "name_font_family", "name_font_size", "tagline"]
+        model = Podcast

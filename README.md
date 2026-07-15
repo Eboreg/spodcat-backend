@@ -1,8 +1,10 @@
 # Spodcat
 
-This is the backend part of my podcast platform. It's designed to go along with [the frontend part](https://github.com/Eboreg/spodcat-frontend). It's built on Django REST Framework with a JSON:API implementation, but more on that later. The admin interface is just the regular Django admin with some minor tweakage. My own specific implementation is available in [this repo](https://github.com/Eboreg/podd-huseli-us-backend) and is also live [here](https://podd.huseli.us).
+This is the backend part of my podcast platform. It's designed to go along with [the frontend part](https://github.com/Eboreg/spodcat-frontend). It's built on Django REST Framework. The admin interface is just the regular Django admin with some minor tweakage. My own specific implementation is available in [this repo](https://github.com/Eboreg/podd-huseli-us-backend) and is also live [here](https://podd.huseli.us).
 
 It's mainly made for my own specific purposes. Lately I have been making some effort to generalise stuff, in order to facilitate some potential wider use. But there's probably lots more that needs to be done to that end.
+
+There is no guarantee of any kind of API stability.
 
 ## External (non-Python) requirements
 
@@ -137,7 +139,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",      # needed for admin
     "django.contrib.staticfiles",   # needed for admin and REST browsable API
     "rest_framework",               # needed for REST browsable API
-    "rest_framework_json_api",      # needed for REST browsable API
     "django_filters",               # needed for REST browsable API
     "martor",                       # needed for admin
     "spodcat",
@@ -167,7 +168,6 @@ urlpatterns = [
 
 * [Django](https://www.djangoproject.com/)
 * [Django REST Framework](https://www.django-rest-framework.org/)
-* [Django REST Framework JSON:API](https://django-rest-framework-json-api.readthedocs.io/)
 * [django-filter](https://django-filter.readthedocs.io/)
 * [django-polymorphic](https://django-polymorphic.readthedocs.io/)
 * [django-rest-polymorphic](https://github.com/denisorehovsky/django-rest-polymorphic)
