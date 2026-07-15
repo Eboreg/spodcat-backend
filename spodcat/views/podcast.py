@@ -33,11 +33,11 @@ class PodcastViewSet(LogRequestMixin, ReadOnlyModelViewSet[Podcast]):
 
     @extend_schema(responses={(200, "text/plain"): OpenApiTypes.NONE})
     @action(methods=["post"], detail=True)
-    def pling(self, request: Request, pk: str):
+    def pling(self, request: Request, slug: str):
         if apps.is_installed("spodcat.logs"):
             from spodcat.logs.models import PodcastRequestLog
 
-            self.log_request(request, PodcastRequestLog, podcast_id=pk)
+            self.log_request(request, PodcastRequestLog, podcast_id=slug)
 
         return Response()
 
