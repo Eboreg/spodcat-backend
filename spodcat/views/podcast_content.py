@@ -42,12 +42,12 @@ class PodcastContentFilter(filters.FilterSet):
 
 
 class AbstractPodcastContentViewSet(LogRequestMixin, GenericViewSet[_MT]):
-    def filter_queryset(self, queryset):
-        queryset = cast(PodcastContentQuerySet, super().filter_queryset(queryset))
-        return queryset.published()
-
     def get_detail_queryset(self, queryset: QuerySet[_MT, _MT]) -> QuerySet[_MT, _MT]:
         return queryset
+
+    def get_list_queryset(self, queryset: QuerySet[_MT, _MT]) -> QuerySet[_MT, _MT]:
+        queryset = cast(PodcastContentQuerySet, queryset)
+        return queryset.published()
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
@@ -65,7 +65,7 @@ class AbstractPodcastContentViewSet(LogRequestMixin, GenericViewSet[_MT]):
         queryset = super().get_queryset()
         if not self.is_list_request():
             return self.get_detail_queryset(queryset)
-        return queryset
+        return self.get_list_queryset(queryset)
 
     def is_list_request(self):
         return self.action == "list"

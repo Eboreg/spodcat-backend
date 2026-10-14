@@ -2125,7 +2125,7 @@ wheels = [
 
 [[package]]
 name = "spodcat-backend"
-version = "2.12.1"
+version = "2.12.2"
 source = { editable = "." }
 dependencies = [
     { name = "country-list" },
