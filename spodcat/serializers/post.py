@@ -4,7 +4,7 @@ from spodcat.serializers.abstract_podcast_content import AbstractPodcastContentS
 
 class PostSerializer(AbstractPodcastContentSerializer[Post]):
     class Meta:
-        exclude = ["polymorphic_ctype", "is_draft"]
+        exclude = ["polymorphic_ctype"]
         model = Post
 
 
@@ -12,6 +12,7 @@ class PartialPostSerializer(PostSerializer):
     class Meta:
         fields = [
             "id",
+            "is_draft",
             "name",
             "podcast",
             "published",
