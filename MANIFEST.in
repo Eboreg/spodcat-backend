@@ -1,9 +1,0 @@
-include README.md LICENSE
-recursive-include spodcat/templates *.html
-recursive-include spodcat/static *.css *.js *.map
-recursive-include spodcat/locale *.po *.mo
-include spodcat/submodules/user-agents-v2/src/*.json
-include spodcat/submodules/GoodBots/iplists/*.ips
-include spodcat/data/*.mmdb
-prune test_env
-exclude /*.py
