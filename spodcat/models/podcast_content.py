@@ -56,11 +56,6 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     def frontend_url(self) -> str:
         instance_class = self.get_real_instance_class() or self.__class__
 
-        if self.is_draft:
-            return spodcat_settings.get_absolute_frontend_url(
-                f"{self.podcast.slug}/{instance_class._meta.model_name}/draft/{self.id}",
-            )
-
         return spodcat_settings.get_absolute_frontend_url(
             f"{self.podcast.slug}/{instance_class._meta.model_name}/{self.slug}",
         )
