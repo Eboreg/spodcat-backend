@@ -38,7 +38,7 @@ license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2.12.3"
+version = "2.12.4"
 
 [project.urls]
 "Live example" = "https://podd.huseli.us"
@@ -104,5 +104,5 @@ exclude-newer = "P7D"
 [tool.uv.build-backend]
 module-name = "spodcat"
 module-root = ""
-source-exclude = ["test_env/**", "*.map"]
-wheel-exclude = ["test_env/**", "*.map"]
+source-exclude = ["test_env/**"]
+wheel-exclude = ["test_env/**"]
