@@ -4,8 +4,8 @@
 {% block result_list %}
 {% if logs_app_installed %}
 <div class="change-list-legend">
-    <p>{% translate "<code>VIEWS</code> = number of times the episode's details page has been visited." %}</p>
-    <p>{% translate "<code>PLAYS</code> = number of times the episode's audio file has been downloaded <em>by a non-bot client</em> (as far as we're able to tell). May be fractional because of partial downloads (common when streaming)." %}</p>
+  <p>{% translate "<code>VIEWS</code> = number of times the episode's details page has been visited." %}</p>
+  <p>{% translate "<code>PLAYS</code> = number of times the episode's audio file has been downloaded <em>by a non-bot client</em> (as far as we're able to tell). May be fractional because of partial downloads (common when streaming)." %}</p>
 </div>
 {% endif %}
 {{ block.super }}
