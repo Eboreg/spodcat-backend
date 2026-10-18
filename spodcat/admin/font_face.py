@@ -1,15 +1,21 @@
-import random
+from __future__ import annotations
 
-from django.contrib import admin
-from django.core.files.uploadedfile import UploadedFile
+import random
+from typing import TYPE_CHECKING
+
 from django.db import models
-from django.forms import ClearableFileInput, ModelForm
-from django.http import HttpRequest
+from django.forms import ClearableFileInput
 from django.utils.timezone import now
 
-from spodcat.contrib.admin.mixin import AdminMixin
+from spodcat.contrib.admin.options import SpodcatModelAdmin
 from spodcat.models import FontFace
 from spodcat.utils import delete_storage_file
+
+
+if TYPE_CHECKING:
+    from django.core.files.uploadedfile import UploadedFile
+    from django.forms import ModelForm
+    from django.http import HttpRequest
 
 
 class FontFileWidget(ClearableFileInput):
@@ -20,7 +26,7 @@ class FontFileWidget(ClearableFileInput):
         }
 
 
-class FontFaceAdmin(AdminMixin, admin.ModelAdmin):
+class FontFaceAdmin(SpodcatModelAdmin):
     list_display = ["name", "format", "weight"]
     formfield_overrides = {
         models.FileField: {"widget": FontFileWidget},

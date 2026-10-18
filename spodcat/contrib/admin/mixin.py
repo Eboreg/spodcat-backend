@@ -1,30 +1,22 @@
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from __future__ import annotations
 
-from django.db.models import Model, QuerySet
+from typing import TYPE_CHECKING, Any
+
 from django.forms import TimeInput
 from django.urls import reverse
 from django.utils.html import format_html
 from martor.models import MartorField
 from polymorphic.models import PolymorphicModel
 
-from spodcat.contrib.admin.site import AdminSite
 from spodcat.contrib.admin.widgets import AdminMartorWidget
 from spodcat.model_fields import TimestampField
 from spodcat.model_mixin import ModelMixin
-from spodcat.settings import spodcat_settings
-
-
-_ModelT = TypeVar("_ModelT", bound=Model)
 
 
 if TYPE_CHECKING:
-    from django.contrib.admin import ModelAdmin
+    from django.db.models import Model
 
-    class MixinBase(ModelAdmin, Generic[_ModelT]): ...
-else:
-
-    class MixinBase(Generic[_ModelT]): ...
+    from spodcat.contrib.admin.site import AdminSite
 
 
 class AdminMixin:
@@ -79,34 +71,3 @@ class AdminMixin:
             return obj.has_delete_permission(request)
 
         return self.has_change_permission(request, obj)
-
-
-class StaticRSSMixin(MixinBase[_ModelT]):
-    def delete_model(self, request, obj: _ModelT):
-        super().delete_model(request, obj)
-        if slugs := self.get_podcast_slugs_from_instance(obj):
-            self.regenerate_static_rss(slugs)
-
-    def delete_queryset(self, request, queryset: QuerySet[_ModelT]):
-        super().delete_queryset(request, queryset)
-        if slugs := self.get_podcast_slugs_from_queryset(queryset):
-            self.regenerate_static_rss(slugs)
-
-    def get_podcast_slugs_from_instance(self, obj: _ModelT) -> Iterable[str]:
-        return []
-
-    def get_podcast_slugs_from_queryset(self, queryset: QuerySet[_ModelT]) -> Iterable[str]:
-        return []
-
-    def regenerate_static_rss(self, podcast_slugs: Iterable[str]):
-        if spodcat_settings.STATIC_RSS_XML:
-            from spodcat.rss import PodcastRssData
-
-            for slug in podcast_slugs:
-                data = PodcastRssData(slug)
-                data.regenerate_static()
-
-    def save_model(self, request, obj: _ModelT, form, change):
-        super().save_model(request, obj, form, change)
-        if slugs := self.get_podcast_slugs_from_instance(obj):
-            self.regenerate_static_rss(slugs)

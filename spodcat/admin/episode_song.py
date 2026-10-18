@@ -1,19 +1,26 @@
-from collections.abc import Iterable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from django.contrib import admin
 from django.db import models
 from django.db.models import Q
 from django.forms import ModelChoiceField
-from django.http import HttpRequest
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from spodcat.contrib.admin.mixin import AdminMixin, StaticRSSMixin
+from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
 from spodcat.models import EpisodeSong
 from spodcat.utils import seconds_to_timestamp
 
 
-class EpisodeSongAdmin(AdminMixin, StaticRSSMixin[EpisodeSong], admin.ModelAdmin):
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from django.http import HttpRequest
+
+
+class EpisodeSongAdmin(SpodcatStaticRSSModelAdmin[EpisodeSong]):
     filter_horizontal = ["artists"]
     list_display = ["title", "artists_str", "episode_str", "start_time_str"]
     ordering = ["-episode__number", "start_time"]

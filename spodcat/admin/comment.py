@@ -1,19 +1,27 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.contrib import admin
 from django.db import models
-from django.http import HttpRequest
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from spodcat.contrib.admin.mixin import AdminMixin
-from spodcat.models import Comment
+from spodcat.contrib.admin.options import SpodcatModelAdmin
+
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
+    from spodcat.models import Comment
 
 
 @admin.action(description=_("Approve comments"))
-def approve_comments(modeladmin: "CommentAdmin", request: HttpRequest, queryset: models.QuerySet[Comment]):
+def approve_comments(modeladmin: CommentAdmin, request: HttpRequest, queryset: models.QuerySet[Comment]):
     queryset.update(is_approved=True)
 
 
-class CommentAdmin(AdminMixin, admin.ModelAdmin):
+class CommentAdmin(SpodcatModelAdmin):
     actions = [approve_comments]
     list_display = ["name", "truncated_text", "created", "is_approved", "content_link", "frontend_link"]
     list_filter = ["is_approved", "podcast_content__podcast"]

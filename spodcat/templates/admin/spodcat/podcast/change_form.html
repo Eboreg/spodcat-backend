@@ -1,0 +1,11 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+{% block object-tools-items %}
+{% if change %}
+<li><a href="{{ original.frontend_url }}" target="_blank">{% translate "Frontend" %}</a></li>
+{% if logs_app_installed %}
+<li><a href="{% url opts|admin_urlname:'stats' original.pk|admin_urlquote %}">{% translate "Statistics" %}</a></li>
+{% endif %}
+{% endif %}
+{{ block.super }}
+{% endblock object-tools-items %}

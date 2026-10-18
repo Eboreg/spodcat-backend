@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 import logging
 import os
 import tempfile
 from datetime import date, timedelta
 from threading import Thread
+from typing import TYPE_CHECKING, Any
 
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.utils import unquote
-from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Count, F, OuterRef, Subquery, Sum
-from django.forms import ModelForm
-from django.http import HttpRequest
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.safestring import mark_safe
@@ -24,6 +24,12 @@ from spodcat.form_fields import ArtistMultipleChoiceField
 from spodcat.forms import EpisodeAdminForm
 from spodcat.models import Artist, Episode, EpisodeChapter, EpisodeSong
 from spodcat.utils import delete_storage_file
+
+
+if TYPE_CHECKING:
+    from django.core.files.uploadedfile import UploadedFile
+    from django.forms import ModelForm
+    from django.http import HttpRequest, HttpResponse
 
 
 logger = logging.getLogger(__name__)
@@ -77,6 +83,17 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
     search_fields = ["name", "description", "slug", "songs__title", "songs__artists__name"]
     form = EpisodeAdminForm
 
+    def change_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+        form_url: str = "",
+        extra_context: dict[str, Any] | None = None,
+    ) -> HttpResponse:
+        extra_context = extra_context or {}
+        extra_context.update(logs_app_installed=apps.is_installed("spodcat.logs"))
+        return super().change_view(request, object_id, form_url, extra_context)
+
     def duration(self, obj: Episode):
         return timedelta(seconds=int(obj.duration_seconds))
 
@@ -123,6 +140,9 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
             )
 
         return qs
+
+    def get_stats_url(self, obj: Episode):
+        return reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_stats", args=(obj.pk,))
 
     def get_urls(self):
         urls = []
@@ -222,9 +242,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
 
     @admin.display(description="")
     def stats_link(self, obj: Episode):
-        meta = obj._meta
-        url = reverse(f"admin:{meta.app_label}_{meta.model_name}_stats", args=(obj.pk,))
-        return mark_safe(f'<a href="{url}">' + _("Statistics") + "</a>")
+        return mark_safe(f'<a href="{self.get_stats_url(obj)}">' + _("Statistics") + "</a>")
 
     def stats_view(self, request: HttpRequest, object_id: str):
         from spodcat.logs.models import (

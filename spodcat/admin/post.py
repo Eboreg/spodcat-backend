@@ -1,11 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.apps import apps
 from django.contrib import admin
-from django.http import HttpRequest
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.admin.podcast_content import BasePodcastContentAdmin, PodcastContentVideoInline
 from spodcat.models import Post
+
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 
 class PostAdmin(BasePodcastContentAdmin[Post]):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import statistics
 from datetime import timedelta
 from typing import TYPE_CHECKING
@@ -11,14 +13,14 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import Avg, Count, F, FloatField, Max, Min, Sum
 from django.db.models.functions import Cast
-from django.forms import ModelForm
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from spodcat.contrib.admin.mixin import AdminMixin, StaticRSSMixin
+from spodcat.contrib.admin.mixin import AdminMixin
+from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
 from spodcat.forms import PodcastAdminForm, PodcastChangeSlugForm
 from spodcat.models import Episode, Podcast, PodcastLink
 from spodcat.utils import delete_storage_file
@@ -26,6 +28,8 @@ from spodcat.utils import delete_storage_file
 
 if TYPE_CHECKING:
     from django.contrib.admin.options import _FieldsetSpec
+    from django.forms import ModelForm
+    from django.http import HttpRequest
 
 
 class PodcastLinkInline(AdminMixin, admin.TabularInline):
@@ -33,7 +37,7 @@ class PodcastLinkInline(AdminMixin, admin.TabularInline):
     extra = 0
 
 
-class PodcastAdmin(AdminMixin, StaticRSSMixin[Podcast], admin.ModelAdmin):
+class PodcastAdmin(SpodcatStaticRSSModelAdmin[Podcast]):
     filter_horizontal = ["categories", "authors"]
     inlines = [PodcastLinkInline]
     readonly_fields = ("slug",)

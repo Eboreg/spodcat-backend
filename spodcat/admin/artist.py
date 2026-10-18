@@ -1,13 +1,21 @@
-from collections.abc import Iterable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from django.contrib import admin
 from django.db import models
-from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.contrib.admin.filters import ArtistSongCountFilter
-from spodcat.contrib.admin.mixin import AdminMixin, StaticRSSMixin
+from spodcat.contrib.admin.mixin import AdminMixin
+from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
 from spodcat.models import Artist, EpisodeSong
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from django.http import HttpRequest
 
 
 class ArtistSongInline(AdminMixin, admin.TabularInline):
@@ -34,7 +42,7 @@ class ArtistSongInline(AdminMixin, admin.TabularInline):
         return obj.episodesong.title
 
 
-class ArtistAdmin(AdminMixin, StaticRSSMixin[Artist], admin.ModelAdmin):
+class ArtistAdmin(SpodcatStaticRSSModelAdmin[Artist]):
     inlines = [ArtistSongInline]
     list_display = ["name", "song_count"]
     list_filter = [ArtistSongCountFilter]

@@ -38,7 +38,7 @@ license-files = ["LICENSE"]
 name = "spodcat-backend"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2.13.1"
+version = "2.14.0"
 
 [project.urls]
 "Live example" = "https://podd.huseli.us"
@@ -73,7 +73,7 @@ stubPath = "typings"
 typeCheckingMode = "basic"
 
 [tool.ruff]
-exclude = [".venv", ".git", ".mypy_cache", "__pycache__", "build", "node_modules", "scratch.py"]
+exclude = [".venv", ".git", ".mypy_cache", "__pycache__", "build", "node_modules", "scratch.py", "*.md"]
 line-length = 120
 show-fixes = true
 target-version = "py312"

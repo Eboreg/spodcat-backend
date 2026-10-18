@@ -1,16 +1,22 @@
-from collections.abc import Iterable
+from __future__ import annotations
 
-from django.contrib import admin
+from typing import TYPE_CHECKING
+
 from django.db import models
-from django.forms import ModelForm
-from django.http import HttpRequest
 
-from spodcat.contrib.admin.mixin import AdminMixin, StaticRSSMixin
+from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
 from spodcat.models import Season
 from spodcat.utils import delete_storage_file
 
 
-class SeasonAdmin(AdminMixin, StaticRSSMixin[Season], admin.ModelAdmin):
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from django.forms import ModelForm
+    from django.http import HttpRequest
+
+
+class SeasonAdmin(SpodcatStaticRSSModelAdmin[Season]):
     list_display = ["podcast", "number", "name"]
     fields = ["podcast", "number", "name", "image"]
 

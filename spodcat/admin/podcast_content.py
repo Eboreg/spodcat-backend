@@ -1,19 +1,27 @@
-from collections.abc import Iterable
-from typing import Generic, TypeVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Count, Q
-from django.forms import ModelChoiceField, ModelForm
-from django.http import HttpRequest
+from django.forms import ModelChoiceField
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from spodcat.contrib.admin.mixin import AdminMixin, StaticRSSMixin
+from spodcat.contrib.admin.mixin import AdminMixin
+from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
 from spodcat.forms import PodcastContentVideoAdminForm
 from spodcat.models import PodcastContent, Video
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from django.forms import ModelForm
+    from django.http import HttpRequest
 
 
 _PCT = TypeVar("_PCT", bound=PodcastContent)
@@ -25,7 +33,7 @@ class PodcastContentVideoInline(AdminMixin, admin.TabularInline):
     form = PodcastContentVideoAdminForm
 
 
-class BasePodcastContentAdmin(AdminMixin, StaticRSSMixin[_PCT], admin.ModelAdmin, Generic[_PCT]):
+class BasePodcastContentAdmin(SpodcatStaticRSSModelAdmin[_PCT], Generic[_PCT]):
     save_on_top = True
     search_fields = ["name", "description", "slug"]
 
