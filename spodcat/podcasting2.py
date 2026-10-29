@@ -11,6 +11,7 @@ NAMESPACE = "https://podcastindex.org/namespace/1.0"
 
 class Podcast2Extension(BaseExtension):
     def __init__(self):
+        self.__podcast_block: list[str] = []
         self.__podcast_guid = None
         self.__podcast_images: list[ImageData] = []
         self.__podcast_images_deprecated: list[tuple[str, int]] = []
@@ -21,6 +22,11 @@ class Podcast2Extension(BaseExtension):
 
     def extend_rss(self, feed):
         channel = feed[0]
+
+        for slug in self.__podcast_block:
+            elem = xml_elem("{%s}block" % NAMESPACE, channel)
+            elem.attrib["id"] = slug
+            elem.text = "yes"
 
         if self.__podcast_guid is not None:
             guid = xml_elem("{%s}guid" % NAMESPACE, channel)
@@ -41,6 +47,11 @@ class Podcast2Extension(BaseExtension):
                 elem.attrib["purpose"] = purpose
 
         return feed
+
+    def podcast_block(self, *slugs: str):
+        for slug in slugs:
+            if slug not in self.__podcast_block:
+                self.__podcast_block.append(slug)
 
     def podcast_guid(self, guid: str | None = None):
         if guid is not None:

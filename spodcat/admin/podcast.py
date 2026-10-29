@@ -89,15 +89,19 @@ class PodcastAdmin(SpodcatStaticRSSModelAdmin[Podcast]):
 
     def get_fieldsets(self, request: HttpRequest, obj: Podcast | None = None) -> _FieldsetSpec:
         fieldsets: _FieldsetSpec = [
-            (None, {"fields": [("name", "slug"), ("tagline", "language"), "description", "episode_rss_suffix"]}),
             (
-                _("Comments"),
+                None,
                 {
                     "fields": [
-                        ("enable_comments", "require_comment_approval"),
-                    ]
+                        ("name", "slug"),
+                        ("tagline", "language"),
+                        "description",
+                        "episode_rss_suffix",
+                        "blocked_platforms",
+                    ],
                 },
             ),
+            (_("Comments"), {"fields": [("enable_comments", "require_comment_approval")]}),
             (_("Graphics"), {"fields": ["cover", "banner", "favicon", "name_font_size", "name_font_face"]}),
         ]
 

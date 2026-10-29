@@ -12,7 +12,15 @@ class PodcastSerializer(serializers.ModelSerializer[Podcast]):
     rss_url = serializers.SerializerMethodField()
 
     class Meta:
-        exclude = ["categories", "authors", "owner", "custom_guid", "episode_rss_suffix", "itunes_type"]
+        exclude = [
+            "authors",
+            "blocked_platforms",
+            "categories",
+            "custom_guid",
+            "episode_rss_suffix",
+            "itunes_type",
+            "owner",
+        ]
         model = Podcast
 
     def get_description_html(self, obj: Podcast) -> str:
@@ -32,5 +40,5 @@ class PodcastSerializer(serializers.ModelSerializer[Podcast]):
 
 class PodcastListSerializer(PodcastSerializer):
     class Meta:
-        fields = ["slug", "name", "banner", "cover_thumbnail", "name_font_family", "name_font_size", "tagline"]
+        fields = ["banner", "cover_thumbnail", "name", "name_font_family", "name_font_size", "slug", "tagline"]
         model = Podcast

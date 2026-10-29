@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-18 03:49+0200\n"
+"POT-Creation-Date: 2026-10-30 00:49+0100\n"
 "PO-Revision-Date: 2026-10-18 03:53+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -46,25 +46,25 @@ msgstr ""
 msgid "text"
 msgstr ""
 
-#: spodcat/admin/episode.py:169 spodcat/models/episode.py:91
-#: spodcat/models/season.py:30
+#: spodcat/admin/episode.py:169 spodcat/models/episode.py:116
+#: spodcat/models/season.py:33
 msgid "number"
 msgstr ""
 
-#: spodcat/admin/episode.py:173 spodcat/admin/podcast.py:162
+#: spodcat/admin/episode.py:173 spodcat/admin/podcast.py:166
 msgid "plays"
 msgstr ""
 
 #: spodcat/admin/episode.py:189 spodcat/logs/admin.py:83
 #: spodcat/logs/admin.py:114 spodcat/logs/admin.py:154
-#: spodcat/logs/models.py:266 spodcat/logs/models.py:355
-#: spodcat/models/podcast.py:190 spodcat/models/podcast_content.py:34
-#: spodcat/models/podcast_link.py:47 spodcat/models/season.py:28
+#: spodcat/logs/models.py:268 spodcat/logs/models.py:357
+#: spodcat/models/podcast.py:213 spodcat/models/podcast_content.py:36
+#: spodcat/models/podcast_link.py:47 spodcat/models/season.py:31
 msgid "podcast"
 msgstr ""
 
 #: spodcat/admin/episode.py:245 spodcat/admin/episode.py:288
-#: spodcat/admin/podcast.py:212 spodcat/admin/podcast.py:273
+#: spodcat/admin/podcast.py:216 spodcat/admin/podcast.py:277
 #: spodcat/templates/admin/spodcat/episode/change_form.html:7
 #: spodcat/templates/admin/spodcat/episode/stats.html:9
 #: spodcat/templates/admin/spodcat/podcast/change_form.html:7
@@ -72,22 +72,22 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
-#: spodcat/admin/episode_song.py:30 spodcat/models/artist.py:28
-#: spodcat/models/episode_song.py:20
+#: spodcat/admin/episode_song.py:30 spodcat/models/artist.py:30
+#: spodcat/models/episode_song.py:22
 msgid "artists"
 msgstr ""
 
 #: spodcat/admin/episode_song.py:34 spodcat/logs/admin.py:139
-#: spodcat/logs/models.py:297 spodcat/models/episode.py:106
-#: spodcat/models/episode_chapter.py:64 spodcat/models/episode_song.py:27
+#: spodcat/logs/models.py:299 spodcat/models/episode.py:131
+#: spodcat/models/episode_chapter.py:66 spodcat/models/episode_song.py:29
 msgid "episode"
 msgstr ""
 
-#: spodcat/admin/episode_song.py:61 spodcat/models/episode_chapter.py:20
+#: spodcat/admin/episode_song.py:61 spodcat/models/episode_chapter.py:22
 msgid "start time"
 msgstr ""
 
-#: spodcat/admin/podcast.py:47 spodcat/models/podcast.py:71
+#: spodcat/admin/podcast.py:47 spodcat/models/podcast.py:88
 msgid "authors"
 msgstr ""
 
@@ -95,19 +95,19 @@ msgstr ""
 msgid "The slug was changed."
 msgstr ""
 
-#: spodcat/admin/podcast.py:94
+#: spodcat/admin/podcast.py:104
 msgid "Comments"
 msgstr ""
 
-#: spodcat/admin/podcast.py:101
+#: spodcat/admin/podcast.py:105
 msgid "Graphics"
 msgstr ""
 
-#: spodcat/admin/podcast.py:158 spodcat/models/podcast.py:171
+#: spodcat/admin/podcast.py:162 spodcat/models/podcast.py:188
 msgid "owner"
 msgstr ""
 
-#: spodcat/admin/podcast.py:280 spodcat/admin/podcast_content.py:84
+#: spodcat/admin/podcast.py:284 spodcat/admin/podcast_content.py:84
 msgid "views"
 msgstr ""
 
@@ -175,193 +175,193 @@ msgstr ""
 msgid "logs"
 msgstr ""
 
-#: spodcat/logs/models.py:60
+#: spodcat/logs/models.py:62
 msgid "device category"
 msgstr ""
 
-#: spodcat/logs/models.py:62
+#: spodcat/logs/models.py:64
 msgid "device name"
 msgstr ""
 
-#: spodcat/logs/models.py:63 spodcat/models/artist.py:19
+#: spodcat/logs/models.py:65 spodcat/models/artist.py:21
 #: spodcat/models/comment.py:19 spodcat/models/font_face.py:19
-#: spodcat/models/podcast.py:151 spodcat/models/podcast_content.py:29
-#: spodcat/models/season.py:31
+#: spodcat/models/podcast.py:168 spodcat/models/podcast_content.py:31
+#: spodcat/models/season.py:34
 msgid "name"
 msgstr ""
 
-#: spodcat/logs/models.py:64
+#: spodcat/logs/models.py:66
 msgid "type"
 msgstr ""
 
-#: spodcat/logs/models.py:65 spodcat/logs/models.py:68
-#: spodcat/logs/models.py:157
+#: spodcat/logs/models.py:67 spodcat/logs/models.py:70
+#: spodcat/logs/models.py:159
 msgid "user agent"
 msgstr ""
 
-#: spodcat/logs/models.py:69
+#: spodcat/logs/models.py:71
 msgid "user agents"
 msgstr ""
 
-#: spodcat/logs/models.py:89
+#: spodcat/logs/models.py:91
 msgid "city"
 msgstr ""
 
-#: spodcat/logs/models.py:90
+#: spodcat/logs/models.py:92
 msgid "country"
 msgstr ""
 
-#: spodcat/logs/models.py:91
+#: spodcat/logs/models.py:93
 msgid "IP"
 msgstr ""
 
-#: spodcat/logs/models.py:92
+#: spodcat/logs/models.py:94
 msgid "org"
 msgstr ""
 
-#: spodcat/logs/models.py:93
+#: spodcat/logs/models.py:95
 msgid "region"
 msgstr ""
 
-#: spodcat/logs/models.py:96 spodcat/logs/models.py:131
+#: spodcat/logs/models.py:98 spodcat/logs/models.py:133
 msgid "GeoIP"
 msgstr ""
 
-#: spodcat/logs/models.py:97
+#: spodcat/logs/models.py:99
 msgid "GeoIP:s"
 msgstr ""
 
-#: spodcat/logs/models.py:124 spodcat/models/comment.py:17
-#: spodcat/models/podcast_content.py:25
+#: spodcat/logs/models.py:126 spodcat/models/comment.py:17
+#: spodcat/models/podcast_content.py:27
 msgid "created"
 msgstr ""
 
-#: spodcat/logs/models.py:133
+#: spodcat/logs/models.py:135
 msgid "is bot"
 msgstr ""
 
-#: spodcat/logs/models.py:134
+#: spodcat/logs/models.py:136
 msgid "path"
 msgstr ""
 
-#: spodcat/logs/models.py:135
+#: spodcat/logs/models.py:137
 msgid "referrer"
 msgstr ""
 
-#: spodcat/logs/models.py:141
+#: spodcat/logs/models.py:143
 msgid "referrer category"
 msgstr ""
 
-#: spodcat/logs/models.py:143
+#: spodcat/logs/models.py:145
 msgid "referrer name"
 msgstr ""
 
-#: spodcat/logs/models.py:148
+#: spodcat/logs/models.py:150
 msgid "remote address"
 msgstr ""
 
-#: spodcat/logs/models.py:154
+#: spodcat/logs/models.py:156
 msgid "remote address category"
 msgstr ""
 
-#: spodcat/logs/models.py:156
+#: spodcat/logs/models.py:158
 msgid "remote host"
 msgstr ""
 
-#: spodcat/logs/models.py:164
+#: spodcat/logs/models.py:166
 msgid "user agent data"
 msgstr ""
 
-#: spodcat/logs/models.py:168
+#: spodcat/logs/models.py:170
 msgid "request log"
 msgstr ""
 
-#: spodcat/logs/models.py:169
+#: spodcat/logs/models.py:171
 msgid "request logs"
 msgstr ""
 
-#: spodcat/logs/models.py:272
+#: spodcat/logs/models.py:274
 msgid "podcast page request log"
 msgstr ""
 
-#: spodcat/logs/models.py:273
+#: spodcat/logs/models.py:275
 msgid "podcast page request logs"
 msgstr ""
 
-#: spodcat/logs/models.py:281 spodcat/models/comment.py:24
-#: spodcat/models/podcast_content.py:48 spodcat/models/video.py:21
+#: spodcat/logs/models.py:283 spodcat/models/comment.py:24
+#: spodcat/models/podcast_content.py:50 spodcat/models/video.py:21
 msgid "podcast content"
 msgstr ""
 
-#: spodcat/logs/models.py:287
+#: spodcat/logs/models.py:289
 msgid "podcast content page request log"
 msgstr ""
 
-#: spodcat/logs/models.py:288
+#: spodcat/logs/models.py:290
 msgid "podcast content page request logs"
 msgstr ""
 
-#: spodcat/logs/models.py:292 spodcat/models/episode.py:67
+#: spodcat/logs/models.py:294 spodcat/models/episode.py:86
 msgid "duration"
 msgstr ""
 
-#: spodcat/logs/models.py:299
+#: spodcat/logs/models.py:301
 msgid "response body size"
 msgstr ""
 
-#: spodcat/logs/models.py:300
+#: spodcat/logs/models.py:302
 msgid "status code"
 msgstr ""
 
-#: spodcat/logs/models.py:305
+#: spodcat/logs/models.py:307
 msgid "podcast episode audio request log"
 msgstr ""
 
-#: spodcat/logs/models.py:306
+#: spodcat/logs/models.py:308
 msgid "podcast episode audio request logs"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:15
+#: spodcat/logs/user_agent.py:17
 msgid "Auto"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:16
+#: spodcat/logs/user_agent.py:18
 msgid "Computer"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:17
+#: spodcat/logs/user_agent.py:19
 msgid "Mobile"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:18
+#: spodcat/logs/user_agent.py:20
 msgid "Smart speaker"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:19
+#: spodcat/logs/user_agent.py:21
 msgid "Smart TV"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:20
+#: spodcat/logs/user_agent.py:22
 msgid "Watch"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:24
+#: spodcat/logs/user_agent.py:26
 msgid "App"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:25
+#: spodcat/logs/user_agent.py:27
 msgid "Bot"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:26
+#: spodcat/logs/user_agent.py:28
 msgid "Browser"
 msgstr ""
 
-#: spodcat/logs/user_agent.py:27
+#: spodcat/logs/user_agent.py:29
 msgid "Library"
 msgstr ""
 
-#: spodcat/models/artist.py:27
+#: spodcat/models/artist.py:29
 msgid "artist"
 msgstr ""
 
@@ -369,7 +369,7 @@ msgstr ""
 msgid "category"
 msgstr ""
 
-#: spodcat/models/category.py:19 spodcat/models/podcast.py:88
+#: spodcat/models/category.py:19 spodcat/models/podcast.py:105
 msgid "categories"
 msgstr ""
 
@@ -430,7 +430,7 @@ msgstr "%(term1)s plus %(term2)s"
 msgid "is approved"
 msgstr ""
 
-#: spodcat/models/comment.py:30 spodcat/models/episode_song.py:22
+#: spodcat/models/comment.py:30 spodcat/models/episode_song.py:24
 msgid "comment"
 msgstr ""
 
@@ -438,67 +438,87 @@ msgstr ""
 msgid "comments"
 msgstr ""
 
-#: spodcat/models/episode.py:50
-msgid "audio content type"
-msgstr ""
-
-#: spodcat/models/episode.py:57
-msgid "audio file"
-msgstr ""
-
 #: spodcat/models/episode.py:64
-msgid "audio file length"
+msgid "RSS feed"
+msgstr ""
+
+#: spodcat/models/episode.py:65
+msgid "Frontend thumbnails"
 msgstr ""
 
 #: spodcat/models/episode.py:66
+msgid "Social media sharing"
+msgstr ""
+
+#: spodcat/models/episode.py:67
+msgid "MediaSession metadata"
+msgstr ""
+
+#: spodcat/models/episode.py:69
+msgid "audio content type"
+msgstr ""
+
+#: spodcat/models/episode.py:76
+msgid "audio file"
+msgstr ""
+
+#: spodcat/models/episode.py:83
+msgid "audio file length"
+msgstr ""
+
+#: spodcat/models/episode.py:85
 msgid "dBFS array"
 msgstr ""
 
-#: spodcat/models/episode.py:74 spodcat/models/episode_chapter.py:28
-#: spodcat/models/season.py:38
+#: spodcat/models/episode.py:93 spodcat/models/episode_chapter.py:30
+#: spodcat/models/season.py:41
 msgid "image"
 msgstr ""
 
-#: spodcat/models/episode.py:96 spodcat/models/season.py:59
+#: spodcat/models/episode.py:113
+msgid "use image for"
+msgstr ""
+
+#: spodcat/models/episode.py:121 spodcat/models/season.py:62
 msgid "season"
 msgstr ""
 
-#: spodcat/models/episode.py:107
+#: spodcat/models/episode.py:132
 msgid "episodes"
 msgstr ""
 
-#: spodcat/models/episode.py:146
+#: spodcat/models/episode.py:193
 msgid ""
 "A non-draft episode must have an audio file. Upload a file or mark this as "
 "draft."
 msgstr ""
 
-#: spodcat/models/episode_chapter.py:19 spodcat/models/episode_song.py:29
+#: spodcat/models/episode_chapter.py:21 spodcat/models/episode_song.py:31
 #: spodcat/models/video.py:25
 msgid "title"
 msgstr ""
 
-#: spodcat/models/episode_chapter.py:21
+#: spodcat/models/episode_chapter.py:23
 msgid "end time"
 msgstr ""
 
-#: spodcat/models/episode_chapter.py:31 spodcat/models/podcast_link.py:50
+#: spodcat/models/episode_chapter.py:33 spodcat/models/podcast_link.py:50
 msgid "URL"
 msgstr ""
 
-#: spodcat/models/episode_chapter.py:68
+#: spodcat/models/episode_chapter.py:70
 msgid "episode chapter"
 msgstr ""
 
-#: spodcat/models/episode_chapter.py:69
+#: spodcat/models/episode_chapter.py:71
 msgid "episode chapters"
 msgstr ""
 
-#: spodcat/models/episode_song.py:34
+#: spodcat/models/episode_song.py:36
 msgid "episode song"
 msgstr ""
 
-#: spodcat/models/episode_song.py:35
+#: spodcat/models/episode_song.py:37
 msgid "episode songs"
 msgstr ""
 
@@ -511,7 +531,6 @@ msgid "format"
 msgstr ""
 
 #: spodcat/models/font_face.py:27
-#| msgid "eight"
 msgid "weight"
 msgstr ""
 
@@ -523,105 +542,109 @@ msgstr ""
 msgid "font faces"
 msgstr ""
 
-#: spodcat/models/podcast.py:57
+#: spodcat/models/podcast.py:74
 #, python-format
 msgid "'%(value)s' is a forbidden slug for podcasts."
 msgstr ""
 
-#: spodcat/models/podcast.py:79
+#: spodcat/models/podcast.py:96
 msgid "banner image"
 msgstr ""
 
-#: spodcat/models/podcast.py:80
+#: spodcat/models/podcast.py:97
 msgid "Should be >= 960px wide and have aspect ratio 3:1."
 msgstr ""
 
-#: spodcat/models/podcast.py:96
+#: spodcat/models/podcast.py:113
 msgid ""
 "This is the round 'avatar' image. It should ideally have height and width >= "
 "1400px."
 msgstr ""
 
-#: spodcat/models/podcast.py:97
+#: spodcat/models/podcast.py:114
 msgid "cover"
 msgstr ""
 
-#: spodcat/models/podcast.py:118
+#: spodcat/models/podcast.py:135
 msgid "custom GUID"
 msgstr ""
 
-#: spodcat/models/podcast.py:120
+#: spodcat/models/podcast.py:137
 msgid ""
 "Don't set if you don't know what you're doing. Ref: https://podcasting2.org/"
 "podcast-namespace/tags/guid"
 msgstr ""
 
-#: spodcat/models/podcast.py:123 spodcat/models/podcast_content.py:26
+#: spodcat/models/podcast.py:140 spodcat/models/podcast_content.py:28
 msgid "description"
 msgstr ""
 
-#: spodcat/models/podcast.py:124
+#: spodcat/models/podcast.py:141
 msgid "enable comments"
 msgstr ""
 
-#: spodcat/models/podcast.py:126
+#: spodcat/models/podcast.py:143
 msgid "Episode RSS suffix"
 msgstr ""
 
-#: spodcat/models/podcast.py:130
+#: spodcat/models/podcast.py:147
 msgid ""
 "Will be added to the bottom of every episode description in the RSS feed."
 msgstr ""
 
-#: spodcat/models/podcast.py:138
+#: spodcat/models/podcast.py:155
 msgid "favicon"
 msgstr ""
 
-#: spodcat/models/podcast.py:149
+#: spodcat/models/podcast.py:166
 msgid "language"
 msgstr ""
 
-#: spodcat/models/podcast.py:156
+#: spodcat/models/podcast.py:173
 msgid "name font face"
 msgstr ""
 
-#: spodcat/models/podcast.py:165
+#: spodcat/models/podcast.py:182
 msgid "name font size"
 msgstr ""
 
-#: spodcat/models/podcast.py:173
+#: spodcat/models/podcast.py:190
 msgid "require comment approval"
 msgstr ""
 
-#: spodcat/models/podcast.py:177
+#: spodcat/models/podcast.py:194
 msgid "Will be used in URLs."
 msgstr ""
 
-#: spodcat/models/podcast.py:178 spodcat/models/podcast_content.py:37
+#: spodcat/models/podcast.py:195 spodcat/models/podcast_content.py:39
 msgid "slug"
 msgstr ""
 
-#: spodcat/models/podcast.py:180
+#: spodcat/models/podcast.py:197
 msgid "tagline"
 msgstr ""
 
-#: spodcat/models/podcast.py:191
+#: spodcat/models/podcast.py:202
+msgid "These platforms are blocked from ingesting this feed."
+msgstr ""
+
+#: spodcat/models/podcast.py:214
 msgid "podcasts"
 msgstr ""
 
-#: spodcat/models/podcast_content.py:28
+#: spodcat/models/podcast_content.py:30
 msgid "draft"
 msgstr ""
 
-#: spodcat/models/podcast_content.py:36
+#: spodcat/models/podcast_content.py:38
 msgid "published"
 msgstr ""
 
-#: spodcat/models/podcast_content.py:49
+#: spodcat/models/podcast_content.py:51
 msgid "podcast contents"
 msgstr ""
 
-#: spodcat/models/podcast_content.py:91
+#: spodcat/models/podcast_content.py:93
 msgid "visible"
 msgstr ""
 
@@ -705,7 +728,7 @@ msgstr ""
 msgid "posts"
 msgstr ""
 
-#: spodcat/models/season.py:60
+#: spodcat/models/season.py:63
 msgid "seasons"
 msgstr ""
 

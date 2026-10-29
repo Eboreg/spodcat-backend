@@ -6,6 +6,7 @@ import re
 import uuid
 from base64 import b64encode
 from io import BytesIO
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import requests
@@ -22,6 +23,7 @@ from markdownify import markdownify
 from martor.models import MartorField
 
 from spodcat.images import ImageData, downscale_image, generate_thumbnail
+from spodcat.model_fields import MultipleChoiceField
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastQuerySet
 from spodcat.settings import spodcat_settings
@@ -52,6 +54,21 @@ logger = logging.getLogger(__name__)
 
 def get_language_choices():
     return [(lang.pt1, lang.name) for lang in iter_langs() if lang.pt1]
+
+
+def get_blocked_platforms_choices():
+    choices = []
+    path = Path(__file__).parent.parent / "submodules/podcast-namespace/serviceslugs.txt"
+
+    try:
+        with path.open("rt") as f:
+            for line in f:
+                line = line.strip()
+                choices.append((line, line))
+    except FileNotFoundError as e:
+        logger.exception("Could not open serviceslugs.txt", exc_info=e)
+
+    return choices
 
 
 def podcast_slug_validator(value: str):
@@ -181,6 +198,12 @@ class Podcast(ModelMixin, models.Model):
         verbose_name=_("slug"),
     )
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None, verbose_name=_("tagline"))
+    blocked_platforms = MultipleChoiceField(
+        choices=get_blocked_platforms_choices(),
+        default=list,
+        blank=True,
+        help_text=_("These platforms are blocked from ingesting this feed."),
+    )
 
     contents: PodcastContentManager
     links: RelatedManager[PodcastLink]

@@ -124,6 +124,7 @@ class PodcastRssData:
             fg.podcast.itunes_category(categories)
 
         fg.podcast2.podcast_guid(str(podcast.guid))
+        fg.podcast2.podcast_block(*podcast.blocked_platforms)
 
         for episode in self.get_episodes():
             description_html = episode.description_html + markdown_to_html(podcast.episode_rss_suffix)
