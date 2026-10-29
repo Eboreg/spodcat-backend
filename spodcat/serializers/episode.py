@@ -8,6 +8,7 @@ from spodcat.serializers.episode_song import EpisodeSongSerializer
 class EpisodeSerializer(AbstractPodcastContentSerializer[Episode]):
     audio_url = serializers.SerializerMethodField()
     has_songs = serializers.SerializerMethodField()
+    image_usage = serializers.MultipleChoiceField(choices=Episode.ImageUsage.choices)
     season = serializers.PrimaryKeyRelatedField(read_only=True)
     songs = EpisodeSongSerializer(many=True)
 
@@ -32,6 +33,7 @@ class PartialEpisodeSerializer(EpisodeSerializer):
             "has_songs",
             "id",
             "image_thumbnail",
+            "image_usage",
             "is_draft",
             "name",
             "number",

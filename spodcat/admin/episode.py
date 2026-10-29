@@ -71,7 +71,7 @@ class EpisodeAdmin(BasePodcastContentAdmin[Episode]):
         ("season", "number"),
         ("is_draft", "published"),
         "audio_file",
-        "image",
+        ("image", "image_usage"),
         "description",
         "duration",
         "audio_content_type",
