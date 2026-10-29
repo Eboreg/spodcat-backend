@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, cast
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from klaatu_python.utils.dicts import filter_values_not_null
 
 from spodcat.model_fields import TimestampField
 from spodcat.model_mixin import ModelMixin
 from spodcat.types import ChapterDict
-from spodcat.utils import filter_values_not_null
 
 from .functions import episode_chapter_image_storage, episode_chapter_image_upload_to
 
@@ -30,7 +32,7 @@ class AbstractEpisodeChapter(ModelMixin, models.Model):
     )
     url = models.URLField(null=True, default=None, blank=True, verbose_name=_("URL"))
 
-    episode: models.ForeignKey["Episode"]
+    episode: models.ForeignKey[Episode]
 
     class Meta:
         ordering = ["start_time"]
