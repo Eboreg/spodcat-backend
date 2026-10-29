@@ -9,12 +9,13 @@ from feedgen.ext.podcast import PodcastExtension
 from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
 
+from spodcat.images import strip_markdown_images
 from spodcat.models import Episode, Podcast
 from spodcat.models.functions import rss_xml_storage
 from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
-from spodcat.utils import markdown_to_html, strip_markdown_images
+from spodcat.utils import markdown_to_html
 
 
 class AuthorsDict(TypedDict):
@@ -95,21 +96,17 @@ class PodcastRssData:
         if last_published := self.get_last_published():
             fg.lastBuildDate(last_published)
 
+        fg.podcast2.podcast_image(podcast.cover_data, podcast.cover_thumbnail_data)
+        fg.podcast2.podcast_image_deprecated(podcast.cover_data, podcast.cover_thumbnail_data)
+
         if podcast.cover:
             fg.podcast.itunes_image(podcast.cover.url)
-
             if podcast.cover_height and podcast.cover_width:
                 fg.image(
                     url=podcast.cover.url,
                     width=str(podcast.cover_width),
                     height=str(podcast.cover_height),
                 )
-
-            if podcast.cover_width:
-                fg.podcast2.podcast_image(podcast.cover.url, podcast.cover_width)
-
-        if podcast.cover_thumbnail and podcast.cover_thumbnail_width:
-            fg.podcast2.podcast_image(podcast.cover_thumbnail.url, podcast.cover_thumbnail_width)
 
         if podcast.owner.email and podcast.owner.get_full_name():
             fg.podcast.itunes_owner(name=podcast.owner.get_full_name(), email=podcast.owner.email)
@@ -161,16 +158,16 @@ class PodcastRssData:
             fe.link(href=episode.frontend_url)
             fe.podcast.itunes_duration(round(episode.duration_seconds))
 
-            if episode.image:
-                fe.podcast.itunes_image(episode.image.url)
+            if Episode.ImageUsage.RSS in episode.image_usage:
+                if episode.image:
+                    fe.podcast.itunes_image(episode.image.url)
+                    fe.podcast2.podcast_image(episode.image_data, episode.image_thumbnail_data)
+                    fe.podcast2.podcast_image_deprecated(episode.image_data, episode.image_thumbnail_data)
 
-                if episode.image_width:
-                    fe.podcast2.podcast_image(episode.image.url, episode.image_width)
-
-            elif episode.season and episode.season.image:
-                fe.podcast.itunes_image(episode.season.image.url)
-                if episode.season.image_width:
-                    fe.podcast2.podcast_image(episode.season.image.url, episode.season.image_width)
+                elif episode.season and episode.season.image:
+                    fe.podcast.itunes_image(episode.season.image.url)
+                    fe.podcast2.podcast_image(episode.season.image_data, episode.season.image_thumbnail_data)
+                    fe.podcast2.podcast_image_deprecated(episode.season.image_data, episode.season.image_thumbnail_data)
 
             audio_file_url = episode.get_audio_file_url()
 
