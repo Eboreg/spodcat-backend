@@ -51,7 +51,7 @@ class TimePeriod(ABC):
     @abstractmethod
     def construct_dates(start_date: datetime.date) -> tuple[datetime.date, datetime.date]: ...
 
-    def range(self, stop: Self, inclusive: bool = True) -> "Generator[Self]":
+    def range(self, stop: Self, inclusive: bool = True) -> Generator[Self]:
         if stop > self:
             for i in range(stop - self):
                 yield self + i

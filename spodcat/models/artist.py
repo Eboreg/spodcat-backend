@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractUser
@@ -18,7 +20,7 @@ if TYPE_CHECKING:
 class Artist(ModelMixin, models.Model):
     name = models.CharField(max_length=100, verbose_name=_("name"))
 
-    songs: "RelatedManager[EpisodeSong]"
+    songs: RelatedManager[EpisodeSong]
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["name"], name="podcasts__artist__name__uq")]

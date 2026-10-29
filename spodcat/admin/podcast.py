@@ -87,8 +87,8 @@ class PodcastAdmin(SpodcatStaticRSSModelAdmin[Podcast]):
     def frontend_link(self, obj: Podcast):
         return mark_safe(f'<a href="{obj.frontend_url}" target="_blank">' + _("Frontend") + "</a>")
 
-    def get_fieldsets(self, request: HttpRequest, obj: Podcast | None = None) -> "_FieldsetSpec":
-        fieldsets: "_FieldsetSpec" = [
+    def get_fieldsets(self, request: HttpRequest, obj: Podcast | None = None) -> _FieldsetSpec:
+        fieldsets: _FieldsetSpec = [
             (None, {"fields": [("name", "slug"), ("tagline", "language"), "description", "episode_rss_suffix"]}),
             (
                 _("Comments"),

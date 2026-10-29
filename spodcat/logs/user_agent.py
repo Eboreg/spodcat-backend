@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import re
 from dataclasses import dataclass
@@ -41,8 +43,8 @@ class UserAgentData:
         cls,
         user_agent: str,
         type: UserAgentType,
-        ua_dict: "UserAgentDict",
-        device: "DeviceDict | None",
+        ua_dict: UserAgentDict,
+        device: DeviceDict | None,
     ):
         return cls(
             user_agent=user_agent,

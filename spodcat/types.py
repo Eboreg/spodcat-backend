@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
 
@@ -73,7 +75,7 @@ class RssEntry(TypedDict):
     itunes_episode: NotRequired[str]
     itunes_season: NotRequired[str]
     links: NotRequired[list[RssLink]]
-    published_parsed: NotRequired["struct_time"]
+    published_parsed: NotRequired[struct_time]
     title: str
 
 
@@ -83,8 +85,8 @@ class Rss(TypedDict):
 
 
 class SettingsFileFieldDict(TypedDict, total=False):
-    STORAGE: "Storage | str"
-    UPLOAD_TO: Callable[["Model", str], str] | str
+    STORAGE: Storage | str
+    UPLOAD_TO: Callable[[Model, str], str] | str
 
 
 SettingsFileFieldKey = Literal[

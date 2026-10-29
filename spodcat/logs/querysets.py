@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import operator
 from datetime import date
@@ -81,7 +83,7 @@ class PodcastRequestLogQuerySet(BaseRequestLogQuerySet["PodcastRequestLog", "_Ro
     _podcast_field_prefix = "podcast"
 
     @classmethod
-    def as_manager(cls) -> "PodcastRequestLogManager":
+    def as_manager(cls) -> PodcastRequestLogManager:
         return cast("PodcastRequestLogManager", super().as_manager())
 
 
@@ -89,7 +91,7 @@ class PodcastContentRequestLogQuerySet(BaseRequestLogQuerySet["PodcastContentReq
     _podcast_field_prefix = "content__podcast"
 
     @classmethod
-    def as_manager(cls) -> "PodcastContentRequestLogManager":
+    def as_manager(cls) -> PodcastContentRequestLogManager:
         return cast("PodcastContentRequestLogManager", super().as_manager())
 
 
@@ -97,10 +99,10 @@ class PodcastRssRequestLogQuerySet(BaseRequestLogQuerySet["PodcastRssRequestLog"
     _podcast_field_prefix = "podcast"
 
     @classmethod
-    def as_manager(cls) -> "PodcastRssRequestLogManager":
+    def as_manager(cls) -> PodcastRssRequestLogManager:
         return cast("PodcastRssRequestLogManager", super().as_manager())
 
-    def filter_by_user(self, user: "AbstractBaseUser | AnonymousUser"):
+    def filter_by_user(self, user: AbstractBaseUser | AnonymousUser):
         if not isinstance(user, AbstractUser) or not user.is_staff:
             return self.none()
         if user.is_superuser:
@@ -112,10 +114,10 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
     _podcast_field_prefix = "episode__podcast"
 
     @classmethod
-    def as_manager(cls) -> "PodcastEpisodeAudioRequestLogManager":
+    def as_manager(cls) -> PodcastEpisodeAudioRequestLogManager:
         return cast("PodcastEpisodeAudioRequestLogManager", super().as_manager())
 
-    def filter_by_user(self, user: "AbstractBaseUser | AnonymousUser"):
+    def filter_by_user(self, user: AbstractBaseUser | AnonymousUser):
         if not isinstance(user, AbstractUser) or not user.is_staff:
             return self.none()
         if user.is_superuser:
@@ -215,7 +217,7 @@ class PodcastEpisodeAudioRequestLogQuerySet(BaseRequestLogQuerySet["PodcastEpiso
             ),
         )
 
-    def values(self, *fields, **expressions) -> "PodcastEpisodeAudioRequestLogQuerySet[dict[str, Any]]":
+    def values(self, *fields, **expressions) -> PodcastEpisodeAudioRequestLogQuerySet[dict[str, Any]]:
         return super().values(*fields, **expressions)  # type: ignore
 
 

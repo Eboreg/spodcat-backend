@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.models import AbstractUser
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class EpisodeSong(AbstractEpisodeChapter):
-    artists: "models.ManyToManyField[Artist, Any]" = models.ManyToManyField(
+    artists: models.ManyToManyField[Artist, Any] = models.ManyToManyField(
         "spodcat.Artist",
         related_name="songs",
         blank=True,

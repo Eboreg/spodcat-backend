@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import ipaddress
 import logging
@@ -266,7 +268,7 @@ class PodcastRequestLog(RequestLog):
         verbose_name=_("podcast"),
     )
 
-    objects: ClassVar["PodcastRequestLogManager"] = PodcastRequestLogQuerySet.as_manager()
+    objects: ClassVar[PodcastRequestLogManager] = PodcastRequestLogQuerySet.as_manager()
 
     class Meta:
         verbose_name = _("podcast page request log")
@@ -281,7 +283,7 @@ class PodcastContentRequestLog(RequestLog):
         verbose_name=_("podcast content"),
     )
 
-    objects: ClassVar["PodcastContentRequestLogManager"] = PodcastContentRequestLogQuerySet.as_manager()
+    objects: ClassVar[PodcastContentRequestLogManager] = PodcastContentRequestLogQuerySet.as_manager()
 
     class Meta:
         verbose_name = _("podcast content page request log")
@@ -299,7 +301,7 @@ class PodcastEpisodeAudioRequestLog(RequestLog):
     response_body_size = models.IntegerField(db_index=True, verbose_name=_("response body size"))
     status_code = models.CharField(max_length=10, verbose_name=_("status code"))
 
-    objects: ClassVar["PodcastEpisodeAudioRequestLogManager"] = PodcastEpisodeAudioRequestLogQuerySet.as_manager()
+    objects: ClassVar[PodcastEpisodeAudioRequestLogManager] = PodcastEpisodeAudioRequestLogQuerySet.as_manager()
 
     class Meta:
         verbose_name = _("podcast episode audio request log")
@@ -355,4 +357,4 @@ class PodcastRssRequestLog(RequestLog):
         verbose_name=_("podcast"),
     )
 
-    objects: ClassVar["PodcastRssRequestLogManager"] = PodcastRssRequestLogQuerySet.as_manager()
+    objects: ClassVar[PodcastRssRequestLogManager] = PodcastRssRequestLogQuerySet.as_manager()

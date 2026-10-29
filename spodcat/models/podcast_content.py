@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from typing import TYPE_CHECKING, ClassVar, Self
 
@@ -36,7 +38,7 @@ class PodcastContent(ModelMixin, PolymorphicModel):
     published = models.DateTimeField(null=True, default=None, verbose_name=_("published"))
     slug = models.SlugField(max_length=100, verbose_name=_("slug"))
 
-    objects: ClassVar["PodcastContentManager[Self]"] = PodcastContentQuerySet[Self].as_manager()
+    objects: ClassVar[PodcastContentManager[Self]] = PodcastContentQuerySet[Self].as_manager()
 
     class Meta:
         ordering = ["-published"]

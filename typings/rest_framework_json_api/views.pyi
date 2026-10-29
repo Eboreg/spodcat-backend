@@ -1,4 +1,5 @@
-from typing import Sequence, TypeVar
+from collections.abc import Sequence
+from typing import TypeVar
 
 from django.db.models import Model
 from rest_framework import generics, viewsets

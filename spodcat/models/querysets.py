@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.contrib.auth.models import AbstractUser
@@ -15,10 +17,10 @@ if TYPE_CHECKING:
 
 class PodcastQuerySet(QuerySet["Podcast"]):
     @classmethod
-    def as_manager(cls) -> "PodcastManager":
+    def as_manager(cls) -> PodcastManager:
         return cast("PodcastManager", super().as_manager())
 
-    def filter_by_user(self, user: "AnonymousUser | AbstractBaseUser"):
+    def filter_by_user(self, user: AnonymousUser | AbstractBaseUser):
         if isinstance(user, AbstractUser) and user.is_superuser:
             return self
         if user.is_authenticated:
@@ -38,7 +40,7 @@ class PodcastQuerySet(QuerySet["Podcast"]):
 
 class PodcastContentQuerySet(PolymorphicQuerySet["_PCT"]):
     @classmethod
-    def as_manager(cls) -> "PodcastContentManager":
+    def as_manager(cls) -> PodcastContentManager:
         return cast("PodcastContentManager", super().as_manager())
 
     def partial(self):

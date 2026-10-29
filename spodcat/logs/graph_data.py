@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import itertools
+from collections.abc import Iterable
 from datetime import date
-from typing import Any, Iterable, TypedDict
+from typing import Any, TypedDict
 
 from spodcat.time_period import TimePeriod
 from spodcat.utils import date_to_timestamp_ms
@@ -12,7 +15,7 @@ class AbstractGraphData:
         y: float
 
     class DataSet(TypedDict):
-        data: "list[AbstractGraphData.DataPoint]"
+        data: list[AbstractGraphData.DataPoint]
         label: str | None
 
     datasets: list[DataSet]
