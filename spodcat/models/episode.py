@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import locale
 import logging
@@ -19,10 +21,12 @@ from markdownify import markdownify
 from slugify import slugify
 
 from spodcat.dbfs import get_audio_file_dbfs_array
+from spodcat.images import ImageData, generate_thumbnail
 from spodcat.mediainfo import mediainfo
+from spodcat.model_fields import MultipleChoiceField
 from spodcat.settings import spodcat_settings
 from spodcat.types import RssEntry
-from spodcat.utils import delete_storage_file, generate_thumbnail
+from spodcat.utils import delete_storage_file
 
 from .functions import (
     episode_audio_file_storage,
@@ -46,7 +50,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def default_image_usage():
+    return [
+        Episode.ImageUsage.RSS,
+        Episode.ImageUsage.FRONTEND,
+        Episode.ImageUsage.SOCIAL_MEDIA,
+        Episode.ImageUsage.MEDIA_SESSION,
+    ]
+
+
 class Episode(PodcastContent):
+    class ImageUsage(models.TextChoices):
+        RSS = "RSS", _("RSS feed")
+        FRONTEND = "FRONTEND", _("Frontend thumbnails")
+        SOCIAL_MEDIA = "SOCIAL_MEDIA", _("Social media sharing")
+        MEDIA_SESSION = "MEDIA_SESSION", _("MediaSession metadata")
+
     audio_content_type = models.CharField(max_length=100, blank=True, verbose_name=_("audio content type"))
     audio_file = models.FileField(
         upload_to=episode_audio_file_upload_to,
@@ -87,6 +106,12 @@ class Episode(PodcastContent):
     image_thumbnail_height = models.PositiveIntegerField(null=True, default=None)
     image_thumbnail_mimetype = models.CharField(max_length=50, null=True, default=None)
     image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
+    image_usage = MultipleChoiceField(
+        choices=ImageUsage,
+        default=default_image_usage,
+        blank=True,
+        verbose_name=_("use image for"),
+    )
     image_width = models.PositiveIntegerField(null=True, default=None)
     number = models.FloatField(null=True, default=None, blank=True, verbose_name=_("number"))
     season = models.ForeignKey["Season"](
@@ -99,8 +124,8 @@ class Episode(PodcastContent):
         default=None,
     )
 
-    songs: "RelatedManager[EpisodeSong]"
-    chapters: "RelatedManager[EpisodeChapter]"
+    songs: RelatedManager[EpisodeSong]
+    chapters: RelatedManager[EpisodeChapter]
 
     class Meta:
         verbose_name = _("episode")
@@ -109,6 +134,28 @@ class Episode(PodcastContent):
     @property
     def chapters_url(self) -> str:
         return spodcat_settings.get_absolute_backend_url("spodcat:episode-chapters", args=(self.id,))
+
+    @property
+    def image_data(self) -> ImageData | None:
+        if self.image:
+            return ImageData(
+                href=self.image.url,
+                width=self.image_width,
+                height=self.image_height,
+                type=self.image_mimetype,
+            )
+        return None
+
+    @property
+    def image_thumbnail_data(self) -> ImageData | None:
+        if self.image_thumbnail:
+            return ImageData(
+                href=self.image_thumbnail.url,
+                width=self.image_thumbnail_width,
+                height=self.image_thumbnail_height,
+                type=self.image_thumbnail_mimetype,
+            )
+        return None
 
     @property
     def number_string(self) -> str | None:

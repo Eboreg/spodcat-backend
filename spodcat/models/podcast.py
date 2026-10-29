@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import mimetypes
 import re
@@ -19,11 +21,12 @@ from iso639 import iter_langs
 from markdownify import markdownify
 from martor.models import MartorField
 
+from spodcat.images import ImageData, downscale_image, generate_thumbnail
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.querysets import PodcastQuerySet
 from spodcat.settings import spodcat_settings
 from spodcat.types import RssFeed
-from spodcat.utils import delete_storage_file, downscale_image, generate_thumbnail, markdown_to_html
+from spodcat.utils import delete_storage_file, markdown_to_html
 
 from .functions import (
     podcast_banner_storage,
@@ -64,7 +67,7 @@ class Podcast(ModelMixin, models.Model):
 
     FONT_SIZES = ["small", "normal", "large"]
 
-    authors: "models.ManyToManyField[AbstractUser, Any]" = models.ManyToManyField(
+    authors: models.ManyToManyField[AbstractUser, Any] = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="podcasts",
         blank=True,
@@ -82,7 +85,7 @@ class Podcast(ModelMixin, models.Model):
     )
     banner_height = models.PositiveIntegerField(null=True, default=None)
     banner_width = models.PositiveIntegerField(null=True, default=None)
-    categories: "models.ManyToManyField[Category, Any]" = models.ManyToManyField(
+    categories: models.ManyToManyField[Category, Any] = models.ManyToManyField(
         "spodcat.Category",
         blank=True,
         verbose_name=_("categories"),
@@ -149,7 +152,7 @@ class Podcast(ModelMixin, models.Model):
         verbose_name=_("language"),
     )
     name = models.CharField(max_length=100, verbose_name=_("name"))
-    name_font_face: "models.ForeignKey[FontFace | None]" = models.ForeignKey(
+    name_font_face: models.ForeignKey[FontFace | None] = models.ForeignKey(
         "spodcat.FontFace",
         related_name="+",
         on_delete=models.SET_NULL,
@@ -179,16 +182,38 @@ class Podcast(ModelMixin, models.Model):
     )
     tagline = models.CharField(max_length=500, null=True, blank=True, default=None, verbose_name=_("tagline"))
 
-    contents: "PodcastContentManager"
-    links: "RelatedManager[PodcastLink]"
+    contents: PodcastContentManager
+    links: RelatedManager[PodcastLink]
 
-    objects: ClassVar["PodcastManager"] = PodcastQuerySet.as_manager()
+    objects: ClassVar[PodcastManager] = PodcastQuerySet.as_manager()
 
     class Meta:
         ordering = ["name"]
         indexes = [models.Index(fields=["name"])]
         verbose_name = _("podcast")
         verbose_name_plural = _("podcasts")
+
+    @property
+    def cover_data(self) -> ImageData | None:
+        if self.cover:
+            return ImageData(
+                href=self.cover.url,
+                width=self.cover_width,
+                height=self.cover_height,
+                type=self.cover_mimetype,
+            )
+        return None
+
+    @property
+    def cover_thumbnail_data(self) -> ImageData | None:
+        if self.cover_thumbnail:
+            return ImageData(
+                href=self.cover_thumbnail.url,
+                width=self.cover_thumbnail_width,
+                height=self.cover_thumbnail_height,
+                type=self.cover_thumbnail_mimetype,
+            )
+        return None
 
     @property
     def description_html(self) -> str:

@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from spodcat.images import ImageData, generate_thumbnail
 from spodcat.model_mixin import ModelMixin
 from spodcat.models.functions import (
     season_image_storage,
@@ -10,7 +13,7 @@ from spodcat.models.functions import (
     season_image_thumbnail_upload_to,
     season_image_upload_to,
 )
-from spodcat.utils import delete_storage_file, generate_thumbnail
+from spodcat.utils import delete_storage_file
 
 
 if TYPE_CHECKING:
@@ -53,11 +56,33 @@ class Season(ModelMixin, models.Model):
     image_thumbnail_width = models.PositiveIntegerField(null=True, default=None)
     image_width = models.PositiveIntegerField(null=True, default=None)
 
-    episodes: "RelatedManager[Episode]"
+    episodes: RelatedManager[Episode]
 
     class Meta:
         verbose_name = _("season")
         verbose_name_plural = _("seasons")
+
+    @property
+    def image_data(self) -> ImageData | None:
+        if self.image:
+            return ImageData(
+                href=self.image.url,
+                width=self.image_width,
+                height=self.image_height,
+                type=self.image_mimetype,
+            )
+        return None
+
+    @property
+    def image_thumbnail_data(self) -> ImageData | None:
+        if self.image_thumbnail:
+            return ImageData(
+                href=self.image_thumbnail.url,
+                width=self.image_thumbnail_width,
+                height=self.image_thumbnail_height,
+                type=self.image_thumbnail_mimetype,
+            )
+        return None
 
     def __str__(self) -> str:
         if self.name:
