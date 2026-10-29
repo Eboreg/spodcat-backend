@@ -27,7 +27,7 @@ class Podcast2Extension(BaseExtension):
             guid.text = self.__podcast_guid
 
         for image in self.__podcast_images:
-            image.create_xml_elem(feed, NAMESPACE)
+            image.create_xml_elem(channel, NAMESPACE)
 
         if self.__podcast_images_deprecated:
             srcset = ", ".join(f"{url} {width}w" for url, width in self.__podcast_images_deprecated)
