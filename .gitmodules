@@ -10,3 +10,6 @@
 [submodule "GoodBots"]
 	path = spodcat/submodules/GoodBots
 	url = https://github.com/AnTheMaker/GoodBots.git
+[submodule "spodcat/submodules/podcast-namespace"]
+	path = spodcat/submodules/podcast-namespace
+	url = https://github.com/Podcastindex-org/podcast-namespace.git
