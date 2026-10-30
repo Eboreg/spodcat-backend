@@ -2,7 +2,6 @@ from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from django.http import Http404, HttpResponse
-from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -44,8 +43,6 @@ class PodcastViewSet(LogRequestMixin, ReadOnlyModelViewSet[Podcast]):
     @extend_schema(responses={(200, "application/rss+xml"): OpenApiTypes.STR})
     @action(methods=["get"], detail=True)
     def rss(self, request: Request, slug: str):
-        # Both template and feedgen methods are available; going with feedgen
-        # for now since it's considerably faster in tests.
         try:
             data = PodcastRssData(slug)
         except ObjectDoesNotExist as e:
@@ -59,7 +56,7 @@ class PodcastViewSet(LogRequestMixin, ReadOnlyModelViewSet[Podcast]):
         return self.__rss_feedgen(request=request, data=data)
 
     def __rss_feedgen(self, request: Request, data: PodcastRssData):
-        rss = data.fetch_static_or_generate()
+        rss = data.get()
 
         if request.query_params.get("html"):
             return TemplateResponse(
@@ -71,27 +68,6 @@ class PodcastViewSet(LogRequestMixin, ReadOnlyModelViewSet[Podcast]):
         return HttpResponse(
             content=rss,
             content_type="application/rss+xml; charset=utf-8",
-            headers={
-                "Content-Disposition": f'inline; filename="{data.podcast_slug}.rss.xml"',
-                "Access-Control-Allow-Origin": "*",
-            },
-        )
-
-    def __rss_template(self, request: Request, data: PodcastRssData):
-        context = data.get_template_context()
-
-        if request.query_params.get("html"):
-            return TemplateResponse(
-                request=request._request,
-                template="spodcat/rss.html",
-                context={"rss": get_template("spodcat/rss.xml").render(context=context)},
-            )
-
-        return TemplateResponse(
-            request=request._request,
-            template="spodcat/rss.xml",
-            context=context,
-            content_type="application/xml; charset=utf-8",
             headers={
                 "Content-Disposition": f'inline; filename="{data.podcast_slug}.rss.xml"',
                 "Access-Control-Allow-Origin": "*",

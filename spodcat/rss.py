@@ -1,21 +1,29 @@
-import itertools
-from datetime import datetime
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from io import StringIO
-from typing import TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict, cast
 
 from django.db.models import Max
 from feedgen.entry import FeedEntry
-from feedgen.ext.podcast import PodcastExtension
-from feedgen.ext.podcast_entry import PodcastEntryExtension
 from feedgen.feed import FeedGenerator
 
 from spodcat.images import strip_markdown_images
 from spodcat.models import Episode, Podcast
 from spodcat.models.functions import rss_xml_storage
-from spodcat.models.querysets import PodcastContentQuerySet
 from spodcat.podcasting2 import Podcast2EntryExtension, Podcast2Extension
 from spodcat.settings import spodcat_settings
 from spodcat.utils import markdown_to_html
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from feedgen.ext.podcast import PodcastExtension
+    from feedgen.ext.podcast_entry import PodcastEntryExtension
+
+
+RSS_MEMORY_CACHE: dict[str, str | bytes] = {}
 
 
 class AuthorsDict(TypedDict):
@@ -33,6 +41,48 @@ class PodcastFeedEntry(FeedEntry):
     podcast2: Podcast2EntryExtension
 
 
+class AbstractPodcastRssCache(ABC):
+    def __init__(self, podcast_slug: str):
+        self.podcast_slug = podcast_slug
+
+    @abstractmethod
+    def fetch(self) -> str | bytes | None: ...
+
+    @abstractmethod
+    def save(self, rss: str | bytes): ...
+
+
+class PodcastRssFileCache(AbstractPodcastRssCache):
+    def __init__(self, podcast_slug: str):
+        super().__init__(podcast_slug)
+        self.storage = rss_xml_storage()
+        self.path = f"rss/{self.podcast_slug}.rss.xml"
+
+    def fetch(self) -> str | bytes | None:
+        if self.storage.exists(self.path):
+            with self.storage.open(self.path, "rt") as f:
+                return f.read()
+
+        return None
+
+    def save(self, rss: str | bytes):
+        rss = rss.decode() if isinstance(rss, bytes) else rss
+        if self.storage.exists(self.path):
+            self.storage.delete(self.path)
+        rss_buffer = StringIO(rss)
+        self.storage.save(self.path, rss_buffer)
+
+
+class PodcastRssMemoryCache(AbstractPodcastRssCache):
+    def fetch(self) -> str | bytes | None:
+        if self.podcast_slug in RSS_MEMORY_CACHE:
+            return RSS_MEMORY_CACHE[self.podcast_slug]
+        return None
+
+    def save(self, rss: str | bytes):
+        RSS_MEMORY_CACHE[self.podcast_slug] = rss
+
+
 class PodcastRssData:
     """
     Models whose creation/updates/deletion should result in static RSS
@@ -47,37 +97,45 @@ class PodcastRssData:
         * EpisodeSong
     """
 
-    __authors: list[AuthorsDict] | None = None
-    __episodes: PodcastContentQuerySet[Episode] | None = None
-    __last_published: datetime | None = None
-    __podcast: Podcast | None = None
+    def __init__(self, podcast_slug: str):
+        self.podcast_slug = podcast_slug
 
-    podcast_slug: str
+    def get(self) -> str | bytes:
+        missing: list[AbstractPodcastRssCache] = []
+        rss: str | bytes | None = None
 
-    def __init__(self, pk: str):
-        self.podcast_slug = pk
+        for cache in self.__get_caches():
+            if rss := cache.fetch():
+                break
+            missing.append(cache)
 
-    def fetch_static_or_generate(self) -> str | bytes:
-        if spodcat_settings.STATIC_RSS_XML:
-            storage = rss_xml_storage()
-            path = f"rss/{self.podcast_slug}.rss.xml"
+        if rss is None:
+            rss = self.__generate()
 
-            if storage.exists(path):
-                with storage.open(path, "rt") as f:
-                    return f.read()
-
-        rss = self.generate()
-
-        if spodcat_settings.STATIC_RSS_XML:
-            self.save_static(rss)
+        for cache in missing:
+            cache.save(rss)
 
         return rss
 
-    def generate(self) -> str | bytes:
-        podcast = self.get_podcast()
-        authors = self.get_authors()
-        author_string = self.get_author_string()
+    def renew_cache(self):
+        self.__save_to_cache(self.__generate())
+
+    def __generate(self) -> str | bytes:
+        podcast = (
+            Podcast.objects.prefetch_related("authors", "categories")
+            .select_related("owner")
+            .get(slug=self.podcast_slug)
+        )
+        episodes = (
+            Episode.objects.filter(podcast_id=self.podcast_slug)
+            .select_related("season", "podcast")
+            .published()
+            .with_has_chapters()
+        )
+        authors = [{"name": a.get_full_name(), "email": a.email} for a in podcast.authors.all()]
+        author_string = ", ".join([a["name"] for a in authors if a["name"]])
         categories = [c.to_dict() for c in podcast.categories.all()]
+        last_published = episodes.aggregate(last_published=Max("published"))["last_published"]
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
@@ -93,7 +151,7 @@ class PodcastRssData:
         fg.description(podcast.tagline or podcast.name)
         fg.podcast.itunes_type(podcast.itunes_type)
 
-        if last_published := self.get_last_published():
+        if last_published:
             fg.lastBuildDate(last_published)
 
         fg.podcast2.podcast_image(podcast.cover_data, podcast.cover_thumbnail_data)
@@ -126,7 +184,7 @@ class PodcastRssData:
         fg.podcast2.podcast_guid(str(podcast.guid))
         fg.podcast2.podcast_block(*podcast.blocked_platforms)
 
-        for episode in self.get_episodes():
+        for episode in episodes:
             description_html = episode.description_html + markdown_to_html(podcast.episode_rss_suffix)
             description_text = strip_markdown_images(episode.description)
             episode_rss_suffix_text = strip_markdown_images(podcast.episode_rss_suffix)
@@ -189,64 +247,13 @@ class PodcastRssData:
 
         return fg.rss_str(pretty=True)
 
-    def get_author_string(self):
-        return ", ".join([a["name"] for a in self.get_authors() if a["name"]])
+    def __get_caches(self) -> Iterator[AbstractPodcastRssCache]:
+        for method in spodcat_settings.CACHE_RSS_XML:
+            if method == "memory":
+                yield PodcastRssMemoryCache(self.podcast_slug)
+            elif method == "file":
+                yield PodcastRssFileCache(self.podcast_slug)
 
-    def get_authors(self):
-        if self.__authors is None:
-            self.__authors = [{"name": a.get_full_name(), "email": a.email} for a in self.get_podcast().authors.all()]
-
-        return self.__authors
-
-    def get_episodes(self):
-        if self.__episodes is None:
-            self.__episodes = (
-                Episode.objects.filter(podcast_id=self.podcast_slug)
-                .select_related("podcast", "season")
-                .published()
-                .with_has_chapters()
-            )
-
-        return self.__episodes
-
-    def get_last_published(self):
-        if self.__last_published is None and self.__episodes is None:
-            self.__last_published = self.get_episodes().aggregate(last_published=Max("published"))["last_published"]
-
-        return self.__last_published
-
-    def get_podcast(self):
-        if self.__podcast is None:
-            self.__podcast = (
-                Podcast.objects.prefetch_related("authors", "categories")
-                .select_related("owner")
-                .get(slug=self.podcast_slug)
-            )
-
-        return self.__podcast
-
-    def get_template_context(self):
-        podcast = self.get_podcast()
-
-        return {
-            "podcast": podcast,
-            "last_published": self.get_last_published(),
-            "authors": self.get_authors(),
-            "author_string": self.get_author_string(),
-            "categories": itertools.groupby(podcast.categories.all(), lambda c: c.cat),
-            "episodes": self.get_episodes(),
-        }
-
-    def regenerate_static(self):
-        self.save_static(self.generate())
-
-    def save_static(self, rss: str | bytes):
-        rss = rss.decode() if isinstance(rss, bytes) else rss
-        storage = rss_xml_storage()
-        filename = f"rss/{self.podcast_slug}.rss.xml"
-
-        if storage.exists(filename):
-            storage.delete(filename)
-
-        rss_buffer = StringIO(rss)
-        storage.save(filename, rss_buffer)
+    def __save_to_cache(self, rss: str | bytes):
+        for cache in self.__get_caches():
+            cache.save(rss)

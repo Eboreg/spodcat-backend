@@ -65,7 +65,7 @@ Here are the available values for `SettingsFileFieldKey` and the model types and
   * Model: `PodcastLink`
   * `UPLOAD_TO` default: `f"{instance.podcast.slug}/images/links/{filename}"`
 * `RSS_XML`
-  * Not connected to a model. This determines the storage engine that will deal with static RSS XML (if `STATIC_RSS_XML` is enabled).
+  * Not connected to a model. This determines the storage engine that will deal with static RSS XML (if `CACHE_RSS_XML` contains `"file"`).
   * `UPLOAD_TO`: not used
 * `SEASON_IMAGE`
   * Model: `Season`
@@ -97,9 +97,9 @@ SPODCAT = {
 
 Mainly used for RSS feed generation and some places in the admin. Default: `http://localhost:4200/`.
 
-### `STATIC_RSS_XML`
+### `CACHE_RSS_XML`
 
-Whether to serve RSS feeds from static files (regenerated every time a relevant object is created/modified/deleted in admin) or generate them on the fly for every request. Default: `True`.
+Sequence of methods with which to cache podcast RSS feeds. Possible values: `"memory"`, `"file"`. If empty, RSS feeds will be generated on the fly for every request. Otherwise, they will be fetched from the first available cache (i.e. the order of the sequence matters), and the caches will be renewed every time a relevant object is created/modified/deleted in the admin. Default: `("memory",)`
 
 ### `USE_INTERNAL_AUDIO_PROXY`
 

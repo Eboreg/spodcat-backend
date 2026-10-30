@@ -20,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.contrib.admin.mixin import AdminMixin
-from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
+from spodcat.contrib.admin.options import SpodcatRSSCacheModelAdmin
 from spodcat.forms import PodcastAdminForm, PodcastChangeSlugForm
 from spodcat.models import Episode, Podcast, PodcastLink
 from spodcat.utils import delete_storage_file
@@ -37,7 +37,7 @@ class PodcastLinkInline(AdminMixin, admin.TabularInline):
     extra = 0
 
 
-class PodcastAdmin(SpodcatStaticRSSModelAdmin[Podcast]):
+class PodcastAdmin(SpodcatRSSCacheModelAdmin[Podcast]):
     filter_horizontal = ["categories", "authors"]
     inlines = [PodcastLinkInline]
     readonly_fields = ("slug",)

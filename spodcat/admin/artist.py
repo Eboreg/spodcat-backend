@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from spodcat.contrib.admin.filters import ArtistSongCountFilter
 from spodcat.contrib.admin.mixin import AdminMixin
-from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
+from spodcat.contrib.admin.options import SpodcatRSSCacheModelAdmin
 from spodcat.models import Artist, EpisodeSong
 
 
@@ -42,7 +42,7 @@ class ArtistSongInline(AdminMixin, admin.TabularInline):
         return obj.episodesong.title
 
 
-class ArtistAdmin(SpodcatStaticRSSModelAdmin[Artist]):
+class ArtistAdmin(SpodcatRSSCacheModelAdmin[Artist]):
     inlines = [ArtistSongInline]
     list_display = ["name", "song_count"]
     list_filter = [ArtistSongCountFilter]

@@ -12,7 +12,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from spodcat.contrib.admin.mixin import AdminMixin
-from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
+from spodcat.contrib.admin.options import SpodcatRSSCacheModelAdmin
 from spodcat.forms import PodcastContentVideoAdminForm
 from spodcat.models import PodcastContent, Video
 
@@ -33,7 +33,7 @@ class PodcastContentVideoInline(AdminMixin, admin.TabularInline):
     form = PodcastContentVideoAdminForm
 
 
-class BasePodcastContentAdmin(SpodcatStaticRSSModelAdmin[_PCT], Generic[_PCT]):
+class BasePodcastContentAdmin(SpodcatRSSCacheModelAdmin[_PCT], Generic[_PCT]):
     save_on_top = True
     search_fields = ["name", "description", "slug"]
 

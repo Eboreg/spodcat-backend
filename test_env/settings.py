@@ -152,6 +152,7 @@ AUTH_USER_MODEL = "test_env.User"
 
 SPODCAT: SpodcatSettingsDict = {
     "BACKEND_HOST": os.environ.get("BACKEND_HOST"),
+    "CACHE_RSS_XML": ("memory", "file"),
     "FILEFIELDS": {
         "FONTFACE_FILE": {"STORAGE": "local"},
         "RSS_XML": {"STORAGE": "local"},

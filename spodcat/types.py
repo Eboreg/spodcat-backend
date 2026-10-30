@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
 
 
@@ -30,6 +30,9 @@ class ChapterDict(TypedDict):
     title: NotRequired[str]
     toc: NotRequired[bool]
     url: NotRequired[str]
+
+
+RssCacheMethod = Literal["memory", "file"]
 
 
 class RssImage(TypedDict):
@@ -109,8 +112,8 @@ SettingsFileFieldKey = Literal[
 class SpodcatSettingsDict(TypedDict, total=False):
     BACKEND_HOST: str | None
     BACKEND_ROOT: str | None
+    CACHE_RSS_XML: Sequence[RssCacheMethod]
     FILEFIELDS: dict[SettingsFileFieldKey, SettingsFileFieldDict]
     FRONTEND_ROOT_URL: str | None
-    STATIC_RSS_XML: bool
     USE_INTERNAL_AUDIO_PROXY: bool
     USE_INTERNAL_AUDIO_REDIRECT: bool

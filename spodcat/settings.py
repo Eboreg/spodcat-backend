@@ -1,11 +1,17 @@
-from typing import cast
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urljoin
 
 from django.conf import settings as django_settings
 from django.core.signals import setting_changed
 from django.urls import reverse
 
-from spodcat.types import SettingsFileFieldDict, SettingsFileFieldKey, SpodcatSettingsDict
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from spodcat.types import RssCacheMethod, SettingsFileFieldDict, SettingsFileFieldKey, SpodcatSettingsDict
 
 
 REST_FRAMEWORK_DEFAULTS = {
@@ -31,9 +37,9 @@ SPECTACULAR_DEFAULTS = {
 SPODCAT_DEFAULTS: SpodcatSettingsDict = {
     "BACKEND_HOST": "http://localhost:8000/",
     "BACKEND_ROOT": "",
+    "CACHE_RSS_XML": ("memory",),
     "FILEFIELDS": {},
     "FRONTEND_ROOT_URL": "http://localhost:3000/",
-    "STATIC_RSS_XML": True,
     "USE_INTERNAL_AUDIO_PROXY": False,
     "USE_INTERNAL_AUDIO_REDIRECT": False,
 }
@@ -51,9 +57,9 @@ class SpodcatSettings:
     _user_settings: dict | None
     BACKEND_HOST: str | None
     BACKEND_ROOT: str | None
+    CACHE_RSS_XML: Sequence[RssCacheMethod]
     FILEFIELDS: dict[SettingsFileFieldKey, SettingsFileFieldDict]
     FRONTEND_ROOT_URL: str | None
-    STATIC_RSS_XML: bool
     USE_INTERNAL_AUDIO_PROXY: bool
     USE_INTERNAL_AUDIO_REDIRECT: bool
 
@@ -66,7 +72,7 @@ class SpodcatSettings:
     def user_settings(self):
         if self._user_settings is None:
             self._user_settings = getattr(django_settings, "SPODCAT", {})
-        return cast(SpodcatSettingsDict, self._user_settings)
+        return cast("SpodcatSettingsDict", self._user_settings)
 
     def __getattr__(self, attr):
         try:

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 
-from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
+from spodcat.contrib.admin.options import SpodcatRSSCacheModelAdmin
 from spodcat.models import Season
 from spodcat.utils import delete_storage_file
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from django.http import HttpRequest
 
 
-class SeasonAdmin(SpodcatStaticRSSModelAdmin[Season]):
+class SeasonAdmin(SpodcatRSSCacheModelAdmin[Season]):
     list_display = ["podcast", "number", "name"]
     fields = ["podcast", "number", "name", "image"]
 

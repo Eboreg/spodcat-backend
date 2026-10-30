@@ -9,7 +9,7 @@ from django.forms import ModelChoiceField
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from spodcat.contrib.admin.options import SpodcatStaticRSSModelAdmin
+from spodcat.contrib.admin.options import SpodcatRSSCacheModelAdmin
 from spodcat.models import EpisodeSong
 from spodcat.utils import seconds_to_timestamp
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from django.http import HttpRequest
 
 
-class EpisodeSongAdmin(SpodcatStaticRSSModelAdmin[EpisodeSong]):
+class EpisodeSongAdmin(SpodcatRSSCacheModelAdmin[EpisodeSong]):
     filter_horizontal = ["artists"]
     list_display = ["title", "artists_str", "episode_str", "start_time_str"]
     ordering = ["-episode__number", "start_time"]

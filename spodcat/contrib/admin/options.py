@@ -31,21 +31,24 @@ class SpodcatModelAdmin(AdminMixin, admin.ModelAdmin):
     ) -> HttpResponse:
         extra_context = extra_context or {}
         extra_context.update(logs_app_installed=apps.is_installed("spodcat.logs"))
+
         return super().change_view(request=request, object_id=object_id, form_url=form_url, extra_context=extra_context)
 
 
-class SpodcatStaticRSSModelAdmin(SpodcatModelAdmin, Generic[_ModelT]):
+class SpodcatRSSCacheModelAdmin(SpodcatModelAdmin, Generic[_ModelT]):
     def delete_model(self, request, obj: _ModelT):
         super().delete_model(request, obj)
-        if spodcat_settings.STATIC_RSS_XML:
+
+        if spodcat_settings.CACHE_RSS_XML:
             if slugs := self.get_podcast_slugs_from_instance(obj):
-                self.regenerate_static_rss(slugs)
+                self.renew_rss_cache(slugs)
 
     def delete_queryset(self, request, queryset: QuerySet[_ModelT]):
         super().delete_queryset(request, queryset)
-        if spodcat_settings.STATIC_RSS_XML:
+
+        if spodcat_settings.CACHE_RSS_XML:
             if slugs := self.get_podcast_slugs_from_queryset(queryset):
-                self.regenerate_static_rss(slugs)
+                self.renew_rss_cache(slugs)
 
     @abstractmethod
     def get_podcast_slugs_from_instance(self, obj: _ModelT) -> Iterable[str]: ...
@@ -53,15 +56,16 @@ class SpodcatStaticRSSModelAdmin(SpodcatModelAdmin, Generic[_ModelT]):
     @abstractmethod
     def get_podcast_slugs_from_queryset(self, queryset: QuerySet[_ModelT]) -> Iterable[str]: ...
 
-    def regenerate_static_rss(self, podcast_slugs: Iterable[str]):
+    def renew_rss_cache(self, podcast_slugs: Iterable[str]):
         from spodcat.rss import PodcastRssData
 
         for slug in podcast_slugs:
             data = PodcastRssData(slug)
-            data.regenerate_static()
+            data.renew_cache()
 
     def save_model(self, request, obj: _ModelT, form, change):
         super().save_model(request, obj, form, change)
-        if spodcat_settings.STATIC_RSS_XML:
+
+        if spodcat_settings.CACHE_RSS_XML:
             if slugs := self.get_podcast_slugs_from_instance(obj):
-                self.regenerate_static_rss(slugs)
+                self.renew_rss_cache(slugs)
